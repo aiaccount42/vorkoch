@@ -1,0 +1,2108 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vorkoch">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Vorkoch</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<meta name="theme-color" content="#F2F2F7">
+<style>
+/* Vorkoch: ruhig, hell, große Titel, gruppierte Listen, weiche Karten. Eine Akzentfarbe, Gericht-Farben nur als kleine Punkte. */
+:root {
+  --bg: #F2F2F7; --card: #FFFFFF; --card2: #F7F7FA;
+  --ink: #1C1C1E; --ink2: #636366; --ink3: #A1A1A6;
+  --line: rgba(60, 60, 67, .16); --fill: rgba(120, 120, 128, .12);
+  --accent: #F2B01E; --accentink: #2A1C00; --accentfg: #8F5A00; --tint: rgba(242, 176, 30, .20);
+  --warn: #B25400; --warnbg: rgba(255, 149, 0, .14); --danger: #D70015;
+  --bar: rgba(249, 249, 252, .82); --scrim: rgba(0, 0, 0, .38);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 6px 20px rgba(0, 0, 0, .05);
+  --c1: #22A06B; --c2: #E8643A; --c3: #3B82F6; --c4: #9B6BEA; --c5: #D4476B;
+  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Text', 'Roboto', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000; --card: #1C1C1E; --card2: #2C2C2E;
+    --ink: #F5F5F7; --ink2: #AEAEB2; --ink3: #636366;
+    --line: rgba(235, 235, 245, .16); --fill: rgba(120, 120, 128, .28);
+    --accent: #F5B93A; --accentink: #241700; --accentfg: #F5B93A; --tint: rgba(245, 185, 58, .18);
+    --warn: #FFB340; --warnbg: rgba(255, 159, 10, .18); --danger: #FF6961;
+    --bar: rgba(28, 28, 30, .78); --scrim: rgba(0, 0, 0, .6);
+    --shadow: none;
+    --c1: #4ADE9B; --c2: #FF8F66; --c3: #6FA3FF; --c4: #B896FF; --c5: #FF7A9C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #000000; --card: #1C1C1E; --card2: #2C2C2E;
+  --ink: #F5F5F7; --ink2: #AEAEB2; --ink3: #636366;
+  --line: rgba(235, 235, 245, .16); --fill: rgba(120, 120, 128, .28);
+  --accent: #F5B93A; --accentink: #241700; --accentfg: #F5B93A; --tint: rgba(245, 185, 58, .18);
+  --warn: #FFB340; --warnbg: rgba(255, 159, 10, .18); --danger: #FF6961;
+  --bar: rgba(28, 28, 30, .78); --scrim: rgba(0, 0, 0, .6);
+  --shadow: none;
+  --c1: #4ADE9B; --c2: #FF8F66; --c3: #6FA3FF; --c4: #B896FF; --c5: #FF7A9C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 16px/1.45 var(--font); letter-spacing: -.005em;
+  font-variant-numeric: tabular-nums;
+  padding-block: 8px 120px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body.lock { overflow: hidden; }
+#app { max-width: 640px; margin: 0 auto; min-width: 0; }
+:focus-visible { outline: 3px solid var(--accentfg); outline-offset: 2px; border-radius: 8px; }
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+button { -webkit-appearance: none; appearance: none; }
+b { font-weight: 600; }
+h2, h3, h4, p { margin: 0; }
+
+/* Titel */
+.ltitle { font: 800 34px/1.08 var(--font); letter-spacing: -.03em; margin: 18px 2px 2px; text-wrap: balance; }
+.lsub { color: var(--ink2); font-size: 15px; margin: 0 2px 14px; }
+.sec { font: 700 22px/1.2 var(--font); letter-spacing: -.02em; margin: 30px 2px 10px; }
+.cap { font: 600 13px/1.2 var(--font); color: var(--ink2); letter-spacing: .01em; margin: 22px 16px 7px; text-transform: none; }
+.foot { font-size: 13px; color: var(--ink2); margin: 8px 16px 0; line-height: 1.4; }
+.sub { font-size: 14px; color: var(--ink2); }
+.warn { color: var(--warn); font-style: normal; font-weight: 600; }
+.alert { background: var(--warnbg); color: var(--ink); border-radius: 14px; padding: 12px 14px; margin: 8px 0; font-size: 15px; }
+.ok { color: var(--accentfg); font-weight: 600; font-size: 14px; }
+
+/* Gruppierte Liste */
+.grp { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+.grp > * + * { border-top: .5px solid var(--line); }
+.pad { padding: 14px 16px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; min-height: 52px; min-width: 0; }
+.row .grow { flex: 1; min-width: 0; }
+.row .val { color: var(--ink2); font-size: 15px; white-space: nowrap; }
+button.row { width: 100%; background: none; border: 0; text-align: left; cursor: pointer; }
+button.row:active { background: var(--fill); }
+.chev::after { content: ""; flex: none; width: 8px; height: 8px; margin-left: 4px; border: solid var(--ink3); border-width: 2px 2px 0 0; transform: rotate(45deg); }
+
+/* Kennzahlen */
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--card); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); min-width: 0; }
+.stat small { display: block; font-size: 13px; color: var(--ink2); }
+.stat b { display: block; font: 700 24px/1.2 var(--font); letter-spacing: -.02em; margin-top: 2px; }
+@media (min-width: 560px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* Buttons */
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+.btn {
+  flex: 1 1 auto; min-height: 50px; padding: 12px 20px; border-radius: 14px; border: 0; cursor: pointer;
+  background: var(--accent); color: var(--accentink); font: 600 16px/1.2 var(--font); text-align: center;
+  transition: transform .12s ease, opacity .12s ease;
+}
+.btn:active { transform: scale(.97); opacity: .9; }
+.btn.soft { background: var(--tint); color: var(--accentfg); }
+.btn.gray { background: var(--fill); color: var(--ink); }
+.btn.danger { background: var(--fill); color: var(--danger); }
+.btn.sm { min-height: 40px; padding: 8px 14px; font-size: 15px; flex: 0 0 auto; border-radius: 12px; }
+.lnk { background: none; border: 0; padding: 8px 0; color: var(--accentfg); font-weight: 600; cursor: pointer; min-height: 44px; }
+
+/* Segmentiert und Chips */
+.seg { display: flex; gap: 2px; background: var(--fill); border-radius: 12px; padding: 2px; }
+.seg button { flex: 1; min-width: 0; min-height: 36px; border: 0; border-radius: 10px; background: none; font-size: 14px; font-weight: 500; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.seg button[aria-pressed=true] { background: var(--card); box-shadow: 0 1px 3px rgba(0, 0, 0, .14); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; line-height: 1; padding: 6px 10px; border-radius: 999px; background: var(--fill); color: var(--ink2); white-space: nowrap; }
+.chip.neu { background: var(--accent); color: var(--accentink); font-weight: 600; padding: 3px 8px; font-size: 11px; margin-left: 6px; vertical-align: 2px; }
+.chip.spec { background: var(--warnbg); color: var(--warn); }
+.chip.hit { background: var(--tint); color: var(--accentfg); font-weight: 600; }
+.filters { display: flex; gap: 8px; overflow-x: auto; padding: 2px 16px 6px; margin: 0 -16px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filters button { flex: none; border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; background: var(--card); color: var(--ink); font-size: 14px; cursor: pointer; box-shadow: var(--shadow); }
+.filters button[aria-pressed=true] { background: var(--accent); color: var(--accentink); font-weight: 600; }
+
+/* Eingaben */
+input[type=text], input[type=number], input[type=search], select, textarea {
+  width: 100%; min-height: 46px; padding: 10px 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--ink); font-size: 16px;
+}
+input::placeholder { color: var(--ink3); }
+.inl { text-align: right; background: none !important; padding: 8px 0; min-height: 40px; width: 120px; flex: none; }
+select.inl { width: auto; max-width: 55%; text-align-last: right; }
+input[type=range] { width: 100%; accent-color: var(--accent); min-height: 36px; }
+.flex { display: flex; gap: 8px; }
+
+/* Schalter */
+.sw { position: relative; flex: none; width: 51px; height: 31px; }
+.sw input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.sw i { position: absolute; inset: 0; border-radius: 999px; background: var(--ink3); transition: background .2s; }
+.sw i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, .25); transition: transform .2s; }
+.sw input:checked + i { background: var(--accent); }
+.sw input:checked + i::after { transform: translateX(20px); }
+.sw input:focus-visible + i { outline: 3px solid var(--accentfg); outline-offset: 2px; }
+
+/* Punkt */
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--ink3)); flex: none; }
+.dot.off { background: transparent; border: 1.5px solid var(--ink3); }
+
+/* Woche */
+.day { display: grid; grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 10px 12px 10px 10px; align-items: stretch; }
+.dn { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.dn b { font-size: 13px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: .04em; }
+.dn span { font-size: 22px; font-weight: 700; letter-spacing: -.02em; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; margin-top: 2px; }
+.dn small { display: none; }
+.day.today .dn span { background: var(--accent); color: var(--accentink); }
+.slot { min-width: 0; min-height: 62px; padding: 8px 10px; border-radius: 12px; background: var(--card2); border: 0; text-align: left; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+button.slot { cursor: pointer; }
+button.slot:active { background: var(--fill); }
+.slot .m { font-size: 11.5px; color: var(--ink2); display: flex; align-items: center; gap: 5px; }
+.slot b { font-size: 14.5px; line-height: 1.2; font-weight: 600; overflow-wrap: anywhere; }
+.slot.off { background: none; border: 1px dashed var(--line); color: var(--ink3); font-size: 12.5px; }
+.dh { display: grid; grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 10px 12px 4px 10px; font-size: 12px; font-weight: 600; color: var(--ink2); }
+.dh span + span { padding-left: 10px; }
+
+/* Kochtermin-Karten */
+.sess { padding: 16px; }
+.sess h3 { font: 700 18px/1.2 var(--font); letter-spacing: -.01em; }
+.sess .who { color: var(--ink2); font-size: 14px; margin-top: 2px; }
+.dish { display: flex; gap: 12px; padding: 12px 0 0; margin-top: 12px; border-top: .5px solid var(--line); }
+.dish > div { min-width: 0; }
+.dish .dot { margin-top: 7px; }
+.dish b { font-size: 16px; }
+.dish .sub { margin-top: 2px; }
+.cfoot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
+.cfoot span { font-size: 14px; color: var(--ink2); }
+
+/* Einkauf */
+.pbar { height: 6px; border-radius: 999px; background: var(--fill); overflow: hidden; margin: 6px 2px 4px; }
+.pbar i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .25s ease; }
+.item { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 16px; cursor: pointer; min-height: 56px; }
+.item input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.box { width: 26px; height: 26px; border: 1.8px solid var(--ink3); border-radius: 50%; display: block; position: relative; background: transparent; transition: background .15s, border-color .15s; }
+.item input:focus-visible + .box { outline: 3px solid var(--accentfg); outline-offset: 2px; }
+.item input:checked + .box { background: var(--accent); border-color: var(--accent); }
+.item input:checked + .box::after { content: ""; position: absolute; left: 8px; top: 3px; width: 6px; height: 12px; border: solid var(--accentink); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.itx { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.itx b { font-weight: 500; font-size: 16.5px; }
+.itx small { font-size: 13px; color: var(--ink2); line-height: 1.3; }
+.itx .rest { color: var(--warn); }
+.ipk { font-size: 14px; color: var(--ink2); text-align: right; max-width: 44vw; overflow-wrap: anywhere; }
+.item.done .itx b, .item.done .ipk { color: var(--ink3); text-decoration: line-through; }
+.item.small { min-height: 48px; padding: 8px 16px; }
+
+/* Kochen */
+.thaw { background: var(--warnbg); border-radius: 12px; padding: 10px 14px; font-size: 14.5px; margin-top: 12px; }
+.gantt { display: grid; grid-template-columns: 62px minmax(0, 1fr); row-gap: 5px; align-items: center; margin-top: 14px; }
+.gh { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13.5px; font-weight: 600; }
+.gl { font-size: 12px; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 6px; }
+.gt { position: relative; height: 22px; border-radius: 6px; background: var(--card2); }
+.bar { position: absolute; top: 3px; height: 16px; border-radius: 5px; }
+.bar.a { background: var(--c); }
+.bar.p { background: color-mix(in srgb, var(--c) 28%, transparent); border: 1.5px solid var(--c); }
+.gax { position: relative; height: 16px; }
+.gax span { position: absolute; top: 2px; transform: translateX(-50%); font-size: 11px; color: var(--ink2); }
+.gax span:first-child { transform: none; }
+.legend { font-size: 12.5px; color: var(--ink2); margin-top: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lg { display: inline-block; width: 22px; height: 10px; border-radius: 4px; }
+.lg.a { background: var(--ink2); }
+.lg.p { border: 1.5px solid var(--ink2); background: transparent; margin-left: 10px; }
+
+/* Rezept-Liste und Details */
+.rrow { display: flex; align-items: center; gap: 12px; padding: 12px 16px; min-height: 64px; }
+.rrow .open { flex: 1; min-width: 0; background: none; border: 0; text-align: left; padding: 0; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.rrow .open b { font-size: 16px; font-weight: 600; line-height: 1.25; }
+.rrow .open small { font-size: 13px; color: var(--ink2); }
+.rrow.offrec .open { opacity: .5; }
+.search { position: relative; }
+.rb h4 { font: 600 13px/1.2 var(--font); color: var(--ink2); margin: 22px 0 8px; }
+.rb h5 { font: 600 15px var(--font); margin: 12px 0 4px; }
+.ing { list-style: none; margin: 0; padding: 0; background: var(--card2); border-radius: 14px; }
+.ing li { padding: 10px 14px; font-size: 15px; }
+.ing li + li { border-top: .5px solid var(--line); }
+.ing li.v { color: var(--ink2); }
+.steps { list-style: none; margin: 0; padding: 0; }
+.steps li { padding: 10px 0; border-top: .5px solid var(--line); font-size: 15px; }
+.tag { display: inline-block; font-size: 11.5px; font-weight: 600; line-height: 1; padding: 4px 8px; border-radius: 999px; white-space: nowrap; margin-right: 6px; vertical-align: 1px; }
+.tag.a { background: var(--ink); color: var(--bg); }
+.tag.p { background: var(--fill); color: var(--ink2); }
+.note { margin-top: 16px; padding: 12px 14px; background: var(--tint); border-radius: 14px; font-size: 14.5px; }
+
+/* Sheet */
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 20; animation: fade .2s ease both; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; margin: 0 auto; max-width: 640px; max-height: 92vh; max-height: 92dvh;
+  background: var(--bg); border-radius: 22px 22px 0 0; display: flex; flex-direction: column; animation: up .28s cubic-bezier(.2, .9, .3, 1) both;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, .25);
+}
+.sheet.full { height: 100vh; height: 100dvh; max-height: none; border-radius: 0; }
+.shd { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px max(16px, env(safe-area-inset-left, 0px)) 8px; }
+.shd .grab { position: absolute; top: 6px; left: 50%; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: var(--ink3); opacity: .5; }
+.sheet.full .grab { display: none; }
+.shd h3 { font: 700 20px/1.2 var(--font); letter-spacing: -.02em; flex: 1; min-width: 0; padding-top: 6px; }
+.shb { overflow-y: auto; overscroll-behavior: contain; padding: 4px max(16px, env(safe-area-inset-left, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)); }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Kochmodus */
+.cm-top { display: flex; align-items: center; gap: 4px; padding: 0 2px; }
+.cm-top i { flex: 1; height: 4px; border-radius: 2px; background: var(--fill); }
+.cm-top i.on { background: var(--accent); }
+.cm-body { flex: 1; overflow-y: auto; padding: 18px max(20px, env(safe-area-inset-left, 0px)) 12px; display: flex; flex-direction: column; gap: 14px; }
+.cm-clock { font-size: 15px; color: var(--ink2); }
+.cm-dish { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+.cm-text { font: 600 26px/1.28 var(--font); letter-spacing: -.02em; text-wrap: pretty; }
+.cm-kind { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; border-radius: 999px; padding: 8px 14px; font-size: 15px; font-weight: 600; }
+.cm-kind.a { background: var(--ink); color: var(--bg); }
+.cm-kind.p { background: var(--fill); color: var(--ink); }
+.cm-par { background: var(--card); border-radius: 16px; padding: 12px 16px; }
+.cm-par p { font-size: 14px; color: var(--ink2); }
+.cm-par li { font-size: 15px; margin-top: 4px; list-style: none; display: flex; gap: 8px; align-items: center; }
+.cm-par ul { margin: 6px 0 0; padding: 0; }
+.cm-foot { display: flex; gap: 10px; padding: 10px max(16px, env(safe-area-inset-left, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)); }
+.timer { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--card); border-radius: 16px; padding: 12px 16px; }
+.timer b { font: 700 30px/1 var(--font); letter-spacing: -.02em; }
+.timer.done b { color: var(--accentfg); }
+
+/* Tabs */
+#tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px); border-top: .5px solid var(--line);
+  padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+#tabs .in { display: flex; max-width: 640px; margin: 0 auto; }
+#tabs button { flex: 1; min-width: 0; min-height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: 0; color: var(--ink2); cursor: pointer; font: 500 11px/1 var(--font); letter-spacing: .01em; }
+#tabs button[aria-current=page] { color: var(--accentfg); }
+#tabs button:active svg { transform: scale(.9); }
+#tabs svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: transform .12s; }
+#tabs button[aria-current=page] svg { stroke-width: 2.1; }
+
+.view { animation: fade .25s ease both; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+.cm-body .btn { flex: 0 0 auto; align-self: stretch; }
+.sess { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); margin: 12px 0; }
+.gax span:last-child:not(:first-child) { transform: translateX(-100%); }
+
+/* Bewertung, Laden, Abgleich */
+.rate { display: inline-flex; gap: 4px; flex: 0 0 auto; align-self: flex-start; }
+.rate button { width: 44px; height: 44px; border: 0; border-radius: 12px; background: var(--fill); color: var(--ink2); display: grid; place-items: center; cursor: pointer; }
+.rate button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rate button[aria-pressed=true] { background: var(--accent); color: var(--accentink); }
+.rate button[aria-pressed=true] svg { fill: currentColor; }
+.rate button:focus-visible { outline: 3px solid var(--accentfg); outline-offset: 2px; }
+.item .mv { grid-column: 2 / 4; justify-self: start; border: 0; background: var(--fill); color: var(--accentfg); border-radius: 999px; min-height: 32px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.mini { margin: 0; padding-left: 20px; font-size: 14px; color: var(--ink2); line-height: 1.45; }
+.mini li + li { margin-top: 4px; }
+.mini code, .foot code { font-size: 12px; word-break: break-all; background: var(--fill); padding: 1px 5px; border-radius: 6px; }
+#syncurl { flex: 1; min-width: 0; }
+input[type=number].inl { width: 72px; }
+input[type=time].inl { width: 130px; }
+.item .mv { min-height: 30px; padding: 4px 10px; font-size: 12.5px; font-weight: 500; }
+</style>
+<div id="app"></div>
+<nav id="tabs" aria-label="Bereiche"><div class="in"><button type="button" data-act="tab" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button type="button" data-act="tab" data-tab="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Einkauf</button><button type="button" data-act="tab" data-tab="cook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h2M20 10h2M9 3c0 1.6 1 1.6 1 3.5M14 3c0 1.6 1 1.6 1 3.5"/></svg>Kochen</button><button type="button" data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Rezepte</button><button type="button" data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Mehr</button></div></nav>
+<script>
+(function (root) {
+'use strict';
+
+/* =========================================================
+   ZUTATEN
+   cls: fresh   = verdirbt, Reste zählen
+        can     = Dose, nach dem Öffnen kurz haltbar, Reste zählen
+        keeps   = lange haltbar, Reste egal
+        dry     = Trockenware, Reste egal
+        frozen  = TK, Reste egal
+        pantry  = Vorrat, wird nur zum Prüfen gelistet
+   p/k/f = Protein / kcal / Ballaststoffe pro 100 g (g, ml) oder pro Einheit
+   ========================================================= */
+const AISLES = ['Obst & Gemüse', 'Kühlregal', 'Tiefkühl', 'Konserven', 'Trockenwaren', 'Brot'];
+
+const ING = {
+  skyr:      { n: 'Skyr', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 450, pl: 'Becher', pls: 'Becher', p: 11, k: 63, f: 0, al: ['skyr', 'quark', 'joghurt'] },
+  feta:      { n: 'Feta', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 200, pl: 'Packung', pls: 'Packungen', p: 16, k: 250, f: 0, al: ['feta', 'schafskäse', 'hirtenkäse'] },
+  halloumi:  { n: 'Halloumi', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 225, pl: 'Packung', pls: 'Packungen', p: 22, k: 320, f: 0, al: ['halloumi', 'grillkäse'] },
+  eier:      { n: 'Eier', a: 'Kühlregal', cls: 'fresh', unit: 'Stk', pack: 10, pl: 'Karton', pls: 'Kartons', p: 7, k: 85, f: 0, al: ['ei', 'eier'], fm: a => a + (a === 1 ? ' Ei' : ' Eier'), nm: 'Eier' },
+  tofu:      { n: 'Tofu natur', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 400, pl: 'Packung', pls: 'Packungen', p: 14, k: 130, f: 1, al: ['tofu'] },
+  putenhack: { n: 'Putenhackfleisch', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 20, k: 120, f: 0, al: ['pute', 'hack', 'hackfleisch'] },
+  huehnchen: { n: 'Hähnchenbrustfilet (TK)', a: 'Tiefkühl', cls: 'frozen', unit: 'g', pack: 1000, pl: 'Beutel', pls: 'Beutel', p: 23, k: 105, f: 0, thaw: true, al: ['hähnchen', 'huhn', 'hühnchen', 'geflügel'] },
+  lachs:     { n: 'Lachsfilet (TK)', a: 'Tiefkühl', cls: 'frozen', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 20, k: 200, f: 0, thaw: true, al: ['lachs', 'fisch'] },
+  garnelen:  { n: 'Garnelen (TK)', a: 'Tiefkühl', cls: 'frozen', unit: 'g', pack: 400, pl: 'Packung', pls: 'Packungen', p: 17, k: 85, f: 0, thaw: true, al: ['garnele', 'shrimp', 'fisch'] },
+  spinat:    { n: 'Blattspinat (TK)', a: 'Tiefkühl', cls: 'frozen', unit: 'g', pack: 450, pl: 'Packung', pls: 'Packungen', p: 3, k: 25, f: 2, al: ['spinat'] },
+  erbsen:    { n: 'Erbsen (TK)', a: 'Tiefkühl', cls: 'frozen', unit: 'g', pack: 450, pl: 'Packung', pls: 'Packungen', p: 6, k: 70, f: 5, al: ['erbse'] },
+  brokkoli:  { n: 'Brokkoli (TK)', a: 'Tiefkühl', cls: 'frozen', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 3, k: 30, f: 3, al: ['brokkoli', 'broccoli'] },
+  wok:       { n: 'Wok-Gemüse (TK)', a: 'Tiefkühl', cls: 'frozen', unit: 'g', pack: 600, pl: 'Beutel', pls: 'Beutel', p: 2, k: 40, f: 3, al: ['wok', 'gemüse'] },
+  paprika:   { n: 'Paprika', a: 'Obst & Gemüse', cls: 'fresh', unit: 'Stk', pack: 1, pl: 'Stück', pls: 'Stück', p: 2, k: 45, f: 3, al: ['paprika'], fm: a => a + ' Paprika', nm: 'Paprika' },
+  zucchini:  { n: 'Zucchini', a: 'Obst & Gemüse', cls: 'fresh', unit: 'Stk', pack: 1, pl: 'Stück', pls: 'Stück', p: 3, k: 50, f: 3, al: ['zucchini'], fm: a => a + ' Zucchini', nm: 'Zucchini' },
+  suesskartoffel: { n: 'Süßkartoffeln', a: 'Obst & Gemüse', cls: 'keeps', unit: 'Stk', pack: 1, pl: 'Stück', pls: 'Stück', p: 5, k: 260, f: 9, al: ['süßkartoffel', 'batate'], fm: a => a + (a === 1 ? ' Süßkartoffel' : ' Süßkartoffeln'), nm: 'Süßkartoffeln' },
+  karotten:  { n: 'Karotten', a: 'Obst & Gemüse', cls: 'keeps', unit: 'g', pack: 1000, pl: 'Beutel', pls: 'Beutel', p: 1, k: 35, f: 3, al: ['karotte', 'möhre'] },
+  kartoffeln:{ n: 'Kartoffeln', a: 'Obst & Gemüse', cls: 'keeps', unit: 'g', pack: 1000, pl: 'Beutel', pls: 'Beutel', p: 2, k: 70, f: 2, al: ['kartoffel'] },
+  petersilie:{ n: 'Petersilie', a: 'Obst & Gemüse', cls: 'fresh', unit: 'Stk', pack: 1, pl: 'Bund', pls: 'Bund', p: 0, k: 0, f: 0, al: ['petersilie'], fm: a => a + ' Bund Petersilie', nm: 'Petersilie' },
+  zitrone:   { n: 'Zitrone', a: 'Obst & Gemüse', cls: 'keeps', unit: 'Stk', pack: 1, pl: 'Stück', pls: 'Stück', p: 0, k: 0, f: 0, al: ['zitrone'], fm: a => a + (a === 1 ? ' Zitrone' : ' Zitronen'), nm: 'Zitrone' },
+  tomaten:   { n: 'Gehackte Tomaten', a: 'Konserven', cls: 'can', unit: 'g', pack: 400, pl: 'Dose', pls: 'Dosen', p: 1.3, k: 20, f: 1.5, al: ['tomate'] },
+  kichererbsen: { n: 'Kichererbsen', a: 'Konserven', cls: 'can', unit: 'g', pack: 240, pl: 'Dose', pls: 'Dosen', p: 7, k: 120, f: 6, al: ['kichererbse'], ps: 'abgetropft' },
+  kidney:    { n: 'Kidneybohnen', a: 'Konserven', cls: 'can', unit: 'g', pack: 240, pl: 'Dose', pls: 'Dosen', p: 8, k: 100, f: 7, al: ['kidney', 'bohne'], ps: 'abgetropft' },
+  weisse:    { n: 'Weiße Bohnen', a: 'Konserven', cls: 'can', unit: 'g', pack: 240, pl: 'Dose', pls: 'Dosen', p: 6.5, k: 95, f: 6, al: ['weiße bohne', 'bohne'], ps: 'abgetropft' },
+  kokos:     { n: 'Kokosmilch light', a: 'Konserven', cls: 'can', unit: 'ml', pack: 400, pl: 'Dose', pls: 'Dosen', p: 0.8, k: 70, f: 0, al: ['kokos'] },
+  linsen:    { n: 'Rote Linsen', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 24, k: 340, f: 11, al: ['linse'] },
+  reis:      { n: 'Vollkornreis', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 7.5, k: 350, f: 4, al: ['reis'] },
+  nudeln:    { n: 'Vollkornnudeln', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 13, k: 340, f: 8, al: ['nudel', 'pasta', 'spaghetti'] },
+  bulgur:    { n: 'Bulgur', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 12, k: 340, f: 8, al: ['bulgur'] },
+  brot:      { n: 'Vollkornbrot', a: 'Brot', cls: 'keeps', unit: 'Stk', pack: 10, pl: 'Packung', pls: 'Packungen', p: 4, k: 105, f: 4, al: ['brot'], fm: a => a + (a === 1 ? ' Scheibe Vollkornbrot' : ' Scheiben Vollkornbrot'), nm: 'Scheiben' },
+
+  thunfisch: { n: 'Thunfisch (im eigenen Saft)', a: 'Konserven', cls: 'can', unit: 'g', pack: 150, pl: 'Dose', pls: 'Dosen', p: 25, k: 110, f: 0, al: ['thunfisch', 'fisch'], ps: 'abgetropft' },
+  mais:      { n: 'Mais', a: 'Konserven', cls: 'can', unit: 'g', pack: 285, pl: 'Dose', pls: 'Dosen', p: 3, k: 80, f: 3, al: ['mais'], ps: 'abgetropft' },
+  seelachs:  { n: 'Seelachsfilet (TK)', a: 'Tiefkühl', cls: 'frozen', unit: 'g', pack: 800, pl: 'Beutel', pls: 'Beutel', p: 17, k: 80, f: 0, thaw: true, al: ['seelachs', 'fisch'] },
+  rinderhack:{ n: 'Rinderhackfleisch', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 19, k: 220, f: 0, al: ['rind', 'hack', 'hackfleisch'] },
+  huettenkaese: { n: 'Hüttenkäse', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 200, pl: 'Becher', pls: 'Becher', p: 12, k: 95, f: 0, al: ['hüttenkäse', 'frischkäse'] },
+  mozzarella:{ n: 'Mozzarella', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 125, pl: 'Packung', pls: 'Packungen', p: 18, k: 240, f: 0, al: ['mozzarella'] },
+  champignons: { n: 'Champignons', a: 'Obst & Gemüse', cls: 'fresh', unit: 'g', pack: 400, pl: 'Schale', pls: 'Schalen', p: 3, k: 22, f: 2, al: ['champignon', 'pilz'] },
+  blumenkohl:{ n: 'Blumenkohl', a: 'Obst & Gemüse', cls: 'fresh', unit: 'Stk', pack: 1, pl: 'Kopf', pls: 'Köpfe', p: 10, k: 130, f: 11, al: ['blumenkohl'], fm: a => a + (a === 1 ? ' Kopf Blumenkohl' : ' Köpfe Blumenkohl'), nm: 'Köpfe' },
+  aubergine: { n: 'Aubergine', a: 'Obst & Gemüse', cls: 'fresh', unit: 'Stk', pack: 1, pl: 'Stück', pls: 'Stück', p: 3, k: 60, f: 8, al: ['aubergine'], fm: a => a + (a === 1 ? ' Aubergine' : ' Auberginen'), nm: 'Auberginen' },
+  lauch:     { n: 'Lauch', a: 'Obst & Gemüse', cls: 'fresh', unit: 'Stk', pack: 1, pl: 'Stange', pls: 'Stangen', p: 2, k: 30, f: 3, al: ['lauch', 'porree'], fm: a => a + (a === 1 ? ' Stange Lauch' : ' Stangen Lauch'), nm: 'Stangen' },
+  hokkaido:  { n: 'Hokkaido-Kürbis', a: 'Obst & Gemüse', cls: 'keeps', unit: 'Stk', pack: 1, pl: 'Stück', pls: 'Stück', p: 9, k: 270, f: 12, al: ['kürbis', 'hokkaido'], fm: a => a + ' Hokkaido-Kürbis', nm: 'Kürbisse' },
+  berglinsen:{ n: 'Berglinsen', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 24, k: 330, f: 11, al: ['linse'] },
+  couscous:  { n: 'Couscous', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 12.5, k: 350, f: 5, al: ['couscous'] },
+  quinoa:    { n: 'Quinoa', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 14, k: 370, f: 7, al: ['quinoa'] },
+  lasagne:   { n: 'Lasagneplatten (Vollkorn)', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 250, pl: 'Packung', pls: 'Packungen', p: 13, k: 340, f: 8, spec: true, al: ['lasagne', 'nudel', 'pasta'] },
+  aprikosen: { n: 'Getrocknete Aprikosen', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 250, pl: 'Packung', pls: 'Packungen', p: 3.5, k: 240, f: 7, al: ['aprikose'] },
+  wraps:     { n: 'Vollkorn-Wraps', a: 'Brot', cls: 'keeps', unit: 'Stk', pack: 6, pl: 'Packung', pls: 'Packungen', p: 5, k: 150, f: 4, al: ['wrap', 'tortilla'], fm: a => a + ' Vollkorn-Wraps', nm: 'Wraps' },
+
+  zwiebel:   { n: 'Zwiebeln', cls: 'pantry', unit: 'Stk', fm: a => a + (a === 1 ? ' Zwiebel' : ' Zwiebeln') },
+  knoblauch: { n: 'Knoblauch', cls: 'pantry', unit: 'Zehen', fm: a => a + (a === 1 ? ' Knoblauchzehe' : ' Knoblauchzehen') },
+  ingwer:    { n: 'Ingwer', cls: 'pantry', unit: 'cm', fm: a => a + ' cm Ingwer' },
+  olivenoel: { n: 'Olivenöl', cls: 'pantry', unit: 'EL', k: 120, fm: a => a + ' EL Olivenöl' },
+  curry:     { n: 'Currypulver (mild)', cls: 'pantry', unit: 'EL', fm: a => a + ' EL Currypulver (mild)' },
+  currypaste:{ n: 'Rote Currypaste (mild)', cls: 'pantry', unit: 'EL', fm: a => a + ' EL rote Currypaste (mild)' },
+  sojasauce: { n: 'Sojasauce', cls: 'pantry', unit: 'EL', fm: a => a + ' EL Sojasauce' },
+  paprikapulver: { n: 'Paprikapulver edelsüß', cls: 'pantry', unit: 'TL', fm: a => a + ' TL Paprikapulver edelsüß' },
+  kreuzkuemmel:  { n: 'Kreuzkümmel', cls: 'pantry', unit: 'TL', fm: a => a + ' TL Kreuzkümmel' },
+  oregano:   { n: 'Oregano', cls: 'pantry', unit: 'TL', fm: a => a + ' TL Oregano' },
+  tomatenmark: { n: 'Tomatenmark', cls: 'pantry', unit: 'EL', fm: a => a + ' EL Tomatenmark' },
+  bruehe:    { n: 'Gemüsebrühe (Pulver)', cls: 'pantry', unit: 'TL', fm: a => a + ' TL Gemüsebrühe' },
+  honig:     { n: 'Honig', cls: 'pantry', unit: 'EL', k: 60, fm: a => a + ' EL Honig' },
+  sesamoel:  { n: 'Sesamöl', cls: 'pantry', unit: 'EL', k: 120, fm: a => a + ' EL Sesamöl' },
+  senf:      { n: 'Senf', cls: 'pantry', unit: 'EL', fm: a => a + ' EL Senf' },
+  garammasala: { n: 'Garam Masala', cls: 'pantry', unit: 'TL', spec: true, fm: a => a + ' TL Garam Masala' },
+  kurkuma:   { n: 'Kurkuma', cls: 'pantry', unit: 'TL', fm: a => a + ' TL Kurkuma' },
+  zimt:      { n: 'Zimt', cls: 'pantry', unit: 'TL', fm: a => a + ' TL Zimt' },
+  erdnussbutter: { n: 'Erdnussbutter (ohne Zucker)', cls: 'pantry', unit: 'EL', p: 3.7, k: 90, f: 1.5, fm: a => a + ' EL Erdnussbutter' },
+  tahin:     { n: 'Tahin (Sesammus)', cls: 'pantry', unit: 'EL', p: 2.7, k: 90, f: 1.5, spec: true, fm: a => a + ' EL Tahin' }
+};
+
+/* =========================================================
+   REZEPTE (alle für 4 Portionen = 2 Personen × 2 Mahlzeiten)
+   tracks: parallele Abläufe. k: a = aktiv (du stehst dran), p = läuft von allein
+   ========================================================= */
+const R = (o) => o;
+const RICE = { n: 'Reis', ph: [
+  { k: 'a', m: 2, d: 'Herd', t: 'Reis mit Wasser aufsetzen.' },
+  { k: 'p', m: 35, d: 'Herd', t: 'Reis garen und quellen lassen.' }] };
+const COUSC = { n: 'Couscous', ph: [
+  { k: 'a', m: 3, d: '', t: 'Couscous mit der gleichen Menge heißem Salzwasser übergießen und abdecken.' },
+  { k: 'p', m: 8, d: '', t: 'Quellen lassen.' },
+  { k: 'a', m: 2, d: '', t: 'Mit einer Gabel auflockern.' }] };
+const PASTA = { n: 'Nudeln', ph: [
+  { k: 'a', m: 3, d: 'Herd', t: 'Nudeln in reichlich Salzwasser aufsetzen.' },
+  { k: 'p', m: 10, d: 'Herd', t: 'Garen.' },
+  { k: 'a', m: 2, d: 'Herd', t: 'Abgießen.' }] };
+const RECIPES = [
+  R({ id: 'dal', name: 'Rotes Linsen-Dal mit Spinat und Skyr', short: 'Linsen-Dal', cuisine: 'Indisch', kind: 'veg', base: 'Reis', reheat: 'sehr gut',
+    note: 'Skyr erst beim Essen obendrauf geben. Dal lässt sich gut einfrieren.',
+    i: [['linsen', 300], ['spinat', 450], ['kokos', 400], ['tomaten', 400], ['reis', 240], ['skyr', 450], ['zwiebel', 2], ['knoblauch', 3], ['ingwer', 3], ['curry', 2], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Dal', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebeln, Knoblauch und Ingwer hacken, mit Currypulver in Öl anschwitzen. Linsen, Tomaten und 800 ml Wasser zugeben.' },
+        { k: 'p', m: 22, d: 'Herd', t: 'Köcheln lassen, zwischendurch rühren.' },
+        { k: 'a', m: 6, d: 'Herd', t: 'Gefrorenen Spinat und Kokosmilch einrühren, 5 Min ziehen lassen, mit Salz abschmecken.' }] },
+      { n: 'Reis', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Reis mit Wasser aufsetzen.' },
+        { k: 'p', m: 35, d: 'Herd', t: 'Reis nach Packungsangabe garen und quellen lassen.' }] }
+    ] }),
+
+  R({ id: 'shakshuka', name: 'Shakshuka mit Kichererbsen und Feta', short: 'Shakshuka', cuisine: 'Nahost', kind: 'veg', base: 'Brot', reheat: 'gut',
+    note: 'Pro Portion etwa 2 Eier und 2 Scheiben Vollkornbrot. Beim Aufwärmen bei niedriger Leistung, damit die Eier nicht gummiartig werden.',
+    i: [['eier', 10], ['tomaten', 800], ['kichererbsen', 240], ['paprika', 2], ['feta', 200], ['brot', 8], ['zwiebel', 2], ['knoblauch', 3], ['paprikapulver', 2], ['kreuzkuemmel', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Shakshuka', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebeln, Knoblauch und Paprika würfeln, mit Paprikapulver und Kreuzkümmel in Öl anbraten. Tomaten und Kichererbsen zugeben.' },
+        { k: 'p', m: 15, d: 'Herd', t: 'Sauce bei mittlerer Hitze einkochen lassen.' },
+        { k: 'a', m: 4, d: 'Herd', t: 'Zehn Mulden in die Sauce drücken und die Eier hineinschlagen.' },
+        { k: 'p', m: 10, d: 'Herd', t: 'Deckel auf, Eier stocken lassen.' },
+        { k: 'a', m: 2, d: '', t: 'Feta darüberbröseln.' }] }
+    ] }),
+
+  R({ id: 'tofucurry', name: 'Thai-Curry mit knusprigem Tofu und Brokkoli', short: 'Tofu-Curry', cuisine: 'Thai', kind: 'veg', base: 'Reis', reheat: 'gut',
+    note: 'Tofu getrennt aufbewahren, dann bleibt er knusprig. Beim Aufwärmen erst die Sauce erhitzen, Tofu zum Schluss zugeben.',
+    i: [['tofu', 800], ['brokkoli', 500], ['paprika', 2], ['kokos', 400], ['reis', 240], ['currypaste', 2], ['sojasauce', 3], ['ingwer', 3], ['knoblauch', 3], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Tofu', ph: [
+        { k: 'a', m: 8, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Tofu gut abtropfen, würfeln, mit 2 EL Sojasauce mischen und aufs Blech geben.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Backen, nach 12 Min wenden.' }] },
+      { n: 'Curry', ph: [
+        { k: 'a', m: 10, d: 'Herd', t: 'Knoblauch und Ingwer hacken, Currypaste in Öl anrösten, Kokosmilch mit 200 ml Wasser angießen, Paprika in Streifen zugeben.' },
+        { k: 'p', m: 10, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Gefrorenen Brokkoli zugeben.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Brokkoli garen.' },
+        { k: 'a', m: 2, d: '', t: 'Tofu unterheben, mit 1 EL Sojasauce abschmecken.' }] },
+      { n: 'Reis', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Reis mit Wasser aufsetzen.' },
+        { k: 'p', m: 35, d: 'Herd', t: 'Reis garen und quellen lassen.' }] }
+    ] }),
+
+  R({ id: 'halloumi', name: 'Bulgur-Gemüsepfanne mit Halloumi und Skyr-Zitronendip', short: 'Halloumi-Bulgur', cuisine: 'Levante', kind: 'veg', base: 'Bulgur', reheat: 'gut',
+    note: 'Dip getrennt halten. Halloumi wird beim Aufwärmen fester, kurz in der Pfanne statt in der Mikrowelle erhitzen.',
+    i: [['bulgur', 280], ['halloumi', 225], ['kichererbsen', 240], ['zucchini', 2], ['paprika', 2], ['skyr', 450], ['zitrone', 1], ['petersilie', 1], ['zwiebel', 1], ['knoblauch', 2], ['kreuzkuemmel', 1], ['paprikapulver', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Pfanne', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zucchini, Paprika und Zwiebel würfeln, mit Kreuzkümmel und Paprikapulver in Öl anbraten.' },
+        { k: 'p', m: 10, d: 'Herd', t: 'Bei mittlerer Hitze garen.' },
+        { k: 'a', m: 8, d: 'Herd', t: 'Halloumi würfeln, mit Kichererbsen zugeben und goldbraun braten, Bulgur untermischen.' }] },
+      { n: 'Bulgur', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Bulgur mit der doppelten Menge Salzwasser aufsetzen.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Quellen lassen.' }] },
+      { n: 'Dip', ph: [
+        { k: 'a', m: 4, d: '', t: 'Skyr mit Zitronensaft, Knoblauch und gehackter Petersilie verrühren.' }] }
+    ] }),
+
+  R({ id: 'ofengemuese', name: 'Ofengemüse mit Feta-Kichererbsen, Bulgur und Skyr-Dip', short: 'Ofengemüse', cuisine: 'Mittelmeer', kind: 'veg', base: 'Bulgur', reheat: 'sehr gut',
+    note: 'Schmeckt auch kalt als Salat. Dip getrennt aufbewahren.',
+    i: [['suesskartoffel', 3], ['paprika', 2], ['zucchini', 2], ['kichererbsen', 480], ['feta', 200], ['bulgur', 160], ['skyr', 450], ['zitrone', 1], ['zwiebel', 2], ['olivenoel', 2], ['paprikapulver', 2], ['kreuzkuemmel', 1]],
+    tracks: [
+      { n: 'Blech', ph: [
+        { k: 'a', m: 15, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Süßkartoffeln, Paprika, Zucchini und Zwiebeln in grobe Stücke schneiden, mit Öl und Gewürzen auf zwei Bleche geben.' },
+        { k: 'p', m: 22, d: 'Ofen', t: 'Backen, nach 12 Min wenden.' },
+        { k: 'a', m: 3, d: 'Ofen', t: 'Abgetropfte Kichererbsen und gewürfelten Feta zugeben.' },
+        { k: 'p', m: 12, d: 'Ofen', t: 'Weiterbacken.' }] },
+      { n: 'Bulgur', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Bulgur mit der doppelten Menge Salzwasser aufsetzen.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Quellen lassen.' }] },
+      { n: 'Dip', ph: [
+        { k: 'a', m: 4, d: '', t: 'Skyr mit Zitronensaft und Salz verrühren.' }] }
+    ] }),
+
+  R({ id: 'frittata', name: 'Spinat-Feta-Frittata mit Ofenkartoffeln und Kräuter-Skyr', short: 'Frittata', cuisine: 'Spanisch', kind: 'veg', base: 'Kartoffel', reheat: 'sehr gut',
+    note: 'Schmeckt warm und kalt. In Stücke geschnitten hält sie sich gut in Dosen.',
+    i: [['eier', 10], ['spinat', 450], ['feta', 200], ['kartoffeln', 600], ['skyr', 450], ['petersilie', 1], ['zwiebel', 2], ['knoblauch', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Frittata', ph: [
+        { k: 'a', m: 12, d: 'Ofen', t: 'Ofen auf 200 °C. Kartoffeln in dünne Scheiben schneiden, mit Öl auf ein tiefes Blech geben.' },
+        { k: 'p', m: 20, d: 'Ofen', t: 'Kartoffeln vorbacken.' },
+        { k: 'a', m: 10, d: 'Ofen', t: 'Spinat auftauen und ausdrücken, Eier mit Feta, Zwiebeln, Knoblauch und Salz verquirlen, über die Kartoffeln gießen.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Bei 180 °C stocken lassen.' }] },
+      { n: 'Dip', ph: [
+        { k: 'a', m: 4, d: '', t: 'Skyr mit gehackter Petersilie und Salz verrühren.' }] }
+    ] }),
+
+  R({ id: 'linsensuppe', name: 'Rote-Linsen-Suppe mit Kichererbsen und Skyr', short: 'Linsensuppe', cuisine: 'Türkisch', kind: 'veg', base: 'Suppe', reheat: 'sehr gut',
+    note: 'Eine Portion Suppe plus 1 Scheibe Brot. Skyr erst beim Essen dazugeben. Lässt sich gut einfrieren.',
+    i: [['linsen', 250], ['kichererbsen', 240], ['karotten', 300], ['tomaten', 400], ['brot', 6], ['skyr', 450], ['zitrone', 1], ['zwiebel', 2], ['knoblauch', 2], ['kreuzkuemmel', 2], ['paprikapulver', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Suppe', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebeln, Karotten und Knoblauch würfeln, mit Kreuzkümmel in Öl anrösten. Linsen, Tomaten und 1,2 l Wasser zugeben.' },
+        { k: 'p', m: 20, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 8, d: 'Herd', t: 'Mit dem Stabmixer grob pürieren, Kichererbsen und Zitronensaft zugeben, salzen.' }] }
+    ] }),
+
+  R({ id: 'lachs_bulgur', name: 'Ofen-Lachs mit Bulgur-Salat und Skyr-Dip', short: 'Ofen-Lachs', cuisine: 'Griechisch', kind: 'fisch', base: 'Bulgur', reheat: 'bedingt',
+    note: 'Lachs am besten am ersten Abend essen. Am zweiten Tag den Lachs kalt über den Salat legen statt ihn aufzuwärmen.',
+    i: [['lachs', 500], ['bulgur', 240], ['zucchini', 2], ['paprika', 1], ['petersilie', 1], ['zitrone', 1], ['skyr', 450], ['zwiebel', 1], ['knoblauch', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Lachs', ph: [
+        { k: 'a', m: 10, d: 'Ofen', t: 'Ofen auf 180 °C. Zucchini und Paprika würfeln, mit Öl und Knoblauch auf ein Blech geben, aufgetauten Lachs darauflegen, mit Zitronenscheiben und Salz belegen.' },
+        { k: 'p', m: 18, d: 'Ofen', t: 'Backen, bis der Lachs gar ist.' }] },
+      { n: 'Bulgur', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Bulgur mit der doppelten Menge Salzwasser aufsetzen.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Quellen lassen.' },
+        { k: 'a', m: 6, d: '', t: 'Bulgur mit gehackter Petersilie, Zwiebel, Zitronensaft und Olivenöl zum Salat mischen.' }] },
+      { n: 'Dip', ph: [
+        { k: 'a', m: 4, d: '', t: 'Skyr mit Zitronensaft und Salz verrühren.' }] }
+    ] }),
+
+  R({ id: 'lachs_curry', name: 'Lachs-Kokos-Curry mit Erbsen und Reis', short: 'Lachs-Curry', cuisine: 'Thai', kind: 'fisch', base: 'Reis', reheat: 'gut',
+    note: 'Die Sauce schützt den Lachs beim Aufwärmen. Nur kurz und bei niedriger Leistung erhitzen.',
+    i: [['lachs', 500], ['kokos', 400], ['erbsen', 450], ['reis', 240], ['currypaste', 2], ['ingwer', 3], ['knoblauch', 2], ['zwiebel', 1], ['zitrone', 1], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Curry', ph: [
+        { k: 'a', m: 10, d: 'Herd', t: 'Zwiebel, Knoblauch und Ingwer hacken, Currypaste in Öl anrösten, Kokosmilch mit 200 ml Wasser angießen, Erbsen zugeben.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 4, d: 'Herd', t: 'Aufgetauten Lachs in Würfel schneiden und in die Sauce legen.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Bei kleiner Hitze gar ziehen lassen, mit Zitronensaft abschmecken.' }] },
+      { n: 'Reis', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Reis mit Wasser aufsetzen.' },
+        { k: 'p', m: 35, d: 'Herd', t: 'Reis garen und quellen lassen.' }] }
+    ] }),
+
+  R({ id: 'garnelen_pasta', name: 'Garnelen-Spinat-Pasta mit Feta', short: 'Garnelen-Pasta', cuisine: 'Italienisch', kind: 'fisch', base: 'Nudeln', reheat: 'bedingt',
+    note: 'Garnelen werden beim Aufwärmen zäh. Zweite Portion bei niedriger Leistung und mit einem Schuss Wasser erhitzen.',
+    i: [['garnelen', 400], ['nudeln', 320], ['tomaten', 800], ['spinat', 450], ['feta', 200], ['zwiebel', 1], ['knoblauch', 3], ['oregano', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Sauce', ph: [
+        { k: 'a', m: 8, d: 'Herd', t: 'Zwiebel und Knoblauch hacken, in Öl anbraten, Tomaten, gefrorenen Spinat und Oregano zugeben.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Einköcheln lassen.' },
+        { k: 'a', m: 5, d: 'Herd', t: 'Aufgetaute Garnelen zugeben, 4 Min garen, Feta zerbröseln und unterrühren.' }] },
+      { n: 'Nudeln', ph: [
+        { k: 'a', m: 3, d: 'Herd', t: 'Nudeln in reichlich Salzwasser aufsetzen.' },
+        { k: 'p', m: 10, d: 'Herd', t: 'Garen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Abgießen und mit der Sauce mischen.' }] }
+    ] }),
+
+  R({ id: 'ofenhaehnchen', name: 'Ofen-Hähnchen mit Süßkartoffel, Brokkoli und Kichererbsen', short: 'Ofen-Hähnchen', cuisine: 'Hausküche', kind: 'fleisch', base: 'Süßkartoffel', reheat: 'gut',
+    note: 'Aufwärmen am besten im Ofen oder in der Pfanne, damit das Hähnchen nicht austrocknet.',
+    i: [['huehnchen', 600], ['suesskartoffel', 3], ['brokkoli', 500], ['kichererbsen', 240], ['knoblauch', 2], ['paprikapulver', 2], ['kreuzkuemmel', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Blech', ph: [
+        { k: 'a', m: 15, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Süßkartoffeln würfeln, Hähnchen in Stücke schneiden, beides mit Öl, Knoblauch und Gewürzen mischen und auf zwei Bleche geben.' },
+        { k: 'p', m: 22, d: 'Ofen', t: 'Backen, einmal wenden.' },
+        { k: 'a', m: 4, d: 'Ofen', t: 'Gefrorenen Brokkoli und abgetropfte Kichererbsen mit aufs Blech geben.' },
+        { k: 'p', m: 15, d: 'Ofen', t: 'Weiterbacken, bis das Hähnchen durch ist.' }] }
+    ] }),
+
+  R({ id: 'wok', name: 'Hähnchen-Gemüse-Wok mit Ei und Vollkornreis', short: 'Hähnchen-Wok', cuisine: 'Ostasiatisch', kind: 'fleisch', base: 'Reis', reheat: 'gut',
+    note: 'Pfanne oder Mikrowelle, beides geht. Ein Spritzer Wasser hält das Gemüse saftig.',
+    i: [['huehnchen', 600], ['wok', 600], ['reis', 240], ['eier', 2], ['sojasauce', 3], ['ingwer', 3], ['knoblauch', 3], ['zwiebel', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Wok', ph: [
+        { k: 'a', m: 8, d: '', t: 'Aufgetautes Hähnchen in Streifen schneiden, mit Sojasauce, Ingwer und Knoblauch marinieren.' },
+        { k: 'p', m: 10, d: '', t: 'Marinieren lassen, in der Zeit Zwiebel schneiden.' },
+        { k: 'a', m: 12, d: 'Herd', t: 'In zwei Chargen in heißem Öl scharf anbraten.' },
+        { k: 'a', m: 8, d: 'Herd', t: 'Wok-Gemüse zugeben und braten.' },
+        { k: 'a', m: 4, d: 'Herd', t: 'Eier verquirlen, unterrühren und stocken lassen.' }] },
+      { n: 'Reis', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Reis mit Wasser aufsetzen.' },
+        { k: 'p', m: 35, d: 'Herd', t: 'Reis garen und quellen lassen.' }] }
+    ] }),
+
+  R({ id: 'chili', name: 'Chili con Pute mit Kidneybohnen und Reis', short: 'Pute-Chili', cuisine: 'Tex-Mex', kind: 'fleisch', base: 'Reis', reheat: 'sehr gut', early: true,
+    note: 'Frisches Hack: dieses Gericht gehört in den Sonntags- oder Montagstermin. Mild gehalten, kein Cayenne.',
+    i: [['putenhack', 500], ['kidney', 480], ['tomaten', 800], ['paprika', 2], ['karotten', 200], ['reis', 200], ['tomatenmark', 2], ['zwiebel', 2], ['knoblauch', 3], ['paprikapulver', 2], ['kreuzkuemmel', 2], ['oregano', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Chili', ph: [
+        { k: 'a', m: 15, d: 'Herd', t: 'Zwiebeln, Knoblauch, Paprika und Karotten würfeln. Hack in Öl krümelig anbraten, Gemüse, Tomatenmark und Gewürze zugeben.' },
+        { k: 'p', m: 25, d: 'Herd', t: 'Tomaten, Bohnen und 200 ml Wasser zugeben, köcheln lassen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Abschmecken, mild halten.' }] },
+      { n: 'Reis', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Reis mit Wasser aufsetzen.' },
+        { k: 'p', m: 35, d: 'Herd', t: 'Reis garen und quellen lassen.' }] }
+    ] }),
+
+  R({ id: 'bolognese', name: 'Linsen-Bolognese mit Vollkornnudeln', short: 'Bolognese', cuisine: 'Italienisch', kind: 'fleisch', base: 'Nudeln', reheat: 'sehr gut', early: true,
+    note: 'Frisches Hack: gehört in den Sonntags- oder Montagstermin. Sauce und Nudeln getrennt aufbewahren, dann werden die Nudeln nicht matschig.',
+    i: [['putenhack', 500], ['linsen', 100], ['tomaten', 800], ['karotten', 300], ['nudeln', 320], ['tomatenmark', 2], ['zwiebel', 2], ['knoblauch', 3], ['oregano', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Sauce', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Zwiebeln, Karotten und Knoblauch würfeln. Hack in Öl anbraten, Tomatenmark und Oregano zugeben.' },
+        { k: 'p', m: 28, d: 'Herd', t: 'Tomaten, Linsen und 300 ml Wasser zugeben, einköcheln lassen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Abschmecken.' }] },
+      { n: 'Nudeln', ph: [
+        { k: 'a', m: 3, d: 'Herd', t: 'Nudeln in reichlich Salzwasser aufsetzen.' },
+        { k: 'p', m: 10, d: 'Herd', t: 'Garen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Abgießen.' }] }
+    ] }),
+
+  R({ id: 'bohneneintopf', name: 'Weiße-Bohnen-Eintopf mit Hähnchen und Spinat', short: 'Bohnen-Eintopf', cuisine: 'Toskanisch', kind: 'fleisch', base: 'Eintopf', reheat: 'sehr gut',
+    note: 'Eintopf wird am zweiten Tag eher besser. Mit 1 Scheibe Vollkornbrot servieren.',
+    i: [['huehnchen', 500], ['weisse', 480], ['spinat', 450], ['tomaten', 400], ['karotten', 300], ['kartoffeln', 400], ['brot', 4], ['zwiebel', 2], ['knoblauch', 3], ['oregano', 2], ['bruehe', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Eintopf', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Hähnchen würfeln und in Öl anbraten, Zwiebeln, Knoblauch, Karotten und Kartoffeln würfeln und mitbraten.' },
+        { k: 'p', m: 30, d: 'Herd', t: 'Tomaten, Bohnen, Oregano und 600 ml Brühe zugeben, köcheln lassen.' },
+        { k: 'a', m: 5, d: 'Herd', t: 'Gefrorenen Spinat einrühren, 5 Min ziehen lassen, abschmecken.' }] }
+    ] }),
+
+  /* ---------- Erweiterung: 24 neue Gerichte ---------- */
+  R({ id: 'chana', isNew: true, name: 'Kichererbsen-Masala mit Halloumi und Reis', short: 'Chana-Masala', cuisine: 'Indisch', kind: 'veg', base: 'Reis', reheat: 'sehr gut',
+    note: 'Halloumi erst beim Essen zugeben, damit er nicht zäh wird. Skyr als kühlen Klecks obendrauf.',
+    i: [['kichererbsen', 720], ['tomaten', 400], ['halloumi', 225], ['reis', 200], ['skyr', 450], ['zwiebel', 2], ['knoblauch', 3], ['ingwer', 3], ['garammasala', 2], ['kurkuma', 1], ['kreuzkuemmel', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Masala', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebeln, Knoblauch und Ingwer hacken, mit Garam Masala, Kurkuma und Kreuzkümmel in Öl anbraten. Tomaten, Kichererbsen und 200 ml Wasser zugeben.' },
+        { k: 'p', m: 20, d: 'Herd', t: 'Köcheln lassen, ein Drittel der Kichererbsen zerdrücken.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Abschmecken.' }] },
+      { n: 'Halloumi', ph: [{ k: 'a', m: 8, d: 'Herd', t: 'Halloumi würfeln und in einer Pfanne goldbraun braten.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'palak_tofu', isNew: true, name: 'Palak-Tofu mit Kichererbsen und Reis', short: 'Palak-Tofu', cuisine: 'Indisch', kind: 'veg', base: 'Reis', reheat: 'gut',
+    note: 'Der Tofu bleibt knuspriger, wenn du ihn erst beim Aufwärmen unter die Sauce hebst.',
+    i: [['tofu', 800], ['spinat', 450], ['kichererbsen', 240], ['tomaten', 400], ['reis', 240], ['zwiebel', 2], ['knoblauch', 3], ['ingwer', 3], ['curry', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Tofu', ph: [
+        { k: 'a', m: 8, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Tofu abtropfen, würfeln, mit Öl und 1 EL Currypulver mischen, aufs Blech geben.' },
+        { k: 'p', m: 22, d: 'Ofen', t: 'Backen, einmal wenden.' }] },
+      { n: 'Sauce', ph: [
+        { k: 'a', m: 10, d: 'Herd', t: 'Zwiebeln, Knoblauch und Ingwer hacken, mit Currypulver in Öl anschwitzen. Tomaten, Kichererbsen und gefrorenen Spinat zugeben.' },
+        { k: 'p', m: 15, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 4, d: 'Herd', w: ['Tofu'], t: 'Sauce grob pürieren, den Tofu unterheben, abschmecken.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'tajine', isNew: true, name: 'Hähnchen-Tajine mit Kichererbsen, Aprikosen und Couscous', short: 'Tajine', cuisine: 'Marokkanisch', kind: 'fleisch', base: 'Couscous', reheat: 'sehr gut',
+    note: 'Zimt und Aprikosen machen es mild-süßlich, nicht scharf. Wird am zweiten Tag besser.',
+    i: [['huehnchen', 500], ['kichererbsen', 240], ['aprikosen', 80], ['tomaten', 400], ['karotten', 300], ['couscous', 240], ['zwiebel', 2], ['knoblauch', 2], ['zimt', 1], ['kurkuma', 1], ['kreuzkuemmel', 1], ['paprikapulver', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Tajine', ph: [
+        { k: 'a', m: 15, d: 'Herd', t: 'Aufgetautes Hähnchen würfeln und mit den Gewürzen in Öl anbraten. Zwiebeln, Knoblauch und Karotten würfeln und mitbraten.' },
+        { k: 'p', m: 30, d: 'Herd', t: 'Tomaten, Kichererbsen, gehackte Aprikosen und 200 ml Wasser zugeben, zugedeckt schmoren.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Abschmecken.' }] },
+      COUSC
+    ] }),
+
+  R({ id: 'shawarma', isNew: true, name: 'Hähnchen-Shawarma mit Ofengemüse, Couscous und Knoblauch-Skyr', short: 'Shawarma', cuisine: 'Libanesisch', kind: 'fleisch', base: 'Couscous', reheat: 'gut',
+    note: 'Dip getrennt halten. Beim Aufwärmen Hähnchen und Gemüse kurz in der Pfanne statt in der Mikrowelle.',
+    i: [['huehnchen', 400], ['blumenkohl', 1], ['paprika', 2], ['couscous', 200], ['skyr', 450], ['zitrone', 1], ['zwiebel', 1], ['knoblauch', 3], ['paprikapulver', 2], ['kreuzkuemmel', 2], ['zimt', 1], ['kurkuma', 1], ['olivenoel', 3]],
+    tracks: [
+      { n: 'Blech', ph: [
+        { k: 'a', m: 15, d: 'Ofen', t: 'Ofen auf 220 °C Umluft. Blumenkohl in Röschen, Paprika und Zwiebel in Streifen, aufgetautes Hähnchen in Streifen schneiden, alles mit Öl und den Gewürzen mischen und auf zwei Bleche geben.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Backen, nach 12 Min wenden.' }] },
+      COUSC,
+      { n: 'Dip', ph: [{ k: 'a', m: 4, d: '', t: 'Skyr mit Knoblauch, Zitronensaft und Salz verrühren.' }] }
+    ] }),
+
+  R({ id: 'koefte', isNew: true, name: 'Köfte aus dem Ofen mit Tomatenreis und Skyr-Dip', short: 'Köfte', cuisine: 'Türkisch', kind: 'fleisch', red: true, early: true, base: 'Reis', reheat: 'gut',
+    note: 'Frisches Hack: gehört in den Sonntags- oder Montagstermin. Das einzige Gericht mit Rindfleisch im Pool.',
+    i: [['rinderhack', 500], ['brot', 2], ['tomaten', 400], ['reis', 240], ['skyr', 450], ['petersilie', 1], ['zwiebel', 2], ['knoblauch', 2], ['kreuzkuemmel', 2], ['paprikapulver', 2], ['tomatenmark', 2], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Köfte', ph: [
+        { k: 'a', m: 18, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Brot einweichen und ausdrücken. Hack mit einer geriebenen Zwiebel, Knoblauch, Brot und Gewürzen verkneten, zu 16 länglichen Köfte formen und aufs Blech legen.' },
+        { k: 'p', m: 20, d: 'Ofen', t: 'Backen, einmal wenden.' }] },
+      { n: 'Tomatenreis', ph: [
+        { k: 'a', m: 8, d: 'Herd', t: 'Zweite Zwiebel würfeln, in Öl anschwitzen, Tomatenmark, Reis, Tomaten und 300 ml Wasser zugeben.' },
+        { k: 'p', m: 40, d: 'Herd', t: 'Zugedeckt garen, bis der Reis weich ist.' }] },
+      { n: 'Dip', ph: [{ k: 'a', m: 4, d: '', t: 'Skyr mit gehackter Petersilie und Salz verrühren.' }] }
+    ] }),
+
+  R({ id: 'enchilada', isNew: true, name: 'Enchilada-Auflauf mit Pute, Bohnen und Mais', short: 'Enchilada', cuisine: 'Mexikanisch', kind: 'fleisch', early: true, base: 'Wraps', reheat: 'sehr gut',
+    note: 'Frisches Hack: gehört in den Sonntags- oder Montagstermin. Mild gewürzt, Aufwärmen im Ofen oder in der Mikrowelle.',
+    i: [['putenhack', 500], ['wraps', 6], ['kidney', 240], ['mais', 285], ['tomaten', 400], ['paprika', 2], ['mozzarella', 125], ['zwiebel', 2], ['knoblauch', 2], ['paprikapulver', 2], ['kreuzkuemmel', 1], ['oregano', 1], ['tomatenmark', 1], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Auflauf', ph: [
+        { k: 'a', m: 15, d: 'Herd', t: 'Zwiebeln, Knoblauch und Paprika würfeln. Hack krümelig anbraten, Gemüse, Tomatenmark und Gewürze zugeben, Bohnen, Mais und Tomaten untermischen.' },
+        { k: 'p', m: 10, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 10, d: 'Ofen', t: 'Ofen auf 200 °C. Füllung und Wraps abwechselnd in eine Auflaufform schichten, Mozzarella zerzupft darüber verteilen.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Überbacken.' }] }
+    ] }),
+
+  R({ id: 'burrito', isNew: true, name: 'Burrito-Bowl mit Bohnen, Feta und Skyr-Creme', short: 'Burrito-Bowl', cuisine: 'Mexikanisch', kind: 'veg', base: 'Reis', reheat: 'sehr gut',
+    note: 'Skyr und Feta erst beim Essen auf die Bowl geben.',
+    i: [['kidney', 480], ['mais', 285], ['paprika', 2], ['tomaten', 400], ['reis', 240], ['feta', 200], ['skyr', 450], ['zwiebel', 2], ['knoblauch', 2], ['paprikapulver', 2], ['kreuzkuemmel', 2], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Bohnen', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebeln, Knoblauch und Paprika würfeln, mit Paprikapulver und Kreuzkümmel in Öl anbraten. Bohnen, Mais und Tomaten zugeben.' },
+        { k: 'p', m: 15, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Abschmecken.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'lasagne', isNew: true, name: 'Spinat-Lasagne mit Hüttenkäse und Skyr-Haube', short: 'Spinat-Lasagne', cuisine: 'Italienisch', kind: 'veg', base: 'Nudeln', reheat: 'sehr gut',
+    note: 'In Portionen geschnitten lässt sie sich sehr gut aufwärmen und einfrieren.',
+    i: [['lasagne', 250], ['spinat', 450], ['huettenkaese', 400], ['mozzarella', 125], ['tomaten', 800], ['skyr', 450], ['zwiebel', 1], ['knoblauch', 3], ['oregano', 2], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Lasagne', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebel und Knoblauch in Öl anschwitzen, Tomaten, gefrorenen Spinat und Oregano zugeben.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 15, d: 'Ofen', t: 'Ofen auf 190 °C. Sauce, Platten und Hüttenkäse abwechselnd schichten, oben Skyr verstreichen, Mozzarella zerzupft darauf.' },
+        { k: 'p', m: 35, d: 'Ofen', t: 'Backen, bis die Oberfläche gebräunt ist.' }] }
+    ] }),
+
+  R({ id: 'hokkaido', isNew: true, name: 'Hokkaido-Linsen-Suppe mit Kichererbsen und Skyr', short: 'Hokkaido-Suppe', cuisine: 'Herbstküche', kind: 'veg', base: 'Suppe', reheat: 'sehr gut',
+    note: 'Hokkaido-Schale kann mitgegessen werden. Skyr erst beim Essen dazugeben, Suppe lässt sich einfrieren.',
+    i: [['hokkaido', 1], ['linsen', 250], ['kichererbsen', 240], ['kokos', 400], ['karotten', 200], ['brot', 6], ['skyr', 450], ['zwiebel', 2], ['knoblauch', 2], ['ingwer', 3], ['curry', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Suppe', ph: [
+        { k: 'a', m: 15, d: 'Herd', t: 'Kürbis entkernen und mit Schale würfeln, Zwiebeln, Karotten und Ingwer klein schneiden, mit Currypulver in Öl anrösten.' },
+        { k: 'p', m: 25, d: 'Herd', t: 'Linsen und 1,2 l Wasser zugeben, köcheln lassen.' },
+        { k: 'a', m: 8, d: 'Herd', t: 'Pürieren, Kokosmilch und Kichererbsen zugeben, salzen.' }] }
+    ] }),
+
+  R({ id: 'linseneintopf', isNew: true, name: 'Linseneintopf mit Kartoffeln, Lauch und Hähnchen', short: 'Linseneintopf', cuisine: 'Deutsch', kind: 'fleisch', base: 'Eintopf', reheat: 'sehr gut',
+    note: 'Klassiker, am zweiten Tag besser. Mit 1 Scheibe Vollkornbrot.',
+    i: [['berglinsen', 250], ['huehnchen', 400], ['kartoffeln', 600], ['karotten', 300], ['lauch', 1], ['brot', 4], ['zwiebel', 2], ['knoblauch', 1], ['senf', 1], ['bruehe', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Eintopf', ph: [
+        { k: 'a', m: 15, d: 'Herd', t: 'Hähnchen würfeln und in Öl anbraten. Zwiebeln, Karotten, Lauch, Kartoffeln und Knoblauch würfeln und mitbraten.' },
+        { k: 'p', m: 35, d: 'Herd', t: 'Linsen, 1,2 l Wasser und Brühe zugeben, köcheln lassen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Senf unterrühren, abschmecken.' }] }
+    ] }),
+
+  R({ id: 'lachs_kartoffel', isNew: true, name: 'Lachs mit Ofenkartoffeln, Erbsen und Senf-Skyr', short: 'Lachs-Kartoffel', cuisine: 'Skandinavisch', kind: 'fisch', base: 'Kartoffel', reheat: 'bedingt',
+    note: 'Lachs am ersten Abend essen. Am zweiten Tag den Lachs kalt zu Kartoffeln und Dip legen.',
+    i: [['lachs', 500], ['kartoffeln', 800], ['erbsen', 450], ['skyr', 450], ['petersilie', 1], ['zitrone', 1], ['zwiebel', 1], ['senf', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Blech', ph: [
+        { k: 'a', m: 12, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Kartoffeln in Spalten schneiden, mit Öl und Salz aufs Blech geben.' },
+        { k: 'p', m: 22, d: 'Ofen', t: 'Vorbacken.' },
+        { k: 'a', m: 6, d: 'Ofen', t: 'Aufgetauten Lachs zwischen die Kartoffeln legen, mit Zitronenscheiben belegen.' },
+        { k: 'p', m: 15, d: 'Ofen', t: 'Backen, bis der Lachs gar ist.' }] },
+      { n: 'Erbsen', ph: [
+        { k: 'a', m: 6, d: 'Herd', t: 'Zwiebel würfeln, in Öl anschwitzen, gefrorene Erbsen zugeben.' },
+        { k: 'p', m: 5, d: 'Herd', t: 'Garen.' }] },
+      { n: 'Dip', ph: [{ k: 'a', m: 4, d: '', t: 'Skyr mit Senf, Zitronensaft und gehackter Petersilie verrühren.' }] }
+    ] }),
+
+  R({ id: 'thunfisch_pasta', isNew: true, name: 'Thunfisch-Tomaten-Pasta mit Spinat', short: 'Thunfisch-Pasta', cuisine: 'Italienisch', kind: 'fisch', base: 'Nudeln', reheat: 'gut',
+    note: 'Schnell, günstig und alles aus Dose und Tiefkühler. Sauce und Nudeln getrennt aufbewahren.',
+    i: [['thunfisch', 450], ['nudeln', 320], ['tomaten', 800], ['spinat', 450], ['zwiebel', 1], ['knoblauch', 3], ['oregano', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Sauce', ph: [
+        { k: 'a', m: 8, d: 'Herd', t: 'Zwiebel und Knoblauch in Öl anbraten, Tomaten, gefrorenen Spinat und Oregano zugeben.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Einköcheln lassen.' },
+        { k: 'a', m: 4, d: 'Herd', t: 'Thunfisch abtropfen, zerzupfen und unterheben, abschmecken.' }] },
+      PASTA
+    ] }),
+
+  R({ id: 'thunfisch_bohnen', isNew: true, name: 'Toskanischer Bohnensalat mit Thunfisch und Brot', short: 'Bohnensalat', cuisine: 'Toskanisch', kind: 'fisch', base: 'Brot', reheat: 'sehr gut',
+    note: 'Kalt servieren, braucht keinen Herd. Gut für Tage, an denen es schnell gehen muss.',
+    i: [['weisse', 480], ['thunfisch', 450], ['brot', 8], ['petersilie', 1], ['zitrone', 1], ['zwiebel', 2], ['olivenoel', 3], ['oregano', 1]],
+    tracks: [
+      { n: 'Salat', ph: [
+        { k: 'a', m: 15, d: '', t: 'Zwiebeln in feine Ringe schneiden. Bohnen und Thunfisch abtropfen, mit Zwiebeln, gehackter Petersilie, Zitronensaft, Öl und Oregano mischen.' },
+        { k: 'p', m: 10, d: '', t: 'Durchziehen lassen.' }] }
+    ] }),
+
+  R({ id: 'seelachs', isNew: true, name: 'Seelachs in Paprika-Tomaten-Sauce mit Couscous', short: 'Seelachs', cuisine: 'Spanisch', kind: 'fisch', base: 'Couscous', reheat: 'gut',
+    note: 'Mild und günstig. Beim Aufwärmen Fisch in der Sauce lassen und nur kurz erhitzen.',
+    i: [['seelachs', 800], ['tomaten', 400], ['paprika', 2], ['couscous', 240], ['zitrone', 1], ['zwiebel', 1], ['knoblauch', 3], ['paprikapulver', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Sauce', ph: [
+        { k: 'a', m: 10, d: 'Herd', t: 'Zwiebel, Knoblauch und Paprika würfeln, mit Paprikapulver in Öl anbraten, Tomaten zugeben.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Einköcheln lassen.' },
+        { k: 'a', m: 5, d: 'Herd', t: 'Aufgetauten Seelachs in großen Stücken in die Sauce legen.' },
+        { k: 'p', m: 10, d: 'Herd', t: 'Bei kleiner Hitze gar ziehen lassen, mit Zitronensaft abschmecken.' }] },
+      COUSC
+    ] }),
+
+  R({ id: 'erdnuss_tofu', isNew: true, name: 'Erdnuss-Tofu-Wok mit Gemüse und Reis', short: 'Erdnuss-Tofu', cuisine: 'Südostasiatisch', kind: 'veg', base: 'Reis', reheat: 'gut',
+    note: 'Mild, nicht scharf. Beim Aufwärmen einen Schuss Wasser zur Sauce geben.',
+    i: [['tofu', 800], ['wok', 600], ['reis', 240], ['erdnussbutter', 4], ['sojasauce', 3], ['honig', 1], ['ingwer', 3], ['knoblauch', 3], ['zitrone', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Tofu', ph: [
+        { k: 'a', m: 8, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Tofu abtropfen, würfeln, mit 1 EL Sojasauce und Öl mischen, aufs Blech geben.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Backen, nach 12 Min wenden.' }] },
+      { n: 'Wok', ph: [
+        { k: 'a', m: 5, d: '', t: 'Sauce rühren: Erdnussbutter, 2 EL Sojasauce, Honig, Zitronensaft und 100 ml warmes Wasser.' },
+        { k: 'a', m: 12, d: 'Herd', t: 'Knoblauch und Ingwer in Öl anbraten, gefrorenes Wok-Gemüse zugeben und braten.' },
+        { k: 'a', m: 3, d: 'Herd', w: ['Tofu'], t: 'Tofu und Sauce unterheben, kurz erwärmen.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'teriyaki', isNew: true, name: 'Teriyaki-Hähnchen mit Brokkoli und Reis', short: 'Teriyaki', cuisine: 'Japanisch', kind: 'fleisch', base: 'Reis', reheat: 'gut',
+    note: 'Brokkoli kurz halten, nicht totkochen, er gart beim Aufwärmen nach.',
+    i: [['huehnchen', 600], ['brokkoli', 500], ['reis', 240], ['sojasauce', 4], ['honig', 2], ['ingwer', 3], ['knoblauch', 3], ['sesamoel', 1], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Hähnchen', ph: [
+        { k: 'a', m: 8, d: '', t: 'Aufgetautes Hähnchen würfeln, mit Sojasauce, Honig, Ingwer und Knoblauch mischen.' },
+        { k: 'p', m: 10, d: '', t: 'Marinieren lassen.' },
+        { k: 'a', m: 12, d: 'Herd', t: 'In zwei Chargen in Öl braten, Marinade zugeben und einkochen lassen.' }] },
+      { n: 'Brokkoli', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Gefrorenen Brokkoli in Salzwasser aufsetzen.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Garen.' },
+        { k: 'a', m: 1, d: '', t: 'Abgießen und mit Sesamöl mischen.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'gigantes', isNew: true, name: 'Ofenbohnen nach griechischer Art mit Spinat, Feta und Skyr', short: 'Ofenbohnen', cuisine: 'Griechisch', kind: 'veg', base: 'Brot', reheat: 'sehr gut',
+    note: 'Skyr als Klecks obendrauf. Mit 2 Scheiben Vollkornbrot servieren.',
+    i: [['weisse', 720], ['tomaten', 800], ['spinat', 450], ['feta', 200], ['skyr', 450], ['brot', 8], ['zwiebel', 2], ['knoblauch', 3], ['oregano', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Bohnen', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebeln und Knoblauch in Öl anschwitzen, Tomaten und Oregano zugeben, 5 Min köcheln.' },
+        { k: 'a', m: 6, d: 'Ofen', t: 'Ofen auf 200 °C. Bohnen, gefrorenen Spinat und Sauce in eine Auflaufform mischen, Feta darüber bröseln.' },
+        { k: 'p', m: 30, d: 'Ofen', t: 'Backen, bis die Oberfläche Farbe hat.' }] }
+    ] }),
+
+  R({ id: 'ratatouille', isNew: true, name: 'Ratatouille mit Linsen, Feta und Kräuter-Skyr', short: 'Ratatouille', cuisine: 'Französisch', kind: 'veg', base: 'Brot', reheat: 'sehr gut',
+    note: 'Schmeckt warm und kalt. Skyr erst beim Essen dazugeben. Mit 1 bis 2 Scheiben Vollkornbrot.',
+    i: [['berglinsen', 250], ['zucchini', 2], ['aubergine', 1], ['paprika', 2], ['tomaten', 800], ['feta', 200], ['skyr', 450], ['brot', 6], ['zwiebel', 2], ['knoblauch', 3], ['oregano', 2], ['olivenoel', 3]],
+    tracks: [
+      { n: 'Ratatouille', ph: [
+        { k: 'a', m: 15, d: 'Herd', t: 'Zucchini, Aubergine, Paprika, Zwiebeln würfeln und in Öl mit Knoblauch anbraten.' },
+        { k: 'p', m: 30, d: 'Herd', t: 'Tomaten, Linsen, Oregano und 400 ml Wasser zugeben, schmoren.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Abschmecken, Feta zerbröseln und beim Servieren darübergeben.' }] }
+    ] }),
+
+  R({ id: 'blumenkohl_ofen', isNew: true, name: 'Ofen-Blumenkohl mit Halloumi, Kichererbsen und Tahin-Skyr', short: 'Blumenkohl-Ofen', cuisine: 'Libanesisch', kind: 'veg', base: 'Couscous', reheat: 'gut',
+    note: 'Tahin gibt es oft nur im Kaufland oder Marktkauf. Ohne Tahin schmeckt der Skyr-Dip mit etwas mehr Zitrone auch gut.',
+    i: [['blumenkohl', 2], ['kichererbsen', 480], ['halloumi', 225], ['couscous', 200], ['skyr', 450], ['tahin', 2], ['zitrone', 1], ['zwiebel', 1], ['knoblauch', 2], ['kreuzkuemmel', 2], ['paprikapulver', 2], ['olivenoel', 3]],
+    tracks: [
+      { n: 'Blech', ph: [
+        { k: 'a', m: 15, d: 'Ofen', t: 'Ofen auf 220 °C Umluft. Blumenkohl in Röschen, Zwiebel in Spalten, mit Öl, Kreuzkümmel und Paprikapulver auf zwei Bleche geben.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Backen, einmal wenden.' },
+        { k: 'a', m: 4, d: 'Ofen', t: 'Abgetropfte Kichererbsen und gewürfelten Halloumi aufs Blech geben.' },
+        { k: 'p', m: 12, d: 'Ofen', t: 'Weiterbacken.' }] },
+      COUSC,
+      { n: 'Dip', ph: [{ k: 'a', m: 4, d: '', t: 'Skyr mit Tahin, Zitronensaft, Knoblauch und Salz verrühren.' }] }
+    ] }),
+
+  R({ id: 'stroganoff', isNew: true, name: 'Pilz-Hähnchen-Stroganoff mit Skyr und Vollkornnudeln', short: 'Stroganoff', cuisine: 'Russisch', kind: 'fleisch', base: 'Nudeln', reheat: 'gut',
+    note: 'Skyr nie mitkochen, sonst flockt er aus. Beim Aufwärmen nur sanft erhitzen.',
+    i: [['huehnchen', 400], ['champignons', 400], ['skyr', 450], ['nudeln', 320], ['zwiebel', 2], ['knoblauch', 2], ['paprikapulver', 2], ['senf', 1], ['bruehe', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Sauce', ph: [
+        { k: 'a', m: 10, d: 'Herd', t: 'Aufgetautes Hähnchen in Streifen in Öl scharf anbraten, Zwiebeln, Knoblauch und Champignons zugeben.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Garen, bis die Flüssigkeit verdampft ist, mit Brühe ablöschen.' },
+        { k: 'a', m: 4, d: 'Herd', t: 'Pfanne vom Herd nehmen, Skyr mit Senf und Paprikapulver einrühren.' }] },
+      PASTA
+    ] }),
+
+  R({ id: 'karibisch', isNew: true, name: 'Karibischer Reis mit Bohnen, Kokos und Hähnchen', short: 'Reis-Bohnen', cuisine: 'Karibisch', kind: 'fleisch', base: 'Reis', reheat: 'sehr gut',
+    note: 'Alles in einem Topf. Wird am zweiten Tag noch aromatischer.',
+    i: [['huehnchen', 500], ['kidney', 480], ['kokos', 400], ['reis', 240], ['paprika', 2], ['zwiebel', 2], ['knoblauch', 3], ['ingwer', 3], ['paprikapulver', 2], ['oregano', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Topf', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Aufgetautes Hähnchen würfeln und in Öl anbraten, Zwiebeln, Knoblauch, Ingwer und Paprika würfeln und mitbraten, Gewürze zugeben.' },
+        { k: 'p', m: 40, d: 'Herd', t: 'Reis, Bohnen, Kokosmilch und 300 ml Wasser zugeben, zugedeckt garen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Umrühren und abschmecken.' }] }
+    ] }),
+
+  R({ id: 'chili_sin', isNew: true, name: 'Chili sin carne mit Tofu-Hack, Quinoa und Skyr', short: 'Chili sin carne', cuisine: 'Tex-Mex', kind: 'veg', base: 'Quinoa', reheat: 'sehr gut',
+    note: 'Der zerbröselte Tofu ersetzt das Hack. Mild gehalten, Skyr als Sauerrahm-Ersatz erst beim Essen.',
+    i: [['tofu', 400], ['kidney', 480], ['tomaten', 800], ['mais', 285], ['paprika', 2], ['quinoa', 200], ['skyr', 450], ['zwiebel', 2], ['knoblauch', 3], ['tomatenmark', 2], ['paprikapulver', 2], ['kreuzkuemmel', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Chili', ph: [
+        { k: 'a', m: 15, d: 'Herd', t: 'Zwiebeln, Knoblauch und Paprika würfeln. Tofu zerbröseln und in Öl anbraten, Tomatenmark und Gewürze zugeben.' },
+        { k: 'p', m: 25, d: 'Herd', t: 'Tomaten, Bohnen, Mais und 200 ml Wasser zugeben, köcheln lassen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Abschmecken, mild halten.' }] },
+      { n: 'Quinoa', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Quinoa abspülen, mit der doppelten Menge Wasser aufsetzen.' },
+        { k: 'p', m: 15, d: 'Herd', t: 'Garen und quellen lassen.' }] }
+    ] }),
+
+  R({ id: 'moussaka', isNew: true, name: 'Moussaka mit Pute, Aubergine und Skyr-Haube', short: 'Moussaka', cuisine: 'Griechisch', kind: 'fleisch', early: true, base: 'Kartoffel', reheat: 'sehr gut',
+    note: 'Frisches Hack: gehört in den Sonntags- oder Montagstermin. In Stücke geschnitten gut aufzuwärmen.',
+    i: [['putenhack', 500], ['aubergine', 2], ['kartoffeln', 600], ['tomaten', 400], ['skyr', 450], ['tomatenmark', 1], ['zwiebel', 2], ['knoblauch', 2], ['zimt', 1], ['oregano', 1], ['olivenoel', 3]],
+    tracks: [
+      { n: 'Gemüse', ph: [
+        { k: 'a', m: 12, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Auberginen und Kartoffeln in Scheiben schneiden, mit Öl und Salz auf zwei Bleche legen.' },
+        { k: 'p', m: 20, d: 'Ofen', t: 'Vorbacken.' },
+        { k: 'a', m: 10, d: 'Ofen', w: ['Hack'], t: 'Gemüse und Hackfleischsauce in einer Auflaufform schichten, oben den Skyr verstreichen.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Überbacken, bis die Haube Farbe hat.' }] },
+      { n: 'Hack', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebeln und Knoblauch würfeln, Hack in Öl krümelig anbraten, Tomatenmark, Zimt und Oregano zugeben.' },
+        { k: 'p', m: 15, d: 'Herd', t: 'Tomaten zugeben und einköcheln lassen.' }] }
+    ] }),
+
+  R({ id: 'butter_chicken', isNew: true, name: 'Butter Chicken light mit Skyr und Vollkornreis', short: 'Butter Chicken', cuisine: 'Indisch', kind: 'fleisch', base: 'Reis', reheat: 'sehr gut',
+    note: 'Skyr statt Sahne: erst nach dem Kochen einrühren und danach nicht mehr aufkochen. Aufwärmen bei niedriger Leistung.',
+    i: [['huehnchen', 500], ['tomaten', 400], ['skyr', 450], ['reis', 240], ['zwiebel', 2], ['knoblauch', 3], ['ingwer', 3], ['garammasala', 2], ['paprikapulver', 2], ['kurkuma', 1], ['tomatenmark', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Curry', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Aufgetautes Hähnchen würfeln, mit den Gewürzen in Öl anbraten, Zwiebeln, Knoblauch und Ingwer zugeben, Tomatenmark und Tomaten einrühren.' },
+        { k: 'p', m: 20, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 4, d: 'Herd', t: 'Herd aus, Skyr einrühren, abschmecken.' }] },
+      RICE
+    ] })
+];
+
+const BY_ID = {};
+RECIPES.forEach(r => { BY_ID[r.id] = r; r.servings = 4; });
+
+/* =========================================================
+   HILFSFUNKTIONEN
+   ========================================================= */
+const FR = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
+function fmtQ(x) {
+  const w = Math.floor(x + 1e-9), f = Math.round((x - w) * 4) / 4;
+  if (f >= 1) return String(w + 1);
+  if (f === 0) return String(w);
+  return (w ? w : '') + FR[f];
+}
+function fmtSize(n, unit) {
+  if (unit === 'g') return n >= 1000 ? (n / 1000).toString().replace('.', ',') + ' kg' : Math.round(n) + ' g';
+  if (unit === 'ml') return n >= 1000 ? (n / 1000).toString().replace('.', ',') + ' l' : Math.round(n) + ' ml';
+  return String(n);
+}
+function fmtAmt(id, a) {
+  const g = ING[id];
+  if (g.fm) return g.fm(a);
+  if (g.unit === 'g' || g.unit === 'ml') return fmtSize(a, g.unit) + ' ' + g.n + (g.ps ? ' (' + g.ps + ')' : '');
+  return a + ' ' + g.unit + ' ' + g.n;
+}
+function fmtDur(m) {
+  m = Math.round(m);
+  if (m < 60) return m + ' Min';
+  const h = Math.floor(m / 60), r = m % 60;
+  return h + ' h' + (r ? ' ' + r + ' Min' : '');
+}
+function fmtClock(m) { m = Math.round(m); return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0'); }
+
+function nutri(r) {
+  let p = 0, k = 0, f = 0;
+  r.i.forEach(([id, a]) => {
+    const g = ING[id];
+    const fac = (g.unit === 'g' || g.unit === 'ml') ? a / 100 : a;
+    p += (g.p || 0) * fac; k += (g.k || 0) * fac; f += (g.f || 0) * fac;
+  });
+  return { p: p / r.servings, k: k / r.servings, f: f / r.servings };
+}
+RECIPES.forEach(r => { r.nu = nutri(r); r.spec = r.i.filter(([id]) => ING[id].spec).map(([id]) => id); });
+
+function activeMin(r) { let s = 0; r.tracks.forEach(t => t.ph.forEach(p => { if (p.k === 'a') s += p.m; })); return s; }
+function devices(r) { const s = new Set(); r.tracks.forEach(t => t.ph.forEach(p => { if (p.d) s.add(p.d); })); return [...s]; }
+
+/* =========================================================
+   EINKAUF
+   ========================================================= */
+function need(recipes) {
+  const t = {};
+  recipes.forEach(r => r.i.forEach(([id, a]) => { t[id] = (t[id] || 0) + a; }));
+  return t;
+}
+function shop(recipes) {
+  const t = need(recipes);
+  const items = [], vorrat = [];
+  Object.keys(t).forEach(id => {
+    const g = ING[id];
+    if (g.cls === 'pantry') { vorrat.push({ id, n: g.n, spec: !!g.spec }); return; }
+    const packs = Math.max(1, Math.ceil(t[id] / g.pack - 1e-9));
+    const left = packs * g.pack - t[id];
+    const forR = recipes.filter(r => r.i.some(x => x[0] === id)).map(r => r.short);
+    const counts = g.unit === 'g' || g.unit === 'ml';
+    let txt = packs + ' ' + (packs === 1 ? g.pl : g.pls);
+    if (counts) txt += ' · je ' + fmtSize(g.pack, g.unit) + (g.ps ? ' ' + g.ps : '');
+    else if (g.pack > 1) txt += ' · je ' + g.pack + ' ' + (g.nm || g.unit);
+    const rest = (g.cls === 'fresh' || g.cls === 'can') && left > g.pack * 0.04;
+    items.push({
+      id, n: g.n, spec: !!g.spec, a: g.a, cls: g.cls, need: t[id], packs, left, leftFrac: left / g.pack, forR, txt,
+      needTxt: counts ? fmtSize(t[id], g.unit) : (g.fm ? g.fm(t[id]) : t[id] + ' ' + g.unit),
+      leftTxt: rest ? (counts ? fmtSize(left, g.unit) : left + ' ' + (g.nm || g.unit)) : '', rest
+    });
+  });
+  items.sort((x, y) => AISLES.indexOf(x.a) - AISLES.indexOf(y.a) || x.n.localeCompare(y.n, 'de'));
+  vorrat.sort((x, y) => x.n.localeCompare(y.n, 'de'));
+  return { items, vorrat };
+}
+function wasteScore(recipes) {
+  const t = need(recipes);
+  let w = 0, kinds = 0;
+  Object.keys(t).forEach(id => {
+    const g = ING[id];
+    if (g.cls === 'pantry') return;
+    kinds++;
+    const packs = Math.max(1, Math.ceil(t[id] / g.pack - 1e-9));
+    const frac = (packs * g.pack - t[id]) / g.pack;
+    if (g.cls === 'fresh') w += frac;
+    else if (g.cls === 'can') w += 0.8 * frac;
+  });
+  return w + 0.06 * kinds;
+}
+
+/* =========================================================
+   KOCH-ZEITPLAN (eine Person, mehrere Abläufe parallel)
+   Probiert alle sinnvollen Reihenfolgen und nimmt die kürzeste.
+   ========================================================= */
+function scheduleSession(list) {
+  const chains = [];
+  list.forEach((r) => r.tracks.forEach((tr) => chains.push({ r, n: tr.n, ph: tr.ph })));
+  const n = chains.length;
+  const rem = chains.map(c => c.ph.map((p, i) => c.ph.slice(i).reduce((s, x) => s + x.m, 0)));
+  const idx = new Array(n).fill(0), ready = new Array(n).fill(0);
+  const log = [];
+  let best = null;
+  function lb(pf) {
+    let m = pf;
+    for (let i = 0; i < n; i++) {
+      if (idx[i] < chains[i].ph.length) m = Math.max(m, ready[i] + rem[i][idx[i]]);
+      else m = Math.max(m, ready[i]);
+    }
+    return m;
+  }
+  function depReady(i) {
+    const w = chains[i].ph[idx[i]].w;
+    if (!w) return 0;
+    let m = 0;
+    for (let j = 0; j < n; j++) {
+      if (j === i || chains[j].r !== chains[i].r || !w.includes(chains[j].n)) continue;
+      if (idx[j] < chains[j].ph.length) return -1;
+      m = Math.max(m, ready[j]);
+    }
+    return m;
+  }
+  function dfs(pf) {
+    let done = true;
+    for (let i = 0; i < n; i++) if (idx[i] < chains[i].ph.length) { done = false; break; }
+    if (done) {
+      const mk = Math.max(pf, ...ready);
+      if (!best || mk < best.mk - 1e-9) best = { mk, log: log.slice() };
+      return;
+    }
+    if (best && lb(pf) >= best.mk - 1e-9) return;
+    const cand = [], dr = [];
+    for (let i = 0; i < n; i++) if (idx[i] < chains[i].ph.length) {
+      const d = depReady(i);
+      if (d >= 0) { cand.push(i); dr[i] = d; }
+    }
+    if (!cand.length) return;
+    cand.sort((a, b) => (rem[b][idx[b]] - chains[b].ph[idx[b]].m) - (rem[a][idx[a]] - chains[a].ph[idx[a]].m));
+    for (const i of cand) {
+      const ph = chains[i].ph[idx[i]];
+      const start = Math.max(pf, ready[i], dr[i]), end = start + ph.m;
+      const si = idx[i], sr = ready[i], ll = log.length;
+      log.push({ c: i, start, end, ph });
+      let t = end; idx[i]++;
+      while (idx[i] < chains[i].ph.length && chains[i].ph[idx[i]].k === 'p') {
+        const p = chains[i].ph[idx[i]];
+        log.push({ c: i, start: t, end: t + p.m, ph: p });
+        t += p.m; idx[i]++;
+      }
+      ready[i] = t;
+      dfs(end);
+      idx[i] = si; ready[i] = sr; log.length = ll;
+    }
+  }
+  dfs(0);
+  const events = best.log.map(e => ({
+    c: e.c, rid: chains[e.c].r.id, rs: chains[e.c].r.short, tn: chains[e.c].n,
+    start: e.start, end: e.end, m: e.ph.m, k: e.ph.k, d: e.ph.d, t: e.ph.t
+  })).sort((a, b) => a.start - b.start || a.c - b.c);
+  const rows = chains.map((c, i) => ({ c: i, rid: c.r.id, rs: c.r.short, tn: c.n }));
+  return { mk: best.mk, events, rows, active: events.filter(e => e.k === 'a').reduce((s, e) => s + e.m, 0) };
+}
+const schedCache = {};
+function sched(list) {
+  const key = list.map(r => r.id).sort().join('+');
+  if (!schedCache[key]) schedCache[key] = scheduleSession(list);
+  return schedCache[key];
+}
+
+/* =========================================================
+   PLANUNG
+   ========================================================= */
+const REHEAT_RANK = { 'bedingt': 0, 'gut': 1, 'sehr gut': 2 };
+
+function assign(rs) {
+  // rs: 5 Rezepte. Ergebnis: Reihenfolge [A, B, C, D, E] (A = Sonntag, B/C = Montag, D/E = Donnerstag)
+  let best = null;
+  for (let a = 0; a < 5; a++) {
+    const rest = [0, 1, 2, 3, 4].filter(x => x !== a);
+    const pairings = [[[rest[0], rest[1]], [rest[2], rest[3]]], [[rest[0], rest[2]], [rest[1], rest[3]]], [[rest[0], rest[3]], [rest[1], rest[2]]]];
+    for (const [p1, p2] of pairings) {
+      for (const [mo, dn] of [[p1, p2], [p2, p1]]) {
+        if (dn.some(i => rs[i].early)) continue;
+        const cost = sched([rs[a]]).mk + sched(mo.map(i => rs[i])).mk + sched(dn.map(i => rs[i])).mk;
+        if (!best || cost < best.cost - 1e-9) best = { cost, a, mo, dn };
+      }
+    }
+  }
+  if (!best) return null;
+  const ord = (pair) => pair.slice().sort((x, y) => REHEAT_RANK[rs[x].reheat] - REHEAT_RANK[rs[y].reheat] || sched([rs[y]]).mk - sched([rs[x]]).mk);
+  return [best.a, ...ord(best.mo), ...ord(best.dn)].map(i => rs[i]);
+}
+
+function gauss(rand) { return rand() + rand() + rand() - 1.5; }
+
+function combos(n, k, cap, rand) {
+  const out = [];
+  function total(n, k) { let r = 1; for (let i = 1; i <= k; i++) r = r * (n - k + i) / i; return Math.round(r); }
+  if (total(n, k) <= cap) {
+    const idx = [];
+    (function rec(s) {
+      if (idx.length === k) { out.push(idx.slice()); return; }
+      for (let i = s; i < n; i++) { idx.push(i); rec(i + 1); idx.pop(); }
+    })(0);
+  } else {
+    const seen = new Set();
+    while (out.length < cap) {
+      const s = new Set();
+      while (s.size < k) s.add(Math.floor(rand() * n));
+      const a = [...s].sort((x, y) => x - y), key = a.join(',');
+      if (!seen.has(key)) { seen.add(key); out.push(a); }
+    }
+  }
+  return out;
+}
+
+function offerHits(r, offers) {
+  const toks = (offers || '').toLowerCase().split(/[,;\n]+/).map(s => s.trim()).filter(s => s.length >= 3);
+  const hits = new Set();
+  toks.forEach(tk => {
+    r.i.forEach(([id]) => {
+      const g = ING[id];
+      if (g.cls === 'pantry') return;
+      const names = [g.n.toLowerCase()].concat(g.al || []);
+      if (names.some(x => x.includes(tk) || tk.includes(x))) hits.add(tk);
+    });
+  });
+  return [...hits];
+}
+
+function plan(o) {
+  const rand = o.rand || Math.random;
+  const st = o.settings, pool = o.pool;
+  const v = o.diversity == null ? 0.5 : o.diversity;
+  const hist = o.history || [];
+  const noise = o.noise == null ? 0.3 : o.noise;
+  const avoid = new Set(o.avoid || []);
+  const targetMeal = Math.max(...st.persons.map(p => p.protein)) * st.share / 2;
+  const hits = pool.map(r => offerHits(r, o.offers));
+  let relaxed = false;
+
+  function enumerate(strict) {
+    const cs = combos(pool.length, 5, 30000, rand), res = [];
+    for (const c of cs) {
+      const rs = c.map(i => pool[i]);
+      const veg = rs.filter(r => r.kind === 'veg').length;
+      const fish = rs.filter(r => r.kind === 'fisch').length;
+      const early = rs.filter(r => r.early).length;
+      if (early > 3) continue;
+      if (rs.filter(r => r.red).length > 1) continue;
+      if (strict && (veg < st.vegMin || fish > st.fishMax)) continue;
+      const cuis = new Set(rs.map(r => r.cuisine)).size, bases = new Set(rs.map(r => r.base)).size;
+      res.push({ c, rs, sp: new Set(rs.flatMap(r => r.spec)).size, w: wasteScore(rs), vr: cuis + 0.6 * bases });
+    }
+    return res;
+  }
+  let res = enumerate(true);
+  if (!res.length) { res = enumerate(false); relaxed = true; }
+  if (!res.length) return null;
+  const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
+  const sd = (a, m) => Math.sqrt(mean(a.map(x => (x - m) * (x - m)))) || 1;
+  const ws = res.map(x => x.w), vs = res.map(x => x.vr);
+  const mw = mean(ws), sw = sd(ws, mw), mv = mean(vs), sv = sd(vs, mv);
+  let best = null;
+  for (const x of res) {
+    const ids = x.rs.map(r => r.id);
+    const key = ids.slice().sort().join(',');
+    if (avoid.has(key)) continue;
+    let s = (1 - v) * (-(x.w - mw) / sw) + v * ((x.vr - mv) / sv);
+    ids.forEach(id => { hist.forEach((h, wi) => { if (h.includes(id)) s -= [1.2, 0.6, 0.3][wi] || 0; }); });
+    x.rs.forEach(r => { s -= 4 * Math.max(0, 1 - r.nu.p / (targetMeal * 0.95)); });
+    let ob = 0; x.c.forEach(i => { ob += Math.min(hits[i].length, 3) * 0.5; });
+    s += Math.min(ob, 3);
+    s -= 0.25 * x.sp;
+    const rt = o.ratings || {};
+    x.rs.forEach(r => { const v = rt[r.id]; if (v > 0) s += 0.2; else if (v < 0) s -= 3; });
+    s += noise * gauss(rand);
+    if (!best || s > best.s) best = { s, x, key };
+  }
+  if (!best) return null;
+  const ordered = assign(best.x.rs);
+  if (!ordered) return null;
+  return { ids: ordered.map(r => r.id), key: best.key, relaxed };
+}
+
+/* =========================================================
+   WOCHE AUFBAUEN
+   ========================================================= */
+const SESSIONS = [
+  { key: 'so', day: 'Sonntag', dish: [0] },
+  { key: 'mo', day: 'Montag', dish: [1, 2] },
+  { key: 'do', day: 'Donnerstag', dish: [3, 4] }
+];
+
+function build(ids, st) {
+  const rs = ids.map(id => BY_ID[id]);
+  const targets = st.persons.map(p => p.protein * st.share / 2);
+  const guide = rs.map(r => {
+    const f = targets.map(t => {
+      const x = Math.round((t / r.nu.p) * 4) / 4;
+      return Math.min(1.5, Math.max(0.5, x));
+    });
+    const needP = 2 * f.reduce((s, x) => s + x, 0);
+    return { f, needP, tight: needP > r.servings + 1e-9, cover: targets.map(t => r.nu.p / t) };
+  });
+  const sessions = SESSIONS.map(s => {
+    const list = s.dish.map(i => rs[i]);
+    const sc = sched(list);
+    const thaw = [];
+    list.forEach(r => r.i.forEach(([id]) => { if (ING[id].thaw && !thaw.includes(ING[id].n)) thaw.push(ING[id].n); }));
+    return Object.assign({}, s, { rs: list, sched: sc, thaw, dev: [...new Set(list.flatMap(devices))] });
+  });
+  const sh = shop(rs);
+  const packs = sh.items.reduce((s, x) => s + x.packs, 0);
+  const rests = sh.items.filter(x => x.rest).length;
+  const mk = sessions.reduce((s, x) => s + x.sched.mk, 0);
+  const avgP = rs.reduce((s, r) => s + r.nu.p, 0) / rs.length;
+  return { rs, guide, sessions, shop: sh, stats: { mk, packs, rests, avgP, kinds: sh.items.length }, targets };
+}
+
+root.VK = { ING, RECIPES, BY_ID, AISLES, SESSIONS, plan, build, assign, sched, shop, nutri, activeMin, devices, offerHits, fmtQ, fmtAmt, fmtDur, fmtClock, fmtSize, wasteScore };
+if (typeof module !== 'undefined') module.exports = root.VK;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* Zusatzfunktionen ohne Oberfläche: Kalenderdatei, Teilen per Link, Abgleich zwischen Geräten.
+   Alles reine Funktionen, mit Node testbar. */
+(function (root) {
+'use strict';
+
+/* ---------- Kalender (.ics) ---------- */
+function icsEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+function u8(ch) { const c = ch.codePointAt(0); return c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4; }
+function fold(line) {
+  const out = []; let cur = '', n = 0, lim = 75;
+  for (const ch of line) {
+    const b = u8(ch);
+    if (n + b > lim) { out.push(cur); cur = ' '; n = 1; lim = 75; }
+    cur += ch; n += b;
+  }
+  out.push(cur);
+  return out.join('\r\n');
+}
+const p2 = n => String(n).padStart(2, '0');
+function stamp(isoDay, hhmm, addMin) {
+  // isoDay 'YYYY-MM-DD', hhmm 'HH:MM' -> 'YYYYMMDDTHHMM00' (lokale Zeit, ohne Zone)
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || '') || [0, '18', '00'];
+  const d = new Date(isoDay + 'T' + p2(+m[1]) + ':' + m[2] + ':00');
+  d.setMinutes(d.getMinutes() + (addMin || 0));
+  return d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + 'T' + p2(d.getHours()) + p2(d.getMinutes()) + '00';
+}
+function addDays(isoDay, n) {
+  const d = new Date(isoDay + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+}
+function fmtClock(m) { m = Math.round(m); return Math.floor(m / 60) + ':' + p2(m % 60); }
+
+/* input: { weekStart: 'YYYY-MM-DD' (Sonntag), times: {shop, so, mo, do}, shopText, sessions: [{key, title, who, mk, thaw: [], dishes: [name], events: [{start, rs, tn, k, m, t}]}] } */
+function buildICS(input) {
+  const now = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  const dayOf = { so: 0, mo: 1, do: 4 };
+  const ev = [];
+  function add(uid, start, end, summary, desc, alarmMin) {
+    let s = ['BEGIN:VEVENT', 'UID:' + uid + '@vorkoch', 'DTSTAMP:' + now, 'DTSTART:' + start, 'DTEND:' + end, 'SUMMARY:' + icsEsc(summary)];
+    if (desc) s.push('DESCRIPTION:' + icsEsc(desc));
+    if (alarmMin != null) s = s.concat(['BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(summary), 'TRIGGER:-PT' + alarmMin + 'M', 'END:VALARM']);
+    s.push('END:VEVENT');
+    ev.push(s.map(fold).join('\r\n'));
+  }
+  const ws = input.weekStart, t = input.times || {};
+  add('einkauf-' + ws, stamp(addDays(ws, -1), t.shop || '10:00'), stamp(addDays(ws, -1), t.shop || '10:00', 60), 'Einkaufen für die Woche', input.shopText || '', 60);
+  input.sessions.forEach(s => {
+    const day = addDays(ws, dayOf[s.key]), tm = t[s.key] || '18:00';
+    if (s.thaw && s.thaw.length) {
+      const prev = addDays(day, -1);
+      add('auftauen-' + s.key + '-' + ws, stamp(prev, '19:00'), stamp(prev, '19:15'), 'Auftauen: ' + s.thaw.join(', '), 'Für morgen: ' + s.dishes.join(' und '), 0);
+    }
+    const lines = [s.dishes.join(' und '), s.who, ''];
+    s.events.forEach(e => lines.push(fmtClock(e.start) + '  ' + e.rs + (e.tn && e.tn !== e.rs ? ' (' + e.tn + ')' : '') + ': ' + e.t));
+    add('kochen-' + s.key + '-' + ws, stamp(day, tm), stamp(day, tm, Math.round(s.mk)), 'Kochen: ' + s.dishes.join(' + '), lines.join('\n'), 30);
+  });
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Vorkoch//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'].join('\r\n') + '\r\n' + ev.join('\r\n') + '\r\nEND:VCALENDAR\r\n';
+}
+
+/* ---------- Teilen per Link ---------- */
+function b64enc(s) {
+  const bytes = typeof TextEncoder !== 'undefined' ? Array.from(new TextEncoder().encode(s)) : Array.from(unescape(encodeURIComponent(s))).map(c => c.charCodeAt(0));
+  let bin = ''; bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64dec(s) {
+  const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return typeof TextDecoder !== 'undefined' ? new TextDecoder().decode(bytes) : decodeURIComponent(escape(bin));
+}
+function encodeShare(kind, obj) { return '#' + kind + '=' + b64enc(JSON.stringify(obj)); }
+function decodeShare(hash) {
+  const m = /^#([js])=([A-Za-z0-9_-]+)$/.exec(hash || '');
+  if (!m) return null;
+  try { return { kind: m[1], data: JSON.parse(b64dec(m[2])) }; } catch (e) { return null; }
+}
+
+/* ---------- Abgleich ----------
+   Zustand S hat Zeitstempel in S.mt: m = {plan, pool, settings, offers}, ratings/storeOv/checked = {id: ms}.
+   Dokument: Abschnitte mit Zeitstempel, Schlüssel-Maps mit [Wert, Zeit]. Der neuere Abschnitt gewinnt, Maps werden pro Eintrag gemischt. */
+const SECTIONS = ['plan', 'pool', 'settings', 'offers'];
+function mapTo(vals, times) { const o = {}; Object.keys(vals || {}).forEach(k => { o[k] = [vals[k], (times && times[k]) || 0]; }); return o; }
+function toDoc(S) {
+  const mt = S.mt || { m: {}, ratings: {}, storeOv: {}, checked: {} };
+  return {
+    v: 1, m: Object.assign({}, mt.m),
+    plan: { ids: S.ids, key: S.key, weekStart: S.weekStart, recent: S.recent, history: S.history, relaxed: !!S.relaxed },
+    pool: { disabled: S.disabled },
+    settings: { settings: S.settings, diversity: S.diversity },
+    offers: S.offers || '',
+    ratings: mapTo(S.ratings, mt.ratings), storeOv: mapTo(S.storeOv, mt.storeOv),
+    checked: { key: S.checked.key, map: mapTo(S.checked.map, mt.checked) }
+  };
+}
+function mergeMap(a, b) {
+  const o = {};
+  [a || {}, b || {}].forEach(m => Object.keys(m).forEach(k => {
+    const x = m[k];
+    if (!Array.isArray(x)) return;
+    if (!o[k] || (x[1] || 0) > (o[k][1] || 0)) o[k] = x;
+  }));
+  return o;
+}
+function merge(a, b) {
+  if (!b) return a;
+  if (!a) return b;
+  const out = { v: 1, m: {} };
+  SECTIONS.forEach(sec => {
+    const ta = (a.m && a.m[sec]) || 0, tb = (b.m && b.m[sec]) || 0;
+    const w = ta >= tb ? a : b;
+    out.m[sec] = Math.max(ta, tb);
+    out[sec] = w[sec];
+  });
+  out.ratings = mergeMap(a.ratings, b.ratings);
+  out.storeOv = mergeMap(a.storeOv, b.storeOv);
+  const wk = (out.plan && Array.isArray(out.plan.ids)) ? out.plan.ids.join(',') : '';
+  const ca = a.checked || { key: '', map: {} }, cb = b.checked || { key: '', map: {} };
+  if (ca.key === cb.key) out.checked = { key: ca.key, map: mergeMap(ca.map, cb.map) };
+  else if (cb.key === wk) out.checked = cb;
+  else if (ca.key === wk) out.checked = ca;
+  else out.checked = { key: wk, map: {} };
+  return out;
+}
+function canon(o) {
+  if (Array.isArray(o)) return '[' + o.map(canon).join(',') + ']';
+  if (o && typeof o === 'object') return '{' + Object.keys(o).sort().map(k => JSON.stringify(k) + ':' + canon(o[k])).join(',') + '}';
+  return JSON.stringify(o === undefined ? null : o);
+}
+function same(a, b) { return canon(a) === canon(b); }
+
+/* Fremde Daten prüfen und in den Zustand schreiben. known = Menge gültiger Rezept-IDs. Gibt true zurück, wenn etwas übernommen wurde. */
+function applyDoc(S, doc, known) {
+  if (!doc || doc.v !== 1) return false;
+  const isId = id => typeof id === 'string' && known[id];
+  const num = (x, lo, hi, d) => (typeof x === 'number' && isFinite(x)) ? Math.min(hi, Math.max(lo, x)) : d;
+  if (!S.mt) S.mt = { m: {}, ratings: {}, storeOv: {}, checked: {} };
+  S.mt.m = Object.assign({}, doc.m || {});
+  const p = doc.plan;
+  if (p && Array.isArray(p.ids) && p.ids.length === 5 && p.ids.every(isId)) {
+    S.ids = p.ids.slice(); S.key = String(p.key || '');
+    S.weekStart = /^\d{4}-\d{2}-\d{2}$/.test(p.weekStart || '') ? p.weekStart : S.weekStart;
+    S.recent = Array.isArray(p.recent) ? p.recent.filter(x => typeof x === 'string').slice(0, 6) : S.recent;
+    S.history = Array.isArray(p.history) ? p.history.filter(h => Array.isArray(h) && h.every(isId)).slice(0, 3) : S.history;
+    S.relaxed = !!p.relaxed;
+  }
+  if (doc.pool && Array.isArray(doc.pool.disabled)) S.disabled = doc.pool.disabled.filter(isId);
+  const st = doc.settings && doc.settings.settings;
+  if (st && Array.isArray(st.persons) && st.persons.length === 2) {
+    S.settings.persons = st.persons.map((x, i) => ({ name: String((x && x.name) || (i ? 'Partnerin' : 'Roman')).slice(0, 30), protein: num(x && x.protein, 40, 220, 90) }));
+    S.settings.share = num(st.share, 0.5, 0.9, S.settings.share);
+    S.settings.vegMin = num(st.vegMin, 0, 5, S.settings.vegMin);
+    S.settings.fishMax = num(st.fishMax, 0, 5, S.settings.fishMax);
+    S.settings.moCook = st.moCook === 1 ? 1 : 0;
+    if (st.cook && typeof st.cook === 'object') {
+      S.settings.cook = Object.assign({}, S.settings.cook);
+      ['shop', 'so', 'mo', 'do'].forEach(k => { if (/^\d{1,2}:\d{2}$/.test(st.cook[k] || '')) S.settings.cook[k] = st.cook[k]; });
+    }
+  }
+  if (doc.settings && doc.settings.diversity != null) S.diversity = num(doc.settings.diversity, 0, 1, S.diversity);
+  if (typeof doc.offers === 'string') S.offers = doc.offers.slice(0, 600);
+  S.ratings = {}; S.mt.ratings = {};
+  Object.keys(doc.ratings || {}).forEach(k => { const x = doc.ratings[k]; if (isId(k) && Array.isArray(x) && (x[0] === 1 || x[0] === -1 || x[0] === 0)) { S.ratings[k] = x[0]; S.mt.ratings[k] = x[1] || 0; } });
+  S.storeOv = {}; S.mt.storeOv = {};
+  Object.keys(doc.storeOv || {}).forEach(k => { const x = doc.storeOv[k]; if (/^[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x) && (x[0] === 'd' || x[0] === 'm')) { S.storeOv[k] = x[0]; S.mt.storeOv[k] = x[1] || 0; } });
+  const c = doc.checked;
+  S.checked = { key: S.ids ? S.ids.join(',') : '', map: {} }; S.mt.checked = {};
+  if (c && c.key === S.checked.key) {
+    Object.keys(c.map || {}).forEach(k => { const x = c.map[k]; if (/^(v_)?[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x)) { S.checked.map[k] = !!x[0]; S.mt.checked[k] = x[1] || 0; } });
+  }
+  return true;
+}
+
+/* Firebase löscht leere Arrays und leere Objekte. Deshalb gehen Pläne, Pool und Einstellungen als Text über die Leitung. */
+function pack(doc) {
+  const w = Object.assign({}, doc);
+  ['plan', 'pool', 'settings'].forEach(k => { w[k] = JSON.stringify(doc[k] === undefined ? null : doc[k]); });
+  return w;
+}
+function unpack(w) {
+  if (!w || typeof w !== 'object' || w.v !== 1) return null;
+  const d = Object.assign({}, w);
+  try { ['plan', 'pool', 'settings'].forEach(k => { d[k] = typeof w[k] === 'string' ? JSON.parse(w[k]) : w[k]; }); } catch (e) { return null; }
+  d.m = d.m && typeof d.m === 'object' ? d.m : {};
+  d.ratings = d.ratings || {}; d.storeOv = d.storeOv || {};
+  d.checked = d.checked && typeof d.checked === 'object' ? { key: String(d.checked.key || ''), map: d.checked.map || {} } : { key: '', map: {} };
+  if (typeof d.offers !== 'string') d.offers = '';
+  return d;
+}
+
+root.VX = { buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack };
+if (typeof module !== 'undefined') module.exports = root.VX;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+(function () {
+'use strict';
+const V = window.VK;
+const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const KEY = 'vorkoch.v1';
+const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
+
+/* ---------- Zustand ---------- */
+function defaults() {
+  return {
+    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0, cook: { shop: '10:00', so: '16:00', mo: '18:00', do: '18:00' } },
+    disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} },
+    offers: '', diversity: 0.5, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
+    ratings: {}, storeOv: {}, shopView: 'gang', sync: { url: '', code: '', fresh: false },
+    mt: { m: {}, ratings: {}, storeOv: {}, checked: {} }
+  };
+}
+function load() {
+  const d = defaults();
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const o = JSON.parse(raw);
+      Object.keys(d).forEach(k => { if (o[k] !== undefined && k !== 'settings') d[k] = o[k]; });
+      if (o.settings) {
+        Object.assign(d.settings, o.settings);
+        if (!Array.isArray(d.settings.persons) || d.settings.persons.length !== 2) d.settings.persons = defaults().settings.persons;
+      }
+    }
+  } catch (e) { /* ohne Speicher weiterarbeiten */ }
+  d.settings.cook = Object.assign({ shop: '10:00', so: '16:00', mo: '18:00', do: '18:00' }, d.settings.cook || {});
+  d.mt = Object.assign({ m: {}, ratings: {}, storeOv: {}, checked: {} }, d.mt || {});
+  ['m', 'ratings', 'storeOv', 'checked'].forEach(k => { if (!d.mt[k] || typeof d.mt[k] !== 'object') d.mt[k] = {}; });
+  if (!d.sync || typeof d.sync !== 'object') d.sync = { url: '', code: '', fresh: false };
+  return d;
+}
+const TRANSIENT = ['msg', 'sheet', 'ci', 'timer', 'fresh', 'confirm', 'q', 'filter', 'ss'];
+let S = load();
+function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timer = null; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.ss = null; }
+resetTransient();
+function save() { saveLocal(); schedSync(); }
+function touch(sec) { S.mt.m[sec] = Date.now(); }
+function touchKey(sec, id) { S.mt[sec][id] = Date.now(); }
+function saveLocal() { try { const c = Object.assign({}, S); TRANSIENT.forEach(k => delete c[k]); localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) { /* egal */ } }
+
+const pad = n => String(n).padStart(2, '0');
+function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function nextSunday(from) {
+  const d = from ? new Date(from) : new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7));
+  return d;
+}
+function weekDays() {
+  const s = new Date((S.weekStart || iso(nextSunday())) + 'T12:00:00'), today = iso(new Date());
+  return DAYS.map((n, i) => { const d = new Date(s); d.setDate(s.getDate() + i); return { n, num: d.getDate(), date: d.getDate() + '.' + (d.getMonth() + 1) + '.', today: iso(d) === today }; });
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function pool() { return V.RECIPES.filter(r => !S.disabled.includes(r.id)); }
+function generate(advance) {
+  const pl = pool();
+  if (pl.length < 5) { S.msg = 'Im Pool sind weniger als fünf Rezepte aktiv. Aktiviere weitere unter „Rezepte“.'; return; }
+  const res = V.plan({ pool: pl, settings: S.settings, diversity: S.diversity, history: S.history, offers: S.offers, avoid: S.recent, ratings: S.ratings });
+  if (!res) { S.msg = 'Mit diesen Regeln lässt sich keine Woche bilden. Lockere die Regeln unter „Mehr“.'; return; }
+  S.msg = '';
+  S.ids = res.ids; S.key = res.key; S.relaxed = res.relaxed;
+  S.recent = [res.key].concat(S.recent).slice(0, 6);
+  S.checked = { key: S.ids.join(','), map: {} }; S.mt.checked = {}; touch('plan');
+  if (advance) {
+    const prev = S.weekStart ? new Date(S.weekStart + 'T12:00:00') : null;
+    let nx = nextSunday();
+    if (prev) { const p7 = new Date(prev); p7.setDate(p7.getDate() + 7); if (p7 > nx) nx = p7; }
+    S.weekStart = iso(nx);
+  } else if (!S.weekStart) S.weekStart = iso(nextSunday());
+  save();
+}
+function valid() { return Array.isArray(S.ids) && S.ids.length === 5 && S.ids.every(id => V.BY_ID[id]); }
+if (!valid()) generate(false);
+
+
+/* ---------- Abgleich zwischen Geräten (Firebase Realtime Database über REST) ---------- */
+const VX = window.VX;
+const URL_RE = /^https:\/\/[a-z0-9-]+(-default-rtdb)?(\.[a-z0-9-]+)*\.(firebaseio\.com|firebasedatabase\.app)$/;
+const CODE_RE = /^[a-z0-9]{8,32}$/;
+function normUrl(u) { u = String(u || '').trim().replace(/\/+$/, '').toLowerCase(); return URL_RE.test(u) ? u : ''; }
+function newCode() {
+  const cs = 'abcdefghijkmnpqrstuvwxyz23456789'; let o = '';
+  try { const a = new Uint8Array(14); crypto.getRandomValues(a); a.forEach(x => { o += cs[x % cs.length]; }); } catch (e) { for (let i = 0; i < 14; i++) o += cs[Math.floor(Math.random() * cs.length)]; }
+  return o;
+}
+function syncOn() { return !!(S.sync && S.sync.url && S.sync.code); }
+function typing() {
+  try { const a = document.activeElement; return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /^(text|number|time|search)$/.test(a.type || 'text'))); } catch (e) { return false; }
+}
+function ssSet(state, msg) {
+  S.ss = { state, msg, at: Date.now() };
+  if (S.tab === 'settings' && !S.sheet && !typing()) { const el = document.getElementById('syncbox'); if (el) el.innerHTML = syncBox(); }
+}
+function jfetch(url, opt) {
+  const c = typeof AbortController === 'function' ? new AbortController() : null;
+  const t = setTimeout(() => { if (c) c.abort(); }, 12000);
+  return fetch(url, Object.assign({ signal: c ? c.signal : undefined, cache: 'no-store' }, opt)).then(r => {
+    clearTimeout(t);
+    if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'Zugriff verweigert. Regeln der Datenbank prüfen.' : 'Serverfehler ' + r.status);
+    return r.json();
+  }, err => { clearTimeout(t); throw new Error('Keine Verbindung.'); });
+}
+var syncing = false, syncTimer = null, again = false;
+function schedSync() {
+  if (!syncOn()) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncNow, 1500);
+}
+async function syncNow() {
+  if (!syncOn()) return;
+  if (syncing) { again = true; return; }
+  if (S.sheet && S.sheet.t === 'cook') return;
+  syncing = true; ssSet('busy', 'Gleiche ab …');
+  try {
+    const ep = S.sync.url + '/vorkoch/' + S.sync.code + '.json';
+    const raw = await jfetch(ep);
+    const remote = raw === null ? null : VX.unpack(raw);
+    if (raw !== null && !remote) throw new Error('Unbekanntes Datenformat unter diesem Code.');
+    const local = VX.toDoc(S);
+    let result;
+    if (!remote) result = local;
+    else if (S.sync.fresh) result = remote;
+    else result = VX.merge(local, remote);
+    if (!VX.same(result, local)) {
+      if (typing()) { again = true; syncing = false; setTimeout(syncNow, 4000); return; }
+      VX.applyDoc(S, result, V.BY_ID);
+      if (!valid()) generate(false);
+      saveLocal(); render();
+    }
+    S.sync.fresh = false; saveLocal();
+    if (!remote || !VX.same(result, remote)) await jfetch(ep, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(VX.pack(result)) });
+    ssSet('ok', 'Abgeglichen um ' + new Date().toTimeString().slice(0, 5));
+  } catch (err) {
+    ssSet('err', err && err.message ? err.message : 'Abgleich fehlgeschlagen.');
+  }
+  syncing = false;
+  if (again) { again = false; schedSync(); }
+}
+setInterval(() => { try { if (document.visibilityState !== 'hidden') syncNow(); } catch (e) { /* egal */ } }, 20000);
+document.addEventListener('visibilitychange', () => { try { if (document.visibilityState === 'visible') syncNow(); } catch (e) { /* egal */ } });
+function baseUrl() { try { return location.href.split('#')[0]; } catch (e) { return ''; } }
+function inviteLink() { return baseUrl() + VX.encodeShare('j', { u: S.sync.url, c: S.sync.code }); }
+function snapLink() { return baseUrl() + VX.encodeShare('s', VX.toDoc(S)); }
+function checkHash() {
+  let h = '';
+  try { h = location.hash; } catch (e) { return; }
+  const d = VX.decodeShare(h);
+  if (!d) return;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* egal */ }
+  if (d.kind === 'j' && d.data && normUrl(d.data.u) && CODE_RE.test(d.data.c || '')) S.sheet = { t: 'join', u: normUrl(d.data.u), c: d.data.c };
+  else if (d.kind === 's' && d.data && d.data.v === 1) S.sheet = { t: 'snap', doc: d.data };
+}
+
+/* ---------- Hilfen ---------- */
+let B = null;
+function rebuild() { B = valid() ? V.build(S.ids, S.settings) : null; }
+function portion(r) {
+  const f = B.targets.map(t => Math.min(1.5, Math.max(0.5, Math.round((t / r.nu.p) * 4) / 4)));
+  const need = 2 * f.reduce((s, x) => s + x, 0);
+  return { f, need, tight: need > r.servings + 1e-9 };
+}
+const names = () => S.settings.persons.map(p => p.name || '?');
+function cookWho(key) {
+  const n = names();
+  if (key === 'so') return 'Ihr kocht zusammen';
+  const mo = S.settings.moCook === 0 ? 0 : 1;
+  return (key === 'mo' ? n[mo] : n[1 - mo]) + ' kocht';
+}
+function dishIdx(rid) { return S.ids.indexOf(rid); }
+const dot = i => '<span class="dot" style="--c:var(--c' + (i + 1) + ')"></span>';
+const SESS_DAY = { so: 0, mo: 1, do: 4 };
+const ICON = {
+  up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>',
+  down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>'
+};
+function rateBtns(id) {
+  const v = S.ratings[id] || 0;
+  return '<span class="rate"><button data-act="rate" data-rid="' + id + '" data-v="1" aria-pressed="' + (v === 1) + '" aria-label="Hat geschmeckt">' + ICON.up + '</button>' +
+    '<button data-act="rate" data-rid="' + id + '" data-v="-1" aria-pressed="' + (v === -1) + '" aria-label="Hat nicht geschmeckt">' + ICON.down + '</button></span>';
+}
+const STORES = { d: 'Aldi Nord oder Lidl', m: 'Marktkauf' };
+function storeOf(x) { return S.storeOv[x.id] || (x.spec ? 'm' : 'd'); }
+
+const SLOTS = [
+  [0, 'Mittag', 'free'], [0, 'Abend', 0, 0],
+  [1, 'Mittag', 0, 1], [1, 'Abend', 1, 0],
+  [2, 'Mittag', 1, 1], [2, 'Abend', 2, 1],
+  [3, 'Mittag', 2, 2], [3, 'Abend', 'half'],
+  [4, 'Mittag', 'half'], [4, 'Abend', 3, 0],
+  [5, 'Mittag', 3, 1], [5, 'Abend', 4, 1],
+  [6, 'Mittag', 4, 2], [6, 'Abend', 'free']
+];
+const AGE = ['frisch', '1 Tag alt', '2 Tage alt'];
+
+/* ---------- Plan ---------- */
+function slotHtml(s) {
+  if (s[2] === 'free') return '<div class="slot off">Frei oder auswärts</div>';
+  if (s[2] === 'half') return '<div class="slot off">Brot, Salat oder Reste</div>';
+  const r = B.rs[s[2]];
+  return '<button class="slot" data-act="recipe" data-rid="' + r.id + '"><span class="m">' + dot(s[2]) + AGE[s[3]] + '</span><b>' + esc(r.short) + '</b></button>';
+}
+
+function viewPlan() {
+  const days = weekDays(), st = B.stats;
+  let h = '<h1 class="ltitle">Diese Woche</h1><p class="lsub">' + days[0].date + ' bis ' + days[6].date + '</p>';
+  if (S.msg) h += '<p class="alert">' + esc(S.msg) + '</p>';
+  if (S.relaxed) h += '<p class="alert">Der Pool ist für deine Regeln zu klein. Die Mindestzahl vegetarischer Gerichte wurde dieses Mal nicht eingehalten.</p>';
+  h += '<div class="stats">' +
+    '<div class="stat"><small>Kochzeit pro Woche</small><b>' + V.fmtDur(st.mk) + '</b></div>' +
+    '<div class="stat"><small>Packungen im Einkauf</small><b>' + st.packs + '</b></div>' +
+    '<div class="stat"><small>Protein pro Portion</small><b>Ø ' + Math.round(st.avgP) + ' g</b></div>' +
+    '<div class="stat"><small>Angebrochene Reste</small><b>' + (st.rests === 0 ? 'keine' : st.rests + ' Posten') + '</b></div></div>';
+  h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Passt, zum Einkauf</button></div>';
+
+  h += '<div class="grp"><div class="dh"><span></span><span>Mittag</span><span>Abend</span></div>';
+  for (let d = 0; d < 7; d++) {
+    const m = SLOTS.find(s => s[0] === d && s[1] === 'Mittag'), a = SLOTS.find(s => s[0] === d && s[1] === 'Abend');
+    h += '<div class="day' + (days[d].today ? ' today' : '') + '"><div class="dn"><b>' + days[d].n + '</b><span>' + days[d].num + '</span></div>' + slotHtml(m) + slotHtml(a) + '</div>';
+  }
+  h += '</div>';
+
+  h += '<p class="cap">Anpassen</p><div class="grp">' +
+    '<button class="row" data-act="reroll"><span class="grow"><b>Neu würfeln</b></span><span class="val">andere Gerichte</span></button>' +
+    '<button class="row" data-act="next"><span class="grow"><b>Woche abschließen</b></span><span class="val">nächste planen</span></button>' +
+    '<div class="pad"><div class="flex" style="justify-content:space-between"><span class="sub">Reste verwerten</span><span class="sub">Vielfalt</span></div><input type="range" id="div" min="0" max="100" step="5" value="' + Math.round(S.diversity * 100) + '" aria-label="Reste verwerten oder Vielfalt"></div></div>';
+
+  h += '<h2 class="sec">Kochtermine</h2>';
+  B.sessions.forEach(s => {
+    const dd = days[SESS_DAY[s.key]];
+    h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + '</h3><p class="who">' + esc(cookWho(s.key)) + '</p>';
+    s.rs.forEach(r => {
+      const i = dishIdx(r.id), g = portion(r);
+      const fq = g.f.map((x, k) => esc(names()[k]) + ' ' + V.fmtQ(x)).join(' · ');
+      h += '<div class="dish">' + dot(i) + '<div><button class="lnk" style="padding:0;min-height:0;text-align:left;color:var(--ink);font-size:16px" data-act="recipe" data-rid="' + r.id + '">' + esc(r.name) + '</button>' +
+        '<div class="sub">' + Math.round(r.nu.p) + ' g Protein · ' + Math.round(r.nu.f) + ' g Ballaststoffe · ' + Math.round(r.nu.k) + ' kcal</div>' +
+        '<div class="sub">Portionen: ' + fq + (g.tight ? ' <em class="warn">knapp, Skyr oder Ei dazu</em>' : '') + '</div>';
+      const hits = V.offerHits(r, S.offers);
+      if (hits.length) h += '<div class="chips" style="margin-top:6px"><span class="chip hit">Angebot: ' + esc(hits.join(', ')) + '</span></div>';
+      h += '</div>' + rateBtns(r.id) + '</div>';
+    });
+    h += '<div class="cfoot"><span>' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv</span><button class="btn sm soft" data-act="cookstart" data-key="' + s.key + '">Kochen</button></div></section>';
+  });
+
+  h += '<p class="foot">Daumen nach dem Essen: Gutes kommt häufiger auf den Plan, Schlechtes seltener.</p>';
+  h += '<p class="cap">Angebote diese Woche</p><div class="grp pad"><p class="sub" style="margin-bottom:10px">Was ist im Prospekt günstig? Begriffe mit Komma trennen, zum Beispiel „Lachs, Feta, Paprika“. Passende Gerichte werden bevorzugt.</p>' +
+    '<div class="flex"><input type="text" id="offers" value="' + esc(S.offers) + '" placeholder="Lachs, Feta, Paprika" aria-label="Angebote"><button class="btn sm" data-act="offerplan">Planen</button></div></div>';
+  return h;
+}
+
+/* ---------- Einkauf ---------- */
+function itemHtml(x, map, mv) {
+  const st = storeOf(x);
+  return '<label class="item' + (map[x.id] ? ' done' : '') + '"><input type="checkbox" data-key="' + x.id + '"' + (map[x.id] ? ' checked' : '') + '><span class="box"></span>' +
+    '<span class="itx"><b>' + esc(x.n) + (!mv && st === 'm' ? '<span class="chip spec" style="margin-left:6px">Marktkauf</span>' : '') + '</b><small>' + esc(x.needTxt) + ' gebraucht · ' + esc(x.forR.join(', ')) + '</small>' +
+    (x.rest ? '<small class="rest">Rest: ' + esc(x.leftTxt) + '</small>' : '') + '</span><span class="ipk">' + esc(x.txt) + '</span>' +
+    (mv ? '<button type="button" class="mv" data-act="store" data-id="' + x.id + '" aria-label="' + esc(x.n) + ' zu ' + (st === 'm' ? 'Aldi oder Lidl' : 'Marktkauf') + ' verschieben">' + (st === 'm' ? 'zu Aldi/Lidl' : 'zu Marktkauf') + '</button>' : '') + '</label>';
+}
+function viewShop() {
+  const items = B.shop.items, map = S.checked.map, by = S.shopView === 'laden';
+  const done = items.filter(x => map[x.id]).length;
+  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Posten in ganzen Packungen für die ganze Woche.</p>';
+  h += '<div class="seg" style="margin-bottom:6px">' + [['gang', 'Nach Gang'], ['laden', 'Nach Laden']].map(([k, l]) => '<button data-act="shopview" data-v="' + k + '" aria-pressed="' + (S.shopView === k || (k === 'gang' && !by)) + '">' + l + '</button>').join('') + '</div>';
+  h += '<div class="flex" style="justify-content:space-between;align-items:baseline;margin:10px 2px 0"><span class="sub">Erledigt</span><b id="prog">' + done + ' von ' + items.length + '</b></div><div class="pbar"><i id="pbar" style="width:' + (items.length ? done / items.length * 100 : 0) + '%"></i></div>';
+  if (by) {
+    ['d', 'm'].forEach(s => {
+      const inStore = items.filter(x => storeOf(x) === s);
+      h += '<p class="cap">' + STORES[s] + ' · ' + inStore.length + ' Posten</p>';
+      if (!inStore.length) { h += '<div class="grp pad"><p class="sub">Hier ist nichts zu holen.</p></div>'; return; }
+      V.AISLES.forEach(a => {
+        const list = inStore.filter(x => x.a === a);
+        if (!list.length) return;
+        h += '<p class="sub" style="margin:10px 18px 4px">' + a + '</p><div class="grp">' + list.map(x => itemHtml(x, map, true)).join('') + '</div>';
+      });
+    });
+    h += '<p class="foot">Spezialzutaten liegen bei Marktkauf, alles andere bei Aldi oder Lidl. Mit dem Knopf an jedem Posten wechselst du den Laden, auch für künftige Wochen.</p>';
+  } else {
+    V.AISLES.forEach(a => {
+      const list = items.filter(x => x.a === a);
+      if (!list.length) return;
+      h += '<p class="cap">' + a + '</p><div class="grp">' + list.map(x => itemHtml(x, map, false)).join('') + '</div>';
+    });
+  }
+  h += '<p class="cap">Zuhause prüfen</p><div class="grp">';
+  B.shop.vorrat.forEach(x => {
+    const k = 'v_' + x.id;
+    h += '<label class="item small' + (map[k] ? ' done' : '') + '"><input type="checkbox" data-key="' + k + '" data-v="1"' + (map[k] ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + (x.spec ? '<span class="chip spec" style="margin-left:6px">Spezial</span>' : '') + '</b></span><span></span></label>';
+  });
+  h += '</div><p class="foot">Fehlendes kommt auf die Liste. Tiefkühlware am Vorabend in den Kühlschrank legen. Hackfleisch gibt es nur an Sonntag und Montag, damit es frisch bleibt.</p>';
+  h += '<div class="actions"><button class="btn gray" data-act="copy">Liste kopieren</button><button class="btn gray" data-act="uncheck">Haken löschen</button></div><div id="copybox"></div>';
+  return h;
+}
+
+/* ---------- Kochen ---------- */
+function gantt(s) {
+  const mk = s.sched.mk, tk = mk <= 60 ? 10 : mk <= 120 ? 15 : 30;
+  let h = '<div class="gantt">';
+  s.rs.forEach(r => {
+    const i = dishIdx(r.id);
+    h += '<div class="gh">' + dot(i) + esc(r.short) + '</div>';
+    s.sched.rows.filter(x => x.rid === r.id).forEach(rw => {
+      h += '<div class="gl">' + esc(rw.tn) + '</div><div class="gt" style="--c:var(--c' + (i + 1) + ')">';
+      s.sched.events.filter(e => e.c === rw.c).forEach(e => {
+        h += '<span class="bar ' + e.k + '" style="left:' + (e.start / mk * 100) + '%;width:' + Math.max(1.2, e.m / mk * 100) + '%"></span>';
+      });
+      h += '</div>';
+    });
+  });
+  h += '<div></div><div class="gax">';
+  for (let t = 0; t <= mk + 0.1; t += tk) h += '<span style="left:' + (t / mk * 100) + '%">' + V.fmtClock(t) + '</span>';
+  h += '</div></div><p class="legend"><span class="lg a"></span>du bist dran<span class="lg p"></span>läuft von allein</p>';
+  return h;
+}
+function viewCook() {
+  const days = weekDays();
+  let h = '<h1 class="ltitle">Kochen</h1><p class="lsub">Drei Termine pro Woche. Ofen und Herd laufen parallel, damit die Zeit kurz bleibt.</p>';
+  B.sessions.forEach(s => {
+    const dd = days[SESS_DAY[s.key]];
+    h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + '</h3><p class="who">' + esc(cookWho(s.key)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
+    if (s.thaw.length) h += '<p class="thaw">Am Vorabend in den Kühlschrank legen: ' + esc(s.thaw.join(', ')) + '</p>';
+    h += gantt(s);
+    h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button></div>';
+    s.rs.forEach(r => {
+      h += '<button class="row chev" style="padding-left:0;padding-right:0" data-act="recipe" data-rid="' + r.id + '">' + dot(dishIdx(r.id)) + '<span class="grow">' + esc(r.name) + '</span></button>';
+    });
+    h += '</section>';
+  });
+  return h;
+}
+
+/* ---------- Rezepte ---------- */
+function recipeBody(r) {
+  const g = portion(r);
+  let h = '<div class="chips"><span class="chip">' + Math.round(r.nu.p) + ' g Protein</span><span class="chip">' + Math.round(r.nu.f) + ' g Ballaststoffe</span><span class="chip">' + Math.round(r.nu.k) + ' kcal</span>' +
+    '<span class="chip">' + V.activeMin(r) + ' Min aktiv</span><span class="chip">Aufwärmen: ' + r.reheat + '</span>' +
+    (r.spec.length ? '<span class="chip spec">Spezialzutat: ' + r.spec.map(id => esc(V.ING[id].n)).join(', ') + '</span>' : '') + '</div>';
+  h += '<p class="sub" style="margin-top:12px">Pro Person und Mahlzeit: ' + g.f.map((x, k) => esc(names()[k]) + ' ' + V.fmtQ(x) + ' Portion' + (x === 1 ? '' : 'en')).join(' · ') +
+    (g.tight ? ' <em class="warn">Der Topf reicht dafür knapp, Skyr oder Ei dazu.</em>' : '') + '</p>';
+  h += '<h4>Zutaten für 4 Portionen</h4><ul class="ing">';
+  r.i.forEach(([id, a]) => { h += '<li' + (V.ING[id].cls === 'pantry' ? ' class="v"' : '') + '>' + esc(V.fmtAmt(id, a)) + '</li>'; });
+  h += '</ul><h4>Ablauf</h4>';
+  r.tracks.forEach(t => {
+    if (r.tracks.length > 1) h += '<h5>' + esc(t.n) + '</h5>';
+    h += '<ol class="steps">' + t.ph.map(p => '<li><span class="tag ' + p.k + '">' + (p.k === 'a' ? 'Aktiv' : 'Läuft') + ' ' + p.m + ' Min' + (p.d ? ' · ' + p.d : '') + '</span>' + esc(p.t) + '</li>').join('') + '</ol>';
+  });
+  if (r.note) h += '<p class="note">' + esc(r.note) + '</p>';
+  return h;
+}
+
+function filteredRecipes() {
+  const q = (S.q || '').trim().toLowerCase(), f = S.filter;
+  return V.RECIPES.filter(r => {
+    if (f === 'veg' || f === 'fisch' || f === 'fleisch') { if (r.kind !== f) return false; }
+    else if (f === 'new') { if (!r.isNew) return false; }
+    else if (f === 'off') { if (!S.disabled.includes(r.id)) return false; }
+    if (!q) return true;
+    return (r.name + ' ' + r.cuisine + ' ' + r.i.map(x => V.ING[x[0]].n).join(' ')).toLowerCase().includes(q);
+  });
+}
+function recipeList() {
+  const list = filteredRecipes();
+  if (!list.length) return '<p class="foot" style="text-align:center;margin-top:30px">Nichts gefunden.</p>';
+  let h = '';
+  ['veg', 'fisch', 'fleisch'].forEach(k => {
+    const l = list.filter(r => r.kind === k).sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0) || a.cuisine.localeCompare(b.cuisine, 'de') || a.short.localeCompare(b.short, 'de'));
+    if (!l.length) return;
+    h += '<p class="cap">' + KIND[k] + ' · ' + l.length + '</p><div class="grp">';
+    l.forEach(r => {
+      const off = S.disabled.includes(r.id);
+      h += '<div class="rrow' + (off ? ' offrec' : '') + '"><button class="open" data-act="recipe" data-rid="' + r.id + '"><b>' + esc(r.name) + (r.isNew ? '<span class="chip neu">neu</span>' : '') + '</b>' +
+        '<small>' + esc(r.cuisine) + ' · ' + Math.round(r.nu.p) + ' g Protein · ' + V.fmtDur(V.sched([r]).mk) + (r.spec.length ? ' · Spezialzutat' : '') + '</small></button>' +
+        '<label class="sw"><input type="checkbox" data-pool="' + r.id + '"' + (off ? '' : ' checked') + ' aria-label="' + esc(r.short) + ' im Pool"><i></i></label></div>';
+    });
+    h += '</div>';
+  });
+  return h;
+}
+function viewRecipes() {
+  const FIL = [['all', 'Alle'], ['new', 'Neu'], ['veg', 'Vegetarisch'], ['fisch', 'Fisch'], ['fleisch', 'Fleisch'], ['off', 'Abgewählt']];
+  let h = '<h1 class="ltitle">Rezepte</h1><p class="lsub"><span id="poolcnt">' + pool().length + ' von ' + V.RECIPES.length + '</span> im Pool. Schalter an heißt: darf geplant werden.</p>';
+  h += '<div class="search"><input type="search" id="q" placeholder="Suchen, zum Beispiel Linsen oder Indisch" value="' + esc(S.q) + '" aria-label="Rezepte suchen"></div>';
+  h += '<div class="filters" role="group" aria-label="Filter" style="margin-top:10px">' + FIL.map(([k, l]) => '<button data-act="filter" data-f="' + k + '" aria-pressed="' + (S.filter === k) + '">' + l + '</button>').join('') + '</div>';
+  h += '<div id="rlist">' + recipeList() + '</div>';
+  h += '<div class="actions"><button class="btn gray" data-act="poolall">Alle aufnehmen</button><button class="btn gray" data-act="poolnone">Alle abwählen</button><button class="btn gray" data-act="copysel">Auswahl kopieren</button></div><div id="copybox"></div>';
+  h += '<p class="foot">Koriander, Innereien und scharfe Gerichte sind ausgeschlossen.</p>';
+  return h;
+}
+
+/* ---------- Mehr ---------- */
+function syncBox() {
+  const ss = S.ss;
+  if (!syncOn()) {
+    return '<div class="grp"><div class="pad"><p class="sub" style="margin-bottom:10px">Damit ihr beide denselben Plan, Einkauf und dieselben Bewertungen seht. Kostenlos über eine eigene Firebase-Datenbank, einmal eingerichtet.</p>' +
+      '<ol class="mini"><li>console.firebase.google.com öffnen, Projekt anlegen (Analytics aus).</li><li>Build, Realtime Database, Datenbank erstellen, Testmodus.</li><li>Reiter „Regeln“: <code>{ "rules": { "vorkoch": { "$code": { ".read": true, ".write": true } } } }</code> einfügen und veröffentlichen.</li><li>Die Datenbank-URL (endet auf firebasedatabase.app oder firebaseio.com) hier einfügen.</li></ol>' +
+      '<div class="flex" style="margin-top:12px"><input type="text" id="syncurl" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://…firebasedatabase.app" aria-label="Datenbank-URL"><button class="btn sm" data-act="connect">Verbinden</button></div>' +
+      (ss && ss.state === 'err' ? '<p class="warn" style="margin-top:8px">' + esc(ss.msg) + '</p>' : '') + '</div>' +
+      '<button class="row" data-act="snaplink"><span class="grow"><b>Momentaufnahme als Link</b></span><span class="val">ohne Server</span></button></div><div id="syncout"></div>';
+  }
+  const st = !ss ? 'Verbunden' : ss.state === 'err' ? ss.msg : ss.msg;
+  return '<div class="grp"><div class="row"><span class="grow"><b>' + (ss && ss.state === 'err' ? 'Problem' : 'Verbunden') + '</b><div class="sub">' + esc(st) + '</div></span></div>' +
+    '<button class="row" data-act="syncnow"><span class="grow">Jetzt abgleichen</span></button>' +
+    '<button class="row" data-act="invite"><span class="grow">Einladungslink für das andere Gerät</span></button>' +
+    '<button class="row" data-act="snaplink"><span class="grow">Momentaufnahme als Link</span></button>' +
+    '<button class="row" data-act="disconnect" style="color:var(--danger)"><span class="grow">Trennen</span></button></div><div id="syncout"></div>' +
+    '<p class="foot">Wer den Link hat, hat Zugriff auf den Plan. Gleichzeitiges Bearbeiten innerhalb weniger Sekunden kann eine Änderung überschreiben.</p>';
+}
+function viewSettings() {
+  const st = S.settings, p = st.persons;
+  const opt = (v, cur, lab) => '<option value="' + v + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + lab + '</option>';
+  let h = '<h1 class="ltitle">Mehr</h1><p class="lsub">Personen, Regeln und Darstellung.</p>';
+  p.forEach((x, i) => {
+    h += '<p class="cap">Person ' + (i + 1) + '</p><div class="grp">' +
+      '<label class="row"><span class="grow">Name</span><input class="inl" type="text" data-set="name" data-i="' + i + '" value="' + esc(x.name) + '" aria-label="Name"></label>' +
+      '<label class="row"><span class="grow">Protein pro Tag</span><input class="inl" type="number" inputmode="numeric" data-set="protein" data-i="' + i + '" min="40" max="220" step="5" value="' + x.protein + '" aria-label="Protein pro Tag in Gramm"><span class="val">g</span></label></div>';
+  });
+  h += '<p class="cap">Mittag und Abend</p><div class="grp pad"><div class="flex" style="justify-content:space-between"><span>Anteil am Tagesziel</span><b id="sharev">' + Math.round(st.share * 100) + ' %</b></div>' +
+    '<input type="range" id="share" min="50" max="90" step="5" value="' + Math.round(st.share * 100) + '" aria-label="Anteil am Tagesziel"></div>' +
+    '<p class="foot">Das Frühstück ist nicht Teil der Planung. Ziel pro Mahlzeit: ' + B.targets.map((t, i) => esc(names()[i]) + ' ' + Math.round(t) + ' g').join(', ') + '.</p>';
+  h += '<p class="cap">Wochenregeln</p><div class="grp">' +
+    '<label class="row"><span class="grow">Mindestens vegetarisch</span><select class="inl" data-set="vegMin">' + [2, 3, 4].map(n => opt(n, st.vegMin, n + ' von 5')).join('') + '</select></label>' +
+    '<label class="row"><span class="grow">Höchstens Fisch</span><select class="inl" data-set="fishMax">' + [0, 1, 2].map(n => opt(n, st.fishMax, n + ' von 5')).join('') + '</select></label>' +
+    '<label class="row"><span class="grow">Montag kocht</span><select class="inl" data-set="moCook">' + opt(0, st.moCook, esc(p[0].name)) + opt(1, st.moCook, esc(p[1].name)) + '</select></label></div>' +
+    '<p class="foot">Regeln gelten ab dem nächsten Würfeln. Der Rhythmus ist fest: Sonntag zusammen ein Gericht, Montag und Donnerstag je zwei.</p>';
+  h += '<p class="cap">Darstellung</p><div class="pad" style="padding:0"><div class="seg">' + [['auto', 'Automatisch'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => '<button data-act="theme" data-t="' + k + '" aria-pressed="' + (S.theme === k) + '">' + l + '</button>').join('') + '</div></div>';
+  h += '<p class="cap">Kalender</p><div class="grp">' +
+    [['shop', 'Einkaufen (Samstag)'], ['so', 'Kochen Sonntag'], ['mo', 'Kochen Montag'], ['do', 'Kochen Donnerstag']].map(([k, l]) =>
+      '<label class="row"><span class="grow">' + l + '</span><input class="inl" type="time" data-cook="' + k + '" value="' + esc(st.cook[k]) + '" aria-label="' + l + '"></label>').join('') +
+    '<div class="pad"><div class="flex"><button class="btn sm" data-act="ics">Kalenderdatei laden</button><button class="btn sm gray" data-act="icscopy">Als Text kopieren</button></div></div></div>' +
+    '<p class="foot">Die Datei enthält Einkauf, Kochen und die Erinnerung zum Auftauen am Vorabend um 19 Uhr. Öffnen, und der Kalender fragt, ob er die Termine übernehmen soll.</p><div id="calbox"></div>';
+  h += '<p class="cap">Gemeinsamer Plan</p><div id="syncbox">' + syncBox() + '</div>';
+  h += '<p class="cap">Daten</p><div class="grp"><div class="pad"><p class="sub">Ohne gemeinsamen Plan liegt alles nur in diesem Browser auf diesem Gerät. Der Installationsmodus auf dem Home-Bildschirm und Safari speichern getrennt.</p></div>' +
+    '<button class="row" data-act="resetall" style="color:var(--danger)"><span class="grow"><b>' + (S.confirm ? 'Wirklich alles zurücksetzen?' : 'Alles zurücksetzen') + '</b></span>' + (S.confirm ? '<span class="val">Tippe noch einmal</span>' : '') + '</button></div>';
+  return h;
+}
+
+/* ---------- Sheets ---------- */
+function cookEvents() { if (!S.sheet || S.sheet.t !== 'cook') return []; const s = B.sessions.find(x => x.key === S.sheet.key); return s ? s.sched.events : []; }
+function fmtMS(sec) { sec = Math.max(0, Math.round(sec)); return pad(Math.floor(sec / 60)) + ':' + pad(sec % 60); }
+
+function sheetHtml() {
+  const sh = S.sheet;
+  if (!sh) return '';
+  if (sh.t === 'recipe') {
+    const r = V.BY_ID[sh.id];
+    if (!r) return '';
+    const off = S.disabled.includes(r.id);
+    return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(r.name) + '"><div class="shd"><span class="grab"></span><h3>' + esc(r.name) + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div>' +
+      '<div class="shb rb"><p class="sub" style="margin-bottom:12px">' + esc(r.cuisine) + ' · ' + KIND[r.kind] + '</p>' + recipeBody(r) +
+      '<div class="flex" style="justify-content:space-between;margin-top:14px"><span class="sub">Hat es geschmeckt?</span>' + rateBtns(r.id) + '</div>' +
+      '<div class="actions"><button class="btn ' + (off ? '' : 'gray') + '" data-act="pool" data-rid="' + r.id + '">' + (off ? 'In den Pool aufnehmen' : 'Aus dem Pool nehmen') + '</button></div></div></div>';
+  }
+  if (sh.t === 'join') {
+    return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Gemeinsamer Plan"><div class="shd"><span class="grab"></span><h3>Gemeinsamer Plan</h3><button class="btn sm soft" data-act="close">Abbrechen</button></div>' +
+      '<div class="shb"><p>Dieses Gerät mit dem gemeinsamen Plan verbinden? Der Plan, die Bewertungen und die Einstellungen von hier werden durch die gemeinsamen ersetzt.</p><div class="actions"><button class="btn" data-act="joinok">Verbinden</button></div></div></div>';
+  }
+  if (sh.t === 'snap') {
+    return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Plan übernehmen"><div class="shd"><span class="grab"></span><h3>Plan übernehmen</h3><button class="btn sm soft" data-act="close">Abbrechen</button></div>' +
+      '<div class="shb"><p>Das ist eine Momentaufnahme eines Plans. Übernehmen ersetzt Plan, Bewertungen und Einstellungen auf diesem Gerät.</p><div class="actions"><button class="btn" data-act="snapok">Übernehmen</button></div></div></div>';
+  }
+  if (sh.t === 'cook') {
+    const s = B.sessions.find(x => x.key === sh.key), ev = cookEvents();
+    if (!s || !ev.length) return '';
+    const i = Math.min(S.ci, ev.length - 1), e = ev[i], di = dishIdx(e.rid), last = i === ev.length - 1;
+    const multi = s.sched.rows.filter(x => x.rid === e.rid).length > 1;
+    const par = ev.filter(o => o !== e && o.k === 'p' && o.start <= e.start + 1e-9 && o.end > e.start + 1e-9);
+    let h = '<div class="sheet full" role="dialog" aria-modal="true" aria-label="Kochmodus"><div class="shd"><button class="lnk" data-act="close">Beenden</button><b>' + SESS_DAY_NAME(s.key) + '</b><span class="sub">' + (i + 1) + ' von ' + ev.length + '</span></div>' +
+      '<div class="cm-top" style="padding:0 max(16px, env(safe-area-inset-left, 0px))">' + ev.map((_, k) => '<i class="' + (k <= i ? 'on' : '') + '"></i>').join('') + '</div>' +
+      '<div class="cm-body"><div class="cm-clock">' + (e.start < 1 ? 'Zu Beginn' : 'Nach ' + V.fmtDur(e.start)) + '</div>' +
+      '<div class="cm-dish">' + dot(di) + esc(e.rs) + (multi ? ' · ' + esc(e.tn) : '') + '</div>' +
+      '<div class="cm-text">' + esc(e.t) + '</div>' +
+      '<div class="cm-kind ' + e.k + '">' + (e.k === 'a' ? 'Du bist dran · ' + e.m + ' Min' : 'Läuft von allein · ' + e.m + ' Min') + (e.d ? ' · ' + esc(e.d) : '') + '</div>';
+    if (S.timer) {
+      const left = (S.timer.end - Date.now()) / 1000;
+      h += '<div class="timer' + (left <= 0 ? ' done' : '') + '"><div><div class="sub">' + esc(S.timer.label) + '</div><b id="tmr">' + (left <= 0 ? 'Fertig' : fmtMS(left)) + '</b></div><button class="btn sm gray" data-act="timerstop">Stoppen</button></div>';
+    } else {
+      h += '<button class="btn soft" data-act="timer" data-min="' + e.m + '" data-label="' + esc(e.rs + ': ' + e.m + ' Min') + '">Timer starten (' + e.m + ' Min)</button>';
+    }
+    if (par.length) h += '<div class="cm-par"><p>Gleichzeitig läuft</p><ul>' + par.map(o => '<li>' + dot(dishIdx(o.rid)) + esc(o.rs + (s.sched.rows.filter(x => x.rid === o.rid).length > 1 ? ' · ' + o.tn : '') + ' bis ' + V.fmtClock(o.end)) + '</li>').join('') + '</ul></div>';
+    if (i === 0 && s.thaw.length) h += '<p class="thaw">Aufgetaut sein sollte: ' + esc(s.thaw.join(', ')) + '</p>';
+    h += '</div><div class="cm-foot"><button class="btn gray" data-act="cmprev"' + (i === 0 ? ' disabled style="opacity:.4"' : '') + '>Zurück</button><button class="btn" data-act="cmnext">' + (last ? 'Fertig' : 'Weiter') + '</button></div></div>';
+    return h;
+  }
+  return '';
+}
+function SESS_DAY_NAME(k) { return { so: 'Sonntag', mo: 'Montag', do: 'Donnerstag' }[k]; }
+
+/* ---------- Rendern ---------- */
+const app = document.getElementById('app');
+let wl = null;
+function lockScreen(on) {
+  try {
+    if (on) { navigator.wakeLock.request('screen').then(l => { wl = l; }, () => {}); }
+    else if (wl) { wl.release(); wl = null; }
+  } catch (e) { /* nicht verfügbar */ }
+}
+function applyTheme() {
+  try {
+    const r = document.documentElement;
+    if (!r) return;
+    if (S.theme === 'light' || S.theme === 'dark') r.setAttribute('data-theme', S.theme); else r.removeAttribute('data-theme');
+  } catch (e) { /* egal */ }
+}
+function render() {
+  rebuild();
+  if (!B) { app.innerHTML = '<p class="alert">' + esc(S.msg || 'Keine Woche geplant.') + '</p><div class="actions"><button class="btn" data-act="reroll">Neu planen</button></div>'; return; }
+  const v = { plan: viewPlan, shop: viewShop, cook: viewCook, recipes: viewRecipes, settings: viewSettings }[S.tab] || viewPlan;
+  app.innerHTML = '<div class="' + (S.fresh ? 'view' : '') + '">' + v() + '</div>' + sheetHtml();
+  S.fresh = false;
+  if (document.body && document.body.classList) document.body.classList.toggle('lock', !!S.sheet);
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
+}
+
+/* ---------- Ereignisse ---------- */
+function listText() {
+  let t = 'Einkauf Vorkoch\n';
+  const block = (items) => V.AISLES.map(a => {
+    const list = items.filter(x => x.a === a);
+    return list.length ? '\n' + a + '\n' + list.map(x => '- ' + x.n + ': ' + x.txt).join('\n') + '\n' : '';
+  }).join('');
+  if (S.shopView === 'laden') ['d', 'm'].forEach(s => { const l = B.shop.items.filter(x => storeOf(x) === s); if (l.length) t += '\n=== ' + STORES[s] + ' ===' + block(l); });
+  else t += block(B.shop.items).replace(/^/, '');
+  t += '\nZuhause prüfen\n' + B.shop.vorrat.map(x => '- ' + x.n).join('\n') + '\n';
+  return t;
+}
+function copyOut(txt, okMsg, rows, boxId) {
+  const box = document.getElementById(boxId || 'copybox');
+  if (!box) return;
+  const fallback = () => { box.innerHTML = '<textarea readonly rows="' + rows + '" id="cptxt"></textarea>'; const ta = document.getElementById('cptxt'); if (ta) { ta.value = txt; ta.focus(); ta.select(); } };
+  try { navigator.clipboard.writeText(txt).then(() => { box.innerHTML = '<p class="ok" style="margin:0 2px">' + okMsg + '</p>'; }, fallback); } catch (err) { fallback(); }
+}
+function setTab(t) { S.tab = t; S.sheet = null; S.fresh = true; save(); render(); window.scrollTo(0, 0); }
+function closeSheet() { if (S.sheet && S.sheet.t === 'cook') lockScreen(false); S.sheet = null; render(); }
+let tick = null;
+function startTick() {
+  if (tick || typeof setInterval !== 'function') return;
+  tick = setInterval(() => {
+    if (!S.timer) { clearInterval(tick); tick = null; return; }
+    const left = (S.timer.end - Date.now()) / 1000, el = document.getElementById('tmr');
+    if (left <= 0 && !S.timer.fired) {
+      S.timer.fired = true;
+      try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) { /* egal */ }
+      if (S.sheet) render();
+    } else if (el && left > 0) el.textContent = fmtMS(left);
+  }, 500);
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'tab') setTab(b.dataset.tab);
+  else if (act === 'reroll') { generate(false); render(); }
+  else if (act === 'next') { S.history = [S.ids.slice()].concat(S.history).slice(0, 3); generate(true); render(); window.scrollTo(0, 0); }
+  else if (act === 'offerplan') { const i = document.getElementById('offers'); S.offers = i ? i.value : S.offers; touch('offers'); generate(false); render(); }
+  else if (act === 'recipe') { S.sheet = { t: 'recipe', id: b.dataset.rid }; render(); }
+  else if (act === 'cookstart') { S.sheet = { t: 'cook', key: b.dataset.key }; S.ci = 0; lockScreen(true); render(); }
+  else if (act === 'close') closeSheet();
+  else if (act === 'cmnext') {
+    if (!S.sheet || S.sheet.t !== 'cook') return;
+    const n = cookEvents().length;
+    if (S.ci >= n - 1) closeSheet(); else { S.ci++; render(); }
+  }
+  else if (act === 'cmprev') { if (S.sheet && S.sheet.t === 'cook' && S.ci > 0) { S.ci--; render(); } }
+  else if (act === 'timer') { S.timer = { end: Date.now() + (+b.dataset.min) * 60000, label: b.dataset.label || 'Timer' }; startTick(); render(); }
+  else if (act === 'timerstop') { S.timer = null; render(); }
+  else if (act === 'filter') { S.filter = b.dataset.f; render(); }
+  else if (act === 'theme') { S.theme = b.dataset.t; applyTheme(); save(); render(); }
+  else if (act === 'poolall') { S.disabled = []; touch('pool'); save(); render(); }
+  else if (act === 'poolnone') { S.disabled = V.RECIPES.map(r => r.id); touch('pool'); save(); render(); }
+  else if (act === 'copysel') {
+    const f = on => V.RECIPES.filter(r => on === !S.disabled.includes(r.id)).map(r => r.id).join(', ');
+    copyOut('Mag ich: ' + f(true) + '\nMag ich nicht: ' + f(false) + '\n', 'Auswahl kopiert.', 6);
+  }
+  else if (act === 'pool') {
+    const id = b.dataset.rid, k = S.disabled.indexOf(id);
+    if (k >= 0) S.disabled.splice(k, 1); else S.disabled.push(id);
+    touch('pool'); save(); render();
+  }
+  else if (act === 'uncheck') { Object.keys(S.checked.map).forEach(k => { S.checked.map[k] = false; touchKey('checked', k); }); save(); render(); }
+  else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
+  else if (act === 'rate') {
+    const id = b.dataset.rid, v = +b.dataset.v;
+    S.ratings[id] = S.ratings[id] === v ? 0 : v; touchKey('ratings', id); save(); render();
+  }
+  else if (act === 'shopview') { S.shopView = b.dataset.v === 'laden' ? 'laden' : 'gang'; save(); render(); }
+  else if (act === 'store') {
+    const id = b.dataset.id, x = B.shop.items.find(o => o.id === id);
+    if (x) { S.storeOv[id] = storeOf(x) === 'm' ? 'd' : 'm'; touchKey('storeOv', id); save(); render(); }
+  }
+  else if (act === 'ics' || act === 'icscopy') {
+    const txt = VX.buildICS({
+      weekStart: S.weekStart || iso(nextSunday()), times: S.settings.cook, shopText: listText(),
+      sessions: B.sessions.map(s => ({ key: s.key, who: cookWho(s.key), mk: s.sched.mk, thaw: s.thaw, dishes: s.rs.map(r => r.name),
+        events: s.sched.events.map(e => ({ start: e.start, rs: e.rs, tn: e.tn, t: e.t })) }))
+    });
+    if (act === 'icscopy') { copyOut(txt, 'Kopiert. In eine Textdatei mit der Endung .ics einfügen und öffnen.', 8, 'calbox'); return; }
+    try {
+      const url = URL.createObjectURL(new Blob([txt], { type: 'text/calendar' }));
+      const l = document.createElement('a'); l.href = url; l.download = 'vorkoch-woche.ics'; document.body.appendChild(l); l.click(); l.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      const box = document.getElementById('calbox'); if (box) box.innerHTML = '<p class="foot">Falls nichts passiert, nimm „Als Text kopieren“.</p>';
+    } catch (err) { copyOut(txt, 'Kopiert. In eine Textdatei mit der Endung .ics einfügen und öffnen.', 8, 'calbox'); }
+  }
+  else if (act === 'connect') {
+    const i = document.getElementById('syncurl'), u = normUrl(i ? i.value : '');
+    if (!u) { ssSet('err', 'Das ist keine Firebase-Adresse. Sie endet auf firebasedatabase.app oder firebaseio.com.'); const el = document.getElementById('syncbox'); if (el) el.innerHTML = syncBox(); return; }
+    S.sync = { url: u, code: newCode(), fresh: false }; S.ss = null; saveLocal(); syncNow(); render();
+  }
+  else if (act === 'syncnow') syncNow();
+  else if (act === 'invite') copyOut(inviteLink(), 'Link kopiert. Auf dem anderen Gerät öffnen.', 4, 'syncout');
+  else if (act === 'snaplink') copyOut(snapLink(), 'Link kopiert. Auf dem anderen Gerät öffnen, um den Plan zu übernehmen.', 4, 'syncout');
+  else if (act === 'disconnect') { S.sync = { url: '', code: '', fresh: false }; S.ss = null; saveLocal(); render(); }
+  else if (act === 'joinok') {
+    const sh = S.sheet; if (!sh || sh.t !== 'join') return;
+    S.sync = { url: sh.u, code: sh.c, fresh: true }; S.sheet = null; S.ss = null; saveLocal(); syncNow(); render();
+  }
+  else if (act === 'snapok') {
+    const sh = S.sheet; if (!sh || sh.t !== 'snap') return;
+    VX.applyDoc(S, sh.doc, V.BY_ID);
+    const n = Date.now(); ['plan', 'pool', 'settings', 'offers'].forEach(k => { S.mt.m[k] = n; });
+    ['ratings', 'storeOv', 'checked'].forEach(k => Object.keys(k === 'checked' ? S.checked.map : S[k]).forEach(id => { S.mt[k][id] = n; }));
+    S.sheet = null; if (!valid()) generate(false);
+    save(); render();
+  }
+  else if (act === 'resetall') {
+    if (!S.confirm) { S.confirm = true; render(); return; }
+    try { localStorage.removeItem(KEY); } catch (err) { /* egal */ }
+    S = defaults(); resetTransient(); applyTheme(); generate(false); render(); window.scrollTo(0, 0);
+  }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.cook) {
+    const k = t.dataset.cook;
+    if (/^\d{1,2}:\d{2}$/.test(t.value)) { S.settings.cook[k] = t.value; touch('settings'); save(); }
+  } else if (t.id === 'syncurl') { /* wird beim Verbinden gelesen */ }
+  else if (t.dataset && t.dataset.pool) {
+    const id = t.dataset.pool, k = S.disabled.indexOf(id);
+    if (t.checked && k >= 0) S.disabled.splice(k, 1); else if (!t.checked && k < 0) S.disabled.push(id);
+    touch('pool');
+    const w = t.closest('.rrow'); if (w) w.classList.toggle('offrec', !t.checked);
+    const c = document.getElementById('poolcnt'); if (c) c.textContent = pool().length + ' von ' + V.RECIPES.length;
+    save();
+  } else if (t.matches('input[type=checkbox][data-key]')) {
+    S.checked.map[t.dataset.key] = t.checked; touchKey('checked', t.dataset.key);
+    const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
+    const items = B.shop.items, n = items.filter(x => S.checked.map[x.id]).length, pr = document.getElementById('prog'), pb = document.getElementById('pbar');
+    if (pr) pr.textContent = n + ' von ' + items.length;
+    if (pb) pb.style.width = (items.length ? n / items.length * 100 : 0) + '%';
+    save();
+  } else if (t.id === 'div') { S.diversity = t.value / 100; touch('settings'); save(); }
+  else if (t.id === 'offers') { S.offers = t.value; touch('offers'); save(); }
+  else if (t.id === 'share') { S.settings.share = t.value / 100; touch('settings'); save(); render(); }
+  else if (t.dataset && t.dataset.set) {
+    const k = t.dataset.set;
+    if (k === 'name') S.settings.persons[+t.dataset.i].name = t.value.trim() || (t.dataset.i === '0' ? 'Roman' : 'Partnerin');
+    else if (k === 'protein') S.settings.persons[+t.dataset.i].protein = Math.min(220, Math.max(40, +t.value || 90));
+    else S.settings[k] = +t.value;
+    touch('settings'); save(); render();
+  }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'share') { const o = document.getElementById('sharev'); if (o) o.textContent = t.value + ' %'; }
+  else if (t.id === 'q') { S.q = t.value; const l = document.getElementById('rlist'); if (l) l.innerHTML = recipeList(); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) closeSheet(); });
+let tx = null;
+document.addEventListener('touchstart', e => { if (S.sheet && S.sheet.t === 'cook' && e.touches && e.touches[0]) tx = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
+document.addEventListener('touchend', e => {
+  if (!tx || !S.sheet || S.sheet.t !== 'cook' || !e.changedTouches || !e.changedTouches[0]) { tx = null; return; }
+  const dx = e.changedTouches[0].clientX - tx[0], dy = e.changedTouches[0].clientY - tx[1];
+  tx = null;
+  if (Math.abs(dx) < 70 || Math.abs(dy) > 60) return;
+  const n = cookEvents().length;
+  if (dx < 0) { if (S.ci < n - 1) { S.ci++; render(); } }
+  else if (S.ci > 0) { S.ci--; render(); }
+}, { passive: true });
+
+applyTheme();
+checkHash();
+render();
+if (syncOn()) { S.sync.fresh = !!S.sync.fresh; syncNow(); }
+})();
+
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
