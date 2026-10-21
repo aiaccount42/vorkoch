@@ -297,6 +297,26 @@ button.slot:active { background: var(--fill); }
 input[type=number].inl { width: 72px; }
 input[type=time].inl { width: 130px; }
 .item .mv { min-height: 30px; padding: 4px 10px; font-size: 12.5px; font-weight: 500; }
+
+/* Wochenraster */
+.slot .cw { font-size: 11.5px; color: var(--warn); font-weight: 600; line-height: 1.2; margin-top: 2px; }
+.slot.warnslot { background: var(--warnbg); }
+
+.mini-x { flex: 0 0 auto; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--fill); color: var(--ink2); font-size: 20px; line-height: 1; cursor: pointer; }
+.grp.cl .row { width: 100%; border: 0; background: none; text-align: left; cursor: pointer; min-height: 48px; }
+.grp.cl .row:active { background: var(--fill); }
+.grp.cl .sub { font-size: 12.5px; }
+
+.trow { gap: 8px; }
+.trow .grow { white-space: nowrap; flex: 1 1 auto; }
+.trow select.inl.day { width: 84px; flex: none; }
+.trow input[type=time].inl { width: 112px; flex: none; }
+.trow select.inl.day { width: 118px; }
+.trow input[type=time].inl { border: 0; background: var(--fill) !important; border-radius: 10px; padding: 8px 10px; width: 118px; text-align: center; }
+.trow select.inl.who, select.inl.who { width: auto; min-width: 140px; max-width: 200px; }
+
+.timers { display: grid; gap: 8px; margin-bottom: 14px; }
+.tset { display: flex; gap: 8px; align-items: stretch; } .tset .soft { flex: 1; } .tset .sm { min-width: 48px; font-size: 20px; }
 </style>
 <div id="app"></div>
 <nav id="tabs" aria-label="Bereiche"><div class="in"><button type="button" data-act="tab" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button type="button" data-act="tab" data-tab="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Einkauf</button><button type="button" data-act="tab" data-tab="cook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h2M20 10h2M9 3c0 1.6 1 1.6 1 3.5M14 3c0 1.6 1 1.6 1 3.5"/></svg>Kochen</button><button type="button" data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Rezepte</button><button type="button" data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Mehr</button></div></nav>
@@ -385,8 +405,26 @@ const ING = {
   kurkuma:   { n: 'Kurkuma', cls: 'pantry', unit: 'TL', fm: a => a + ' TL Kurkuma' },
   zimt:      { n: 'Zimt', cls: 'pantry', unit: 'TL', fm: a => a + ' TL Zimt' },
   erdnussbutter: { n: 'Erdnussbutter (ohne Zucker)', cls: 'pantry', unit: 'EL', p: 3.7, k: 90, f: 1.5, fm: a => a + ' EL Erdnussbutter' },
-  tahin:     { n: 'Tahin (Sesammus)', cls: 'pantry', unit: 'EL', p: 2.7, k: 90, f: 1.5, spec: true, fm: a => a + ' EL Tahin' }
+  tahin:     { n: 'Tahin (Sesammus)', cls: 'pantry', unit: 'EL', p: 2.7, k: 90, f: 1.5, spec: true, fm: a => a + ' EL Tahin' },
+  fischsauce:{ n: 'Fischsauce', cls: 'pantry', unit: 'EL', spec: true, fm: a => a + ' EL Fischsauce' }
 };
+Object.assign(ING, {
+  spaetzle:  { n: 'Spätzle (frisch)', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 10, k: 290, f: 3, al: ['spätzle', 'nudel'] },
+  rindergulasch: { n: 'Rindergulasch', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 600, pl: 'Packung', pls: 'Packungen', p: 21, k: 130, f: 0, al: ['rind', 'gulasch'] },
+  schweinefilet: { n: 'Schweinefilet (Minutensteaks)', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 400, pl: 'Packung', pls: 'Packungen', p: 21, k: 110, f: 0, al: ['schwein'] },
+  cabanossi: { n: 'Mini-Cabanossi', a: 'Kühlregal', cls: 'keeps', unit: 'g', pack: 250, pl: 'Packung', pls: 'Packungen', p: 20, k: 380, f: 0, al: ['cabanossi', 'wurst'] },
+  frischkaese: { n: 'Frischkäse', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 200, pl: 'Packung', pls: 'Packungen', p: 6, k: 250, f: 0, al: ['frischkäse'] },
+  parmesan:  { n: 'Parmesan', a: 'Kühlregal', cls: 'fresh', unit: 'g', pack: 100, pl: 'Stück', pls: 'Stück', p: 36, k: 400, f: 0, al: ['parmesan', 'käse'] },
+  salat:     { n: 'Romanasalat', a: 'Obst & Gemüse', cls: 'fresh', unit: 'Stk', pack: 1, pl: 'Kopf', pls: 'Köpfe', p: 1.5, k: 20, f: 2, al: ['salat'], fm: a => a + (a === 1 ? ' Kopf Romanasalat' : ' Köpfe Romanasalat'), nm: 'Salat' },
+  gurke:     { n: 'Gurke', a: 'Obst & Gemüse', cls: 'fresh', unit: 'Stk', pack: 1, pl: 'Stück', pls: 'Stück', p: 3, k: 30, f: 1, al: ['gurke'], fm: a => a + ' Gurke', nm: 'Gurke' },
+  linsen_dose: { n: 'Braune Linsen (Dose)', a: 'Konserven', cls: 'can', unit: 'g', pack: 265, pl: 'Dose', pls: 'Dosen', p: 8, k: 105, f: 5, al: ['linse'], ps: 'abgetropft' },
+  polenta:   { n: 'Polenta', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 500, pl: 'Packung', pls: 'Packungen', p: 8, k: 350, f: 3, al: ['polenta', 'mais'] },
+  ramen:     { n: 'Ramen-Nudeln', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 250, pl: 'Packung', pls: 'Packungen', p: 12, k: 350, f: 3, spec: true, al: ['ramen', 'nudel'] },
+  kuerbiskerne: { n: 'Kürbiskerne', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 100, pl: 'Beutel', pls: 'Beutel', p: 30, k: 560, f: 6, al: ['kürbiskern', 'kern'] },
+  walnuesse: { n: 'Walnüsse', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 100, pl: 'Beutel', pls: 'Beutel', p: 15, k: 650, f: 7, al: ['walnuss', 'nuss'] },
+  balsamico: { n: 'Balsamico', cls: 'pantry', unit: 'EL', fm: a => a + ' EL Balsamico' }
+});
+ING.reisnudeln = { n: 'Reisbandnudeln', a: 'Trockenwaren', cls: 'dry', unit: 'g', pack: 250, pl: 'Packung', pls: 'Packungen', p: 7, k: 360, f: 1.5, al: ['reisnudel', 'nudel'] };
 
 /* =========================================================
    REZEPTE (alle für 4 Portionen = 2 Personen × 2 Mahlzeiten)
@@ -572,7 +610,7 @@ const RECIPES = [
     ] }),
 
   R({ id: 'chili', name: 'Chili con Pute mit Kidneybohnen und Reis', short: 'Pute-Chili', cuisine: 'Tex-Mex', kind: 'fleisch', base: 'Reis', reheat: 'sehr gut', early: true,
-    note: 'Frisches Hack: dieses Gericht gehört in den Sonntags- oder Montagstermin. Mild gehalten, kein Cayenne.',
+    note: 'Frisches Hack: dieses Gericht gehört in den ersten oder zweiten Kochtermin der Woche. Mild gehalten, kein Cayenne.',
     i: [['putenhack', 500], ['kidney', 480], ['tomaten', 800], ['paprika', 2], ['karotten', 200], ['reis', 200], ['tomatenmark', 2], ['zwiebel', 2], ['knoblauch', 3], ['paprikapulver', 2], ['kreuzkuemmel', 2], ['oregano', 1], ['olivenoel', 2]],
     tracks: [
       { n: 'Chili', ph: [
@@ -585,7 +623,7 @@ const RECIPES = [
     ] }),
 
   R({ id: 'bolognese', name: 'Linsen-Bolognese mit Vollkornnudeln', short: 'Bolognese', cuisine: 'Italienisch', kind: 'fleisch', base: 'Nudeln', reheat: 'sehr gut', early: true,
-    note: 'Frisches Hack: gehört in den Sonntags- oder Montagstermin. Sauce und Nudeln getrennt aufbewahren, dann werden die Nudeln nicht matschig.',
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. Sauce und Nudeln getrennt aufbewahren, dann werden die Nudeln nicht matschig.',
     i: [['putenhack', 500], ['linsen', 100], ['tomaten', 800], ['karotten', 300], ['nudeln', 320], ['tomatenmark', 2], ['zwiebel', 2], ['knoblauch', 3], ['oregano', 2], ['olivenoel', 2]],
     tracks: [
       { n: 'Sauce', ph: [
@@ -658,7 +696,7 @@ const RECIPES = [
     ] }),
 
   R({ id: 'koefte', isNew: true, name: 'Köfte aus dem Ofen mit Tomatenreis und Skyr-Dip', short: 'Köfte', cuisine: 'Türkisch', kind: 'fleisch', red: true, early: true, base: 'Reis', reheat: 'gut',
-    note: 'Frisches Hack: gehört in den Sonntags- oder Montagstermin. Das einzige Gericht mit Rindfleisch im Pool.',
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. Das einzige Gericht mit Rindfleisch im Pool.',
     i: [['rinderhack', 500], ['brot', 2], ['tomaten', 400], ['reis', 240], ['skyr', 450], ['petersilie', 1], ['zwiebel', 2], ['knoblauch', 2], ['kreuzkuemmel', 2], ['paprikapulver', 2], ['tomatenmark', 2], ['olivenoel', 1]],
     tracks: [
       { n: 'Köfte', ph: [
@@ -671,7 +709,7 @@ const RECIPES = [
     ] }),
 
   R({ id: 'enchilada', isNew: true, name: 'Enchilada-Auflauf mit Pute, Bohnen und Mais', short: 'Enchilada', cuisine: 'Mexikanisch', kind: 'fleisch', early: true, base: 'Wraps', reheat: 'sehr gut',
-    note: 'Frisches Hack: gehört in den Sonntags- oder Montagstermin. Mild gewürzt, Aufwärmen im Ofen oder in der Mikrowelle.',
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. Mild gewürzt, Aufwärmen im Ofen oder in der Mikrowelle.',
     i: [['putenhack', 500], ['wraps', 6], ['kidney', 240], ['mais', 285], ['tomaten', 400], ['paprika', 2], ['mozzarella', 125], ['zwiebel', 2], ['knoblauch', 2], ['paprikapulver', 2], ['kreuzkuemmel', 1], ['oregano', 1], ['tomatenmark', 1], ['olivenoel', 1]],
     tracks: [
       { n: 'Auflauf', ph: [
@@ -867,7 +905,7 @@ const RECIPES = [
     ] }),
 
   R({ id: 'moussaka', isNew: true, name: 'Moussaka mit Pute, Aubergine und Skyr-Haube', short: 'Moussaka', cuisine: 'Griechisch', kind: 'fleisch', early: true, base: 'Kartoffel', reheat: 'sehr gut',
-    note: 'Frisches Hack: gehört in den Sonntags- oder Montagstermin. In Stücke geschnitten gut aufzuwärmen.',
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. In Stücke geschnitten gut aufzuwärmen.',
     i: [['putenhack', 500], ['aubergine', 2], ['kartoffeln', 600], ['tomaten', 400], ['skyr', 450], ['tomatenmark', 1], ['zwiebel', 2], ['knoblauch', 2], ['zimt', 1], ['oregano', 1], ['olivenoel', 3]],
     tracks: [
       { n: 'Gemüse', ph: [
@@ -889,11 +927,298 @@ const RECIPES = [
         { k: 'p', m: 20, d: 'Herd', t: 'Köcheln lassen.' },
         { k: 'a', m: 4, d: 'Herd', t: 'Herd aus, Skyr einrühren, abschmecken.' }] },
       RICE
+    ] }),
+
+  R({ id: 'pho', isNew: true, name: 'Vietnamesische Hähnchen-Nudelsuppe mit Champignons und Karotten', short: 'Pho-Suppe', cuisine: 'Vietnamesisch', kind: 'fleisch', base: 'Nudeln', reheat: 'gut',
+    note: 'Nach Phở-Art, mild. Nudeln und Brühe getrennt aufbewahren und beim Essen zusammengeben, dann bleiben die Nudeln bissfest.',
+    i: [['huehnchen', 600], ['reisnudeln', 250], ['champignons', 400], ['karotten', 300], ['zitrone', 1], ['zwiebel', 2], ['ingwer', 4], ['knoblauch', 3], ['sojasauce', 3], ['fischsauce', 2], ['bruehe', 3]],
+    tracks: [
+      { n: 'Brühe', ph: [
+        { k: 'a', m: 10, d: 'Herd', t: 'Zwiebeln halbieren und im trockenen Topf anbräunen. Ingwer und Knoblauch in Scheiben schneiden, zugeben. Aufgetautes Hähnchen, 1,6 l Wasser, Brühe und Sojasauce zugeben.' },
+        { k: 'p', m: 25, d: 'Herd', t: 'Köcheln lassen, bis das Hähnchen gar ist.' },
+        { k: 'a', m: 8, d: 'Herd', t: 'Hähnchen herausnehmen und zerzupfen. Karotten und Champignons in dünne Scheiben schneiden und in die Brühe geben.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Gemüse garen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Hähnchen zurück in die Brühe, mit Fischsauce und Zitronensaft abschmecken.' }] },
+      { n: 'Nudeln', ph: [
+        { k: 'a', m: 2, d: '', t: 'Reisnudeln mit kochendem Wasser übergießen.' },
+        { k: 'p', m: 10, d: '', t: 'Quellen lassen.' },
+        { k: 'a', m: 2, d: '', t: 'Abgießen und mit kaltem Wasser abspülen.' }] }
+    ] }),
+
+  R({ id: 'viet_hack', isNew: true, name: 'Vietnamesische Hack-Bowl mit Paprika, Ei und Reis', short: 'Hack-Bowl', cuisine: 'Vietnamesisch', kind: 'fleisch', base: 'Reis', reheat: 'gut', early: true,
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. Mild, süßlich-salzig.',
+    i: [['putenhack', 500], ['eier', 6], ['reis', 240], ['paprika', 3], ['karotten', 200], ['zwiebel', 2], ['ingwer', 3], ['knoblauch', 3], ['sojasauce', 3], ['fischsauce', 1], ['honig', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Hack', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Zwiebeln, Knoblauch, Ingwer, Paprika und Karotten klein schneiden. Hack in Öl anbraten, das Gemüse zugeben.' },
+        { k: 'p', m: 10, d: 'Herd', t: 'Sojasauce, Fischsauce, Honig und 100 ml Wasser zugeben, einköcheln lassen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Abschmecken.' }] },
+      { n: 'Eier', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Eier in kochendes Wasser legen.' },
+        { k: 'p', m: 9, d: 'Herd', t: 'Kochen.' },
+        { k: 'a', m: 4, d: '', t: 'Abschrecken, pellen und halbieren.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'viet_nudel', isNew: true, name: 'Reisnudel-Wok mit Tofu, Ei und Erdnuss-Sauce', short: 'Nudel-Wok', cuisine: 'Vietnamesisch', kind: 'veg', base: 'Nudeln', reheat: 'gut',
+    note: 'Mild. Beim Aufwärmen einen Schuss Wasser zugeben.',
+    i: [['tofu', 800], ['reisnudeln', 250], ['wok', 600], ['eier', 4], ['erdnussbutter', 3], ['sojasauce', 3], ['honig', 1], ['zitrone', 1], ['ingwer', 3], ['knoblauch', 3], ['sesamoel', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Tofu', ph: [
+        { k: 'a', m: 8, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Tofu abtropfen, würfeln, mit 1 EL Sojasauce und Öl mischen, aufs Blech geben.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Backen, nach 12 Min wenden.' }] },
+      { n: 'Nudeln', ph: [
+        { k: 'a', m: 2, d: '', t: 'Reisnudeln mit kochendem Wasser übergießen.' },
+        { k: 'p', m: 10, d: '', t: 'Quellen lassen.' },
+        { k: 'a', m: 2, d: '', t: 'Abgießen.' }] },
+      { n: 'Wok', ph: [
+        { k: 'a', m: 5, d: '', t: 'Sauce rühren: Erdnussbutter, 2 EL Sojasauce, Honig, Zitronensaft, Sesamöl und 100 ml warmes Wasser.' },
+        { k: 'a', m: 12, d: 'Herd', t: 'Knoblauch und Ingwer in Öl anbraten, gefrorenes Wok-Gemüse zugeben und braten. Eier zugeben und stocken lassen.' },
+        { k: 'a', m: 3, d: 'Herd', w: ['Tofu', 'Nudeln'], t: 'Tofu, Nudeln und Sauce unterheben, kurz erwärmen.' }] }
+    ] }),
+
+  R({ id: 'geschnetzeltes', isNew: true, name: 'Paprika-Geschnetzeltes mit Hähnchen, Skyr und Vollkornnudeln', short: 'Geschnetzeltes', cuisine: 'Deutsch', kind: 'fleisch', base: 'Nudeln', reheat: 'gut',
+    note: 'Skyr erst nach dem Kochen einrühren, sonst flockt er aus. Beim Aufwärmen nicht aufkochen.',
+    i: [['huehnchen', 500], ['skyr', 450], ['paprika', 4], ['champignons', 400], ['nudeln', 320], ['tomatenmark', 2], ['zwiebel', 2], ['paprikapulver', 3], ['bruehe', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Pfanne', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Aufgetautes Hähnchen in Streifen schneiden und in Öl anbraten. Zwiebeln, Paprika und Champignons schneiden und mitbraten.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Tomatenmark, Paprikapulver, Brühe und 200 ml Wasser zugeben, köcheln lassen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Herd aus, Skyr einrühren, abschmecken.' }] },
+      PASTA
+    ] }),
+
+  R({ id: 'kartoffelauflauf', isNew: true, name: 'Kartoffel-Lauch-Auflauf mit Putenhack, Ei und Mozzarella', short: 'Kartoffelauflauf', cuisine: 'Deutsch', kind: 'fleisch', base: 'Kartoffel', reheat: 'sehr gut', early: true,
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. Lässt sich sehr gut aufwärmen.',
+    i: [['putenhack', 500], ['kartoffeln', 1000], ['lauch', 2], ['eier', 4], ['huettenkaese', 200], ['mozzarella', 125], ['zwiebel', 1], ['senf', 1], ['bruehe', 1], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Kartoffeln', ph: [
+        { k: 'a', m: 10, d: 'Herd', t: 'Kartoffeln schälen, in dünne Scheiben schneiden, in Salzwasser aufsetzen.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Vorgaren, abgießen.' }] },
+      { n: 'Hack', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Zwiebel und Lauch schneiden. Hack in Öl anbraten, Zwiebel und Lauch zugeben, mit Brühe und Senf abschmecken.' }] },
+      { n: 'Auflauf', ph: [
+        { k: 'a', m: 8, d: 'Ofen', w: ['Kartoffeln', 'Hack'], t: 'Ofen auf 200 °C Umluft. Kartoffeln und Hack schichten. Eier mit Hüttenkäse verquirlen, darübergießen, Mozzarella darüberzupfen.' },
+        { k: 'p', m: 30, d: 'Ofen', t: 'Backen, bis die Oberfläche goldbraun ist.' }] }
+    ] }),
+
+  R({ id: 'frikadellen', isNew: true, name: 'Putenfrikadellen mit Ofenkartoffeln, Brokkoli und Kräuter-Skyr', short: 'Frikadellen', cuisine: 'Deutsch', kind: 'fleisch', base: 'Kartoffel', reheat: 'gut', early: true,
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. Frikadellen kalt oder im Ofen aufwärmen.',
+    i: [['putenhack', 500], ['kartoffeln', 1000], ['brokkoli', 500], ['skyr', 450], ['eier', 2], ['brot', 2], ['petersilie', 1], ['zwiebel', 2], ['senf', 1], ['olivenoel', 3]],
+    tracks: [
+      { n: 'Kartoffeln', ph: [
+        { k: 'a', m: 10, d: 'Ofen', t: 'Ofen auf 200 °C Umluft. Kartoffeln in Spalten schneiden, mit Öl und Salz aufs Blech geben.' },
+        { k: 'p', m: 35, d: 'Ofen', t: 'Backen, einmal wenden.' }] },
+      { n: 'Frikadellen', ph: [
+        { k: 'a', m: 16, d: 'Herd', t: 'Brot in Wasser einweichen und ausdrücken. Hack, Ei, Zwiebel, Senf und Brot mischen, zu Frikadellen formen. In Öl von beiden Seiten braten.' }] },
+      { n: 'Dip', ph: [
+        { k: 'a', m: 5, d: '', t: 'Skyr mit gehackter Petersilie, Salz und Pfeffer verrühren.' }] },
+      { n: 'Brokkoli', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Gefrorenen Brokkoli in Salzwasser aufsetzen.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Garen.' },
+        { k: 'a', m: 1, d: '', t: 'Abgießen.' }] }
+    ] }),
+
+  R({ id: 'cacciatore', isNew: true, name: 'Hähnchen-Cacciatore mit Paprika, Champignons und Vollkornnudeln', short: 'Cacciatore', cuisine: 'Italienisch', kind: 'fleisch', base: 'Nudeln', reheat: 'sehr gut',
+    note: 'Schmorgericht, wird beim Aufwärmen besser. Sauce und Nudeln getrennt aufbewahren.',
+    i: [['huehnchen', 600], ['tomaten', 800], ['paprika', 3], ['champignons', 400], ['nudeln', 320], ['tomatenmark', 1], ['zwiebel', 2], ['knoblauch', 3], ['oregano', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Sauce', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Aufgetautes Hähnchen würfeln und in Öl anbraten. Zwiebeln, Paprika, Champignons und Knoblauch schneiden und mitbraten.' },
+        { k: 'p', m: 30, d: 'Herd', t: 'Tomaten, Tomatenmark, Oregano und 100 ml Wasser zugeben, schmoren lassen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Abschmecken.' }] },
+      PASTA
+    ] }),
+
+  R({ id: 'kokossuppe', isNew: true, name: 'Thai-Kokossuppe mit Hähnchen, Champignons und Reis', short: 'Kokossuppe', cuisine: 'Thai', kind: 'fleisch', base: 'Reis', reheat: 'gut',
+    note: 'Mild gehalten, Currypaste sparsam. Reis separat aufbewahren.',
+    i: [['huehnchen', 600], ['kokos', 400], ['champignons', 400], ['paprika', 2], ['reis', 240], ['currypaste', 2], ['zitrone', 1], ['zwiebel', 1], ['ingwer', 3], ['sojasauce', 2], ['bruehe', 2], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Suppe', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Aufgetautes Hähnchen würfeln. Mit Zwiebel, Ingwer und Currypaste in Öl anbraten.' },
+        { k: 'p', m: 18, d: 'Herd', t: 'Kokosmilch, 600 ml Wasser, Brühe, geschnittene Champignons und Paprika zugeben, köcheln lassen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Mit Zitronensaft und Sojasauce abschmecken.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'thai_hack', isNew: true, name: 'Thai-Hackpfanne mit Paprika, Erbsen, Ei und Reis', short: 'Thai-Hack', cuisine: 'Thai', kind: 'fleisch', base: 'Reis', reheat: 'gut', early: true,
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. Mild, ohne Chili.',
+    i: [['putenhack', 500], ['eier', 4], ['erbsen', 450], ['paprika', 3], ['reis', 240], ['currypaste', 1], ['zwiebel', 1], ['ingwer', 3], ['knoblauch', 3], ['sojasauce', 3], ['fischsauce', 1], ['honig', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Pfanne', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Zwiebel, Knoblauch, Ingwer und Paprika schneiden. Hack mit Currypaste in Öl anbraten, Gemüse zugeben.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Gefrorene Erbsen, Sojasauce, Fischsauce, Honig und 80 ml Wasser zugeben, garen.' },
+        { k: 'a', m: 4, d: 'Herd', t: 'Eier verquirlen und unterrühren, stocken lassen.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'kuerbis_pasta', isNew: true, src: 'REWE Rezeptideen', name: 'Lauwarmer Kürbis-Pastasalat mit Mozzarella und Kichererbsen', short: 'Kürbis-Pastasalat', cuisine: 'Herbstküche', kind: 'veg', base: 'Nudeln', reheat: 'gut',
+    note: 'Schmeckt lauwarm und kalt. Salat und Dressing erst beim Essen dazugeben, dann bleibt alles knackig.',
+    i: [['nudeln', 320], ['hokkaido', 1], ['mozzarella', 250], ['kichererbsen', 480], ['salat', 1], ['kuerbiskerne', 60], ['honig', 1], ['balsamico', 2], ['olivenoel', 3]],
+    tracks: [
+      { n: 'Kürbis', ph: [
+        { k: 'a', m: 10, d: 'Ofen', t: 'Ofen auf 180 °C Umluft. Kürbis entkernen und mit Schale würfeln, mit 1 EL Öl und Salz aufs Blech geben.' },
+        { k: 'p', m: 25, d: 'Ofen', t: 'Backen, bis er weich ist.' }] },
+      PASTA,
+      { n: 'Salat', ph: [
+        { k: 'a', m: 8, d: '', w: ['Kürbis', 'Nudeln'], t: 'Salat in Streifen schneiden, Mozzarella abtropfen und Kichererbsen abspülen. Aus Balsamico, Honig und 2 EL Öl ein Dressing rühren. Alles mit Nudeln und Kürbis mischen, Kürbiskerne darüberstreuen.' }] }
+    ] }),
+
+  R({ id: 'lachs_spinat_reis', isNew: true, src: 'REWE Rezeptideen', name: 'Lachs mit Frischkäse-Spinat und Vollkornreis', short: 'Lachs-Spinat-Reis', cuisine: 'Hausküche', kind: 'fisch', base: 'Reis', reheat: 'bedingt',
+    note: 'Lachs am zweiten Tag lieber kalt oder nur kurz bei niedriger Leistung erwärmen. Spinat extra erhitzen.',
+    i: [['lachs', 500], ['spinat', 450], ['reis', 240], ['frischkaese', 100], ['zwiebel', 1], ['knoblauch', 1], ['zitrone', 1], ['honig', 1], ['bruehe', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Spinat', ph: [
+        { k: 'a', m: 8, d: 'Herd', t: 'Zwiebel und Knoblauch würfeln, in Öl anschwitzen. Aufgetauten Spinat zugeben.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Dünsten, bis das Wasser verdampft ist.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Mit 100 ml Brühe ablöschen, Frischkäse einrühren und abschmecken.' }] },
+      { n: 'Lachs', ph: [
+        { k: 'a', m: 4, d: 'Herd', t: 'Aufgetauten Lachs salzen und pfeffern. Von beiden Seiten braten, mit Zitronensaft und Honig beträufeln.' },
+        { k: 'p', m: 7, d: 'Herd', t: 'Braten, einmal wenden.' }] },
+      RICE
+    ] }),
+
+  R({ id: 'pilzgulasch', isNew: true, src: 'REWE Rezeptideen', name: 'Rindergulasch mit Pilzen und Spätzle', short: 'Pilzgulasch', cuisine: 'Deutsch', kind: 'fleisch', base: 'Nudeln', reheat: 'sehr gut',
+    note: 'Das Schmoren läuft lange von allein. Wird beim Aufwärmen noch besser. Paprikapulver edelsüß, nicht scharf.',
+    i: [['rindergulasch', 600], ['champignons', 600], ['spaetzle', 500], ['paprika', 1], ['frischkaese', 100], ['zwiebel', 2], ['paprikapulver', 3], ['tomatenmark', 1], ['bruehe', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Gulasch', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Gulasch portionsweise in Öl scharf anbraten und herausnehmen. Zwiebeln und Paprika würfeln und im selben Topf anschwitzen.' },
+        { k: 'a', m: 8, d: 'Herd', t: 'Pilze putzen, vierteln und mit anbraten. Fleisch zurück in den Topf, Tomatenmark und Paprikapulver zugeben, mit 500 ml Brühe ablöschen.' },
+        { k: 'p', m: 80, d: 'Herd', t: 'Zugedeckt bei kleiner Hitze schmoren, bis das Fleisch zart ist.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Frischkäse einrühren und abschmecken.' }] },
+      { n: 'Spätzle', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Wasser für die Spätzle aufsetzen.' },
+        { k: 'p', m: 4, d: 'Herd', w: ['Gulasch'], t: 'Spätzle nach Packungsangabe garen.' },
+        { k: 'a', m: 1, d: 'Herd', t: 'Abgießen.' }] }
+    ] }),
+
+  R({ id: 'kartoffelpfanne', isNew: true, src: 'REWE Rezeptideen', name: 'Herbstliche Kartoffelpfanne mit Schweinefilet, Lauch und Pilzen', short: 'Kartoffelpfanne', cuisine: 'Deutsch', kind: 'fleisch', base: 'Kartoffel', reheat: 'gut',
+    note: 'Die Kartoffeln dürfen ruhig schon am Vortag gekocht sein, dann bräunen sie besser.',
+    i: [['schweinefilet', 800], ['kartoffeln', 800], ['champignons', 200], ['karotten', 400], ['lauch', 2], ['paprika', 1], ['petersilie', 1], ['zwiebel', 1], ['paprikapulver', 2], ['bruehe', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Kartoffeln', ph: [
+        { k: 'a', m: 3, d: 'Herd', t: 'Kartoffeln mit Schale in Salzwasser aufsetzen.' },
+        { k: 'p', m: 25, d: 'Herd', t: 'Gar kochen.' },
+        { k: 'a', m: 6, d: '', t: 'Abgießen, pellen und würfeln.' }] },
+      { n: 'Pfanne', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Fleisch in Streifen schneiden, in Öl braun anbraten und herausnehmen. Lauch, Karotten, Zwiebel, Paprika und Pilze schneiden.' },
+        { k: 'a', m: 6, d: 'Herd', t: 'Lauch, Karotten, Zwiebel und Pilze im Bratfett anbraten, mit Brühe ablöschen.' },
+        { k: 'p', m: 12, d: 'Herd', t: 'Garen, nach 5 Min die Paprika zugeben.' },
+        { k: 'a', m: 4, d: 'Herd', w: ['Kartoffeln'], t: 'Kartoffelwürfel und Fleisch zugeben, mit Paprikapulver, Salz und Pfeffer würzen, Petersilie darüberstreuen.' }] }
+    ] }),
+
+  R({ id: 'cabanossi_eintopf', isNew: true, src: 'REWE Rezeptideen', name: 'Cabanossi-Bohneneintopf mit Kartoffeln und Skyr', short: 'Cabanossi-Eintopf', cuisine: 'Deutsch', kind: 'fleisch', base: 'Eintopf', reheat: 'sehr gut',
+    note: 'Skyr erst im Teller obendrauf geben. Die Wurst ist deftig, deshalb nur eine Packung. Das Eiweiß kommt vor allem von Bohnen und Skyr.',
+    i: [['cabanossi', 250], ['kartoffeln', 600], ['karotten', 300], ['paprika', 2], ['champignons', 200], ['weisse', 480], ['skyr', 450], ['zwiebel', 2], ['tomatenmark', 1], ['paprikapulver', 2], ['bruehe', 2], ['petersilie', 1], ['olivenoel', 1]],
+    tracks: [
+      { n: 'Eintopf', ph: [
+        { k: 'a', m: 16, d: 'Herd', t: 'Zwiebeln, Karotten, Paprika und Pilze schneiden, Kartoffeln würfeln. Zwiebeln, Karotten und Pilze in Öl anbraten, Tomatenmark zugeben.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Mit 800 ml Wasser und Brühe aufgießen, Kartoffeln und Paprika zugeben.' },
+        { k: 'p', m: 18, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Cabanossi in Stücken und abgespülte Bohnen zugeben.' },
+        { k: 'p', m: 5, d: 'Herd', t: 'Mitziehen lassen, mit Paprikapulver und Salz abschmecken, Petersilie darüber.' }] }
+    ] }),
+
+  R({ id: 'ramen_tofu', isNew: true, src: 'REWE Rezeptideen', name: 'Ramen mit Ei, Tofu und Pilzen', short: 'Ramen', cuisine: 'Japanisch', kind: 'veg', base: 'Nudeln', reheat: 'gut',
+    note: 'Nudeln, Brühe und Beilagen getrennt aufbewahren und erst beim Essen zusammengeben. Ohne Chili, mild.',
+    i: [['ramen', 250], ['tofu', 800], ['eier', 6], ['champignons', 400], ['wok', 600], ['bruehe', 3], ['ingwer', 3], ['knoblauch', 3], ['sojasauce', 3], ['sesamoel', 1]],
+    tracks: [
+      { n: 'Brühe', ph: [
+        { k: 'a', m: 6, d: 'Herd', t: 'Ingwer in Scheiben und Knoblauch andrücken. Mit Brühe, 1,2 l Wasser und Sojasauce aufsetzen.' },
+        { k: 'p', m: 20, d: 'Herd', t: 'Leise köcheln lassen, am Ende mit Sesamöl abschmecken.' }] },
+      { n: 'Tofu', ph: [
+        { k: 'a', m: 8, d: 'Herd', t: 'Tofu abtropfen, in Scheiben schneiden und mit den halbierten Pilzen in Öl goldbraun anbraten.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Braten, einmal wenden.' }] },
+      { n: 'Eier', ph: [
+        { k: 'a', m: 2, d: 'Herd', t: 'Eier in kochendes Wasser legen.' },
+        { k: 'p', m: 7, d: 'Herd', t: 'Weich kochen.' },
+        { k: 'a', m: 4, d: '', t: 'Abschrecken, pellen und halbieren.' }] },
+      { n: 'Nudeln', ph: [
+        { k: 'a', m: 3, d: 'Herd', t: 'Ramen-Nudeln und Wok-Gemüse nach Packungsangabe kochen.' },
+        { k: 'p', m: 4, d: 'Herd', t: 'Garen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Abgießen.' }] }
+    ] }),
+
+  R({ id: 'hack_polenta', isNew: true, src: 'REWE Rezeptideen', name: 'Hackbällchen-Polenta-Auflauf mit Gemüse und Feta', short: 'Hack-Polenta', cuisine: 'Italienisch', kind: 'fleisch', base: 'Polenta', reheat: 'sehr gut', early: true,
+    note: 'Frisches Hack: gehört in den ersten oder zweiten Kochtermin der Woche. Statt Gorgonzola kommt Feta drauf.',
+    i: [['putenhack', 500], ['polenta', 250], ['wok', 600], ['feta', 200], ['eier', 1], ['brot', 2], ['zwiebel', 1], ['paprikapulver', 1], ['bruehe', 3], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Polenta', ph: [
+        { k: 'a', m: 4, d: 'Herd', t: 'Brühe mit 750 ml Wasser aufkochen, Polenta unter Rühren einstreuen.' },
+        { k: 'p', m: 6, d: 'Herd', t: 'Quellen lassen, dann in eine geölte Auflaufform streichen.' }] },
+      { n: 'Hackbällchen', ph: [
+        { k: 'a', m: 16, d: 'Herd', t: 'Brot in Wasser einweichen und ausdrücken. Mit Hack, Ei, gewürfelter Zwiebel, Paprikapulver und Salz mischen, kleine Bällchen formen und in Öl rundum anbraten.' }] },
+      { n: 'Auflauf', ph: [
+        { k: 'a', m: 8, d: 'Ofen', w: ['Polenta', 'Hackbällchen'], t: 'Ofen auf 200 °C Umluft. Gefrorenes Gemüse auf der Polenta verteilen, Hackbällchen eindrücken, Feta darüberbröseln.' },
+        { k: 'p', m: 22, d: 'Ofen', t: 'Backen, bis der Feta gebräunt ist.' }] }
+    ] }),
+
+  R({ id: 'linsen_bowl', isNew: true, src: 'REWE Rezeptideen', name: 'Knusprige Linsen-Bowl mit Couscous, Feta und Walnüssen', short: 'Linsen-Bowl', cuisine: 'Mittelmeer', kind: 'veg', base: 'Couscous', reheat: 'gut',
+    note: 'Eine kalte Bowl. Die Linsen nur kurz im Ofen, dann bleiben sie knusprig. Dressing erst vor dem Essen darüber.',
+    i: [['linsen_dose', 795], ['couscous', 240], ['feta', 200], ['walnuesse', 80], ['gurke', 1], ['paprika', 2], ['karotten', 200], ['zitrone', 1], ['honig', 1], ['senf', 1], ['paprikapulver', 2], ['kreuzkuemmel', 1], ['olivenoel', 3]],
+    tracks: [
+      { n: 'Linsen', ph: [
+        { k: 'a', m: 6, d: 'Ofen', t: 'Ofen auf 180 °C Umluft. Linsen abspülen und gut trocknen, mit 1 EL Öl, Paprikapulver, Kreuzkümmel und Salz mischen, aufs Blech geben.' },
+        { k: 'p', m: 22, d: 'Ofen', t: 'Backen, einmal wenden.' }] },
+      COUSC,
+      { n: 'Bowl', ph: [
+        { k: 'a', m: 12, d: '', t: 'Gurke, Paprika und Karotten schneiden bzw. raspeln, Walnüsse hacken, Feta würfeln. Aus Zitronensaft, 2 EL Öl, Honig, Senf und Salz ein Dressing rühren.' },
+        { k: 'a', m: 3, d: '', w: ['Linsen', 'Couscous'], t: 'Alles nebeneinander in Boxen verteilen.' }] }
+    ] }),
+
+  R({ id: 'curry_couscous', isNew: true, src: 'REWE Rezeptideen', name: 'Mildes Hähnchen-Curry mit Paprika, Mais und Couscous', short: 'Hähnchen-Curry', cuisine: 'Indisch', kind: 'fleisch', base: 'Couscous', reheat: 'sehr gut',
+    note: 'Gewürze sparsam, mild. Statt Cashewmus kommt Erdnussbutter rein.',
+    i: [['huehnchen', 500], ['kokos', 400], ['karotten', 300], ['paprika', 2], ['mais', 285], ['couscous', 240], ['erdnussbutter', 1], ['zwiebel', 1], ['knoblauch', 2], ['curry', 2], ['kurkuma', 1], ['kreuzkuemmel', 1], ['bruehe', 2], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Curry', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Aufgetautes Hähnchen würfeln, in Öl anbraten. Zwiebel und Knoblauch zugeben, dann Curry, Kurkuma und Kreuzkümmel kurz mitrösten. Karotten in Scheiben, Paprika in Streifen zugeben.' },
+        { k: 'p', m: 15, d: 'Herd', t: 'Mit Kokosmilch und 200 ml Wasser samt Brühe aufkochen und köcheln lassen.' },
+        { k: 'a', m: 3, d: 'Herd', t: 'Erdnussbutter und abgetropften Mais einrühren, abschmecken.' }] },
+      COUSC
+    ] }),
+
+  R({ id: 'spinatknoedel', isNew: true, src: 'REWE Rezeptideen', name: 'Spinatknödel mit Parmesan und Skyr-Dip', short: 'Spinatknödel', cuisine: 'Deutsch', kind: 'veg', base: 'Brot', reheat: 'gut',
+    note: 'Am zweiten Tag in Scheiben in der Pfanne anbraten, so schmecken sie fast frisch.',
+    i: [['brot', 8], ['spinat', 450], ['eier', 4], ['parmesan', 200], ['skyr', 450], ['zwiebel', 1], ['knoblauch', 1], ['olivenoel', 2]],
+    tracks: [
+      { n: 'Knödel', ph: [
+        { k: 'a', m: 14, d: 'Herd', t: 'Brot würfeln und mit 150 ml heißem Wasser übergießen. Zwiebel und Knoblauch würfeln, in Öl anschwitzen, gefrorenen Spinat zugeben und ausdampfen lassen.' },
+        { k: 'a', m: 10, d: '', t: 'Spinat, Eier, 150 g geriebenen Parmesan und Salz zum Brot geben, mit nassen Händen etwa 8 Knödel formen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Knödel in siedendes Salzwasser legen.' },
+        { k: 'p', m: 15, d: 'Herd', t: 'Ziehen lassen, bis sie oben schwimmen.' }] },
+      { n: 'Dip', ph: [
+        { k: 'a', m: 4, d: '', t: 'Skyr mit restlichem Parmesan, Salz und Pfeffer verrühren.' }] }
+    ] }),
+
+  R({ id: 'seelachs_lauch', isNew: true, src: 'REWE Rezeptideen', name: 'Panierter Seelachs mit Lauchrahm und Pellkartoffeln', short: 'Seelachs-Lauch', cuisine: 'Deutsch', kind: 'fisch', base: 'Kartoffel', reheat: 'bedingt',
+    note: 'Der Fisch schmeckt frisch am besten. Am zweiten Tag kurz im Ofen knusprig machen. Lauchrahm separat aufwärmen.',
+    i: [['seelachs', 800], ['kartoffeln', 1000], ['lauch', 3], ['eier', 2], ['brot', 4], ['frischkaese', 100], ['zitrone', 1], ['knoblauch', 2], ['bruehe', 1], ['olivenoel', 3]],
+    tracks: [
+      { n: 'Kartoffeln', ph: [
+        { k: 'a', m: 3, d: 'Herd', t: 'Kartoffeln mit Schale in Salzwasser aufsetzen.' },
+        { k: 'p', m: 25, d: 'Herd', t: 'Gar kochen, danach abgießen und pellen.' }] },
+      { n: 'Lauchrahm', ph: [
+        { k: 'a', m: 8, d: 'Herd', t: 'Lauch in halbe Ringe schneiden, Knoblauch hacken. In Öl andünsten, mit Brühe und 100 ml Wasser ablöschen.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Köcheln lassen.' },
+        { k: 'a', m: 2, d: 'Herd', t: 'Frischkäse einrühren, mit Salz, Pfeffer und Zitronensaft abschmecken.' }] },
+      { n: 'Fisch', ph: [
+        { k: 'a', m: 12, d: 'Herd', t: 'Aufgetauten Fisch trocken tupfen und salzen. Brot fein zerbröseln. Fisch erst durchs verquirlte Ei, dann durch die Brösel ziehen und in Öl goldbraun braten.' },
+        { k: 'p', m: 8, d: 'Herd', t: 'Braten, einmal wenden.' }] }
     ] })
 ];
 
 const BY_ID = {};
-RECIPES.forEach(r => { BY_ID[r.id] = r; r.servings = 4; });
+const COUNTRY = { 'Italienisch': 'Italien', 'Toskanisch': 'Italien', 'Deutsch': 'Deutschland', 'Hausküche': 'Deutschland', 'Herbstküche': 'Deutschland', 'Thai': 'Thailand', 'Vietnamesisch': 'Vietnam',
+  'Indisch': 'Indien', 'Griechisch': 'Griechenland', 'Türkisch': 'Türkei', 'Spanisch': 'Spanien', 'Französisch': 'Frankreich', 'Mexikanisch': 'Mexiko', 'Tex-Mex': 'Mexiko',
+  'Nahost': 'Orient', 'Levante': 'Orient', 'Libanesisch': 'Orient', 'Marokkanisch': 'Orient', 'Mittelmeer': 'Mittelmeer', 'Ostasiatisch': 'Asien', 'Südostasiatisch': 'Asien', 'Japanisch': 'Japan',
+  'Skandinavisch': 'Skandinavien', 'Russisch': 'Russland', 'Karibisch': 'Karibik' };
+RECIPES.forEach(r => { BY_ID[r.id] = r; r.servings = 4; r.country = COUNTRY[r.cuisine] || r.cuisine; });
+function countries(list) {
+  const c = {};
+  (list || RECIPES).forEach(r => { c[r.country] = (c[r.country] || 0) + 1; });
+  return Object.keys(c).sort((a, b) => c[b] - c[a] || a.localeCompare(b, 'de')).map(k => ({ name: k, n: c[k] }));
+}
 
 /* =========================================================
    HILFSFUNKTIONEN
@@ -941,20 +1266,20 @@ function devices(r) { const s = new Set(); r.tracks.forEach(t => t.ph.forEach(p 
 /* =========================================================
    EINKAUF
    ========================================================= */
-function need(recipes) {
+function need(recipes, facs) {
   const t = {};
-  recipes.forEach(r => r.i.forEach(([id, a]) => { t[id] = (t[id] || 0) + a; }));
+  recipes.forEach((r, k) => r.i.forEach(([id, a]) => { t[id] = (t[id] || 0) + a * (facs ? facs[k] : 1); }));
   return t;
 }
-function shop(recipes) {
-  const t = need(recipes);
+function shop(recipes, facs) {
+  const t = need(recipes, facs);
   const items = [], vorrat = [];
   Object.keys(t).forEach(id => {
     const g = ING[id];
     if (g.cls === 'pantry') { vorrat.push({ id, n: g.n, spec: !!g.spec }); return; }
     const packs = Math.max(1, Math.ceil(t[id] / g.pack - 1e-9));
     const left = packs * g.pack - t[id];
-    const forR = recipes.filter(r => r.i.some(x => x[0] === id)).map(r => r.short);
+    const forR = [...new Set(recipes.filter(r => r.i.some(x => x[0] === id)).map(r => r.short))];
     const counts = g.unit === 'g' || g.unit === 'ml';
     let txt = packs + ' ' + (packs === 1 ? g.pl : g.pls);
     if (counts) txt += ' · je ' + fmtSize(g.pack, g.unit) + (g.ps ? ' ' + g.ps : '');
@@ -962,8 +1287,8 @@ function shop(recipes) {
     const rest = (g.cls === 'fresh' || g.cls === 'can') && left > g.pack * 0.04;
     items.push({
       id, n: g.n, spec: !!g.spec, a: g.a, cls: g.cls, need: t[id], packs, left, leftFrac: left / g.pack, forR, txt,
-      needTxt: counts ? fmtSize(t[id], g.unit) : (g.fm ? g.fm(t[id]) : t[id] + ' ' + g.unit),
-      leftTxt: rest ? (counts ? fmtSize(left, g.unit) : left + ' ' + (g.nm || g.unit)) : '', rest
+      needTxt: counts ? fmtSize(t[id], g.unit) : (g.fm ? g.fm(t[id]) : fmtQ(t[id]) + ' ' + g.unit),
+      leftTxt: rest ? (counts ? fmtSize(left, g.unit) : fmtQ(left) + ' ' + (g.nm || g.unit)) : '', rest
     });
   });
   items.sort((x, y) => AISLES.indexOf(x.a) - AISLES.indexOf(y.a) || x.n.localeCompare(y.n, 'de'));
@@ -1016,7 +1341,10 @@ function scheduleSession(list) {
     }
     return m;
   }
+  let nodes = 0;
+  const LIM = n > 4 ? 30000 : Infinity;
   function dfs(pf) {
+    if (++nodes > LIM && best) return;
     let done = true;
     for (let i = 0; i < n; i++) if (idx[i] < chains[i].ph.length) { done = false; break; }
     if (done) {
@@ -1068,23 +1396,45 @@ function sched(list) {
    ========================================================= */
 const REHEAT_RANK = { 'bedingt': 0, 'gut': 1, 'sehr gut': 2 };
 
-function assign(rs) {
-  // rs: 5 Rezepte. Ergebnis: Reihenfolge [A, B, C, D, E] (A = Sonntag, B/C = Montag, D/E = Donnerstag)
+function sessionSizes(D, M) {
+  // Gerichte pro Kochtermin: die ersten Termine bekommen eher weniger (5 Gerichte auf 3 Termine: 1, 2, 2)
+  if (D <= 0) return [];
+  M = Math.max(1, Math.min(M, D));
+  const base = Math.floor(D / M), rem = D - base * M, a = [];
+  for (let i = 0; i < M; i++) a.push(base + (i >= M - rem ? 1 : 0));
+  return a;
+}
+function assign(rsIn, sizes, opt) {
+  // Verteilt die Gerichte auf die Kochtermine (Gruppen laut sizes). Kurze Gesamtzeit, frisches Hack nicht im letzten Termin.
+  const rs = rsIn.slice().sort((a, b) => a.id < b.id ? -1 : 1);
+  const n = rs.length, M = sizes.length;
+  if (!n) return [];
+  const ord = (g) => g.slice().sort((x, y) => REHEAT_RANK[x.reheat] - REHEAT_RANK[y.reheat] || sched([y]).mk - sched([x]).mk);
+  if (M === 1) return [ord(rs)];
+  const need = (opt && opt.need) || {}, times = (opt && opt.times) || [];
+  const late = (g, si) => g.reduce((s, r) => s + (need[r.id] === undefined || times[si] === undefined ? 0 : times[si] > need[r.id] ? 5000 : (need[r.id] - times[si]) / 1440 * 30), 0);
   let best = null;
-  for (let a = 0; a < 5; a++) {
-    const rest = [0, 1, 2, 3, 4].filter(x => x !== a);
-    const pairings = [[[rest[0], rest[1]], [rest[2], rest[3]]], [[rest[0], rest[2]], [rest[1], rest[3]]], [[rest[0], rest[3]], [rest[1], rest[2]]]];
-    for (const [p1, p2] of pairings) {
-      for (const [mo, dn] of [[p1, p2], [p2, p1]]) {
-        if (dn.some(i => rs[i].early)) continue;
-        const cost = sched([rs[a]]).mk + sched(mo.map(i => rs[i])).mk + sched(dn.map(i => rs[i])).mk;
-        if (!best || cost < best.cost - 1e-9) best = { cost, a, mo, dn };
-      }
+  function rec(si, rest, groups, cost) {
+    if (best && cost >= best.cost - 1e-9) return;
+    if (si === M - 1) {
+      if (rest.some(r => r.early)) return;
+      const c = cost + sched(rest).mk + late(rest, si);
+      if (!best || c < best.cost - 1e-9) best = { cost: c, groups: groups.concat([rest]) };
+      return;
     }
+    const k = sizes[si], idx = [];
+    (function pick(s) {
+      if (idx.length === k) {
+        const g = idx.map(i => rest[i]), others = rest.filter((_, i) => !idx.includes(i));
+        rec(si + 1, others, groups.concat([g]), cost + sched(g).mk + late(g, si));
+        return;
+      }
+      for (let i = s; i < rest.length; i++) { idx.push(i); pick(i + 1); idx.pop(); }
+    })(0);
   }
+  rec(0, rs, [], 0);
   if (!best) return null;
-  const ord = (pair) => pair.slice().sort((x, y) => REHEAT_RANK[rs[x].reheat] - REHEAT_RANK[rs[y].reheat] || sched([rs[y]]).mk - sched([rs[x]]).mk);
-  return [best.a, ...ord(best.mo), ...ord(best.dn)].map(i => rs[i]);
+  return best.groups.map(ord);
 }
 
 function gauss(rand) { return rand() + rand() + rand() - 1.5; }
@@ -1125,28 +1475,40 @@ function offerHits(r, offers) {
 }
 
 function plan(o) {
+  // Wählt n neue Gerichte zusätzlich zu den schon festgelegten (o.fixed). o.sessions = Zahl der Kochtermine.
   const rand = o.rand || Math.random;
-  const st = o.settings, pool = o.pool;
+  const st = o.settings, fixed = o.fixed || [];
+  const fixedIds = new Set(fixed.map(r => r.id));
+  const pool = o.pool.filter(r => !fixedIds.has(r.id));
+  const n = o.n == null ? 5 : o.n;
+  const U = n + fixed.length;
   const v = o.diversity == null ? 0.5 : o.diversity;
   const hist = o.history || [];
   const noise = o.noise == null ? 0.3 : o.noise;
   const avoid = new Set(o.avoid || []);
+  const M = Math.max(1, o.sessions || 3);
+  const sizes = sessionSizes(U, M);
   const targetMeal = Math.max(...st.persons.map(p => p.protein)) * st.share / 2;
+  const vegMin = Math.min(U, Math.round(st.vegMin * U / 5));
+  const fishMax = st.fishMax === 0 ? 0 : Math.max(1, Math.round(st.fishMax * U / 5));
+  const redMax = Math.max(1, Math.round(U / 5));
+  const earlyMax = sizes.length > 1 ? U - sizes[sizes.length - 1] : U;
+  if (n <= 0) return { ids: [], key: fixed.map(r => r.id).sort().join(','), relaxed: false };
+  if (pool.length < n) return null;
   const hits = pool.map(r => offerHits(r, o.offers));
   let relaxed = false;
 
   function enumerate(strict) {
-    const cs = combos(pool.length, 5, 30000, rand), res = [];
+    const cs = combos(pool.length, n, 30000, rand), res = [];
     for (const c of cs) {
-      const rs = c.map(i => pool[i]);
+      const chosen = c.map(i => pool[i]), rs = fixed.concat(chosen);
       const veg = rs.filter(r => r.kind === 'veg').length;
       const fish = rs.filter(r => r.kind === 'fisch').length;
-      const early = rs.filter(r => r.early).length;
-      if (early > 3) continue;
-      if (rs.filter(r => r.red).length > 1) continue;
-      if (strict && (veg < st.vegMin || fish > st.fishMax)) continue;
+      if (rs.filter(r => r.early).length > earlyMax) continue;
+      if (rs.filter(r => r.red).length > redMax) continue;
+      if (strict && (veg < vegMin || fish > fishMax)) continue;
       const cuis = new Set(rs.map(r => r.cuisine)).size, bases = new Set(rs.map(r => r.base)).size;
-      res.push({ c, rs, sp: new Set(rs.flatMap(r => r.spec)).size, w: wasteScore(rs), vr: cuis + 0.6 * bases });
+      res.push({ c, chosen, rs, sp: new Set(rs.flatMap(r => r.spec)).size, w: wasteScore(rs), vr: (cuis + 0.6 * bases) / Math.max(1, U / 5) });
     }
     return res;
   }
@@ -1159,62 +1521,192 @@ function plan(o) {
   const mw = mean(ws), sw = sd(ws, mw), mv = mean(vs), sv = sd(vs, mv);
   let best = null;
   for (const x of res) {
-    const ids = x.rs.map(r => r.id);
-    const key = ids.slice().sort().join(',');
+    const ids = x.chosen.map(r => r.id);
+    const key = x.rs.map(r => r.id).sort().join(',');
     if (avoid.has(key)) continue;
     let s = (1 - v) * (-(x.w - mw) / sw) + v * ((x.vr - mv) / sv);
     ids.forEach(id => { hist.forEach((h, wi) => { if (h.includes(id)) s -= [1.2, 0.6, 0.3][wi] || 0; }); });
-    x.rs.forEach(r => { s -= 4 * Math.max(0, 1 - r.nu.p / (targetMeal * 0.95)); });
+    x.chosen.forEach(r => { s -= 4 * Math.max(0, 1 - r.nu.p / (targetMeal * 0.95)); });
     let ob = 0; x.c.forEach(i => { ob += Math.min(hits[i].length, 3) * 0.5; });
     s += Math.min(ob, 3);
     s -= 0.25 * x.sp;
     const rt = o.ratings || {};
-    x.rs.forEach(r => { const v = rt[r.id]; if (v > 0) s += 0.2; else if (v < 0) s -= 3; });
+    x.chosen.forEach(r => { const q = rt[r.id]; if (q > 0) s += 0.2; else if (q < 0) s -= 3; });
+    if (o.motto) x.chosen.forEach(r => { if (r.country === o.motto) s += 2; });
     s += noise * gauss(rand);
     if (!best || s > best.s) best = { s, x, key };
   }
   if (!best) return null;
-  const ordered = assign(best.x.rs);
-  if (!ordered) return null;
-  return { ids: ordered.map(r => r.id), key: best.key, relaxed };
+  return { ids: best.x.chosen.map(r => r.id), key: best.key, relaxed };
+}
+
+// Frisch gekochte Gerichte für einzelne Mahlzeiten: schnell, eiweißreich, ohne Dopplung.
+function pickFresh(o) {
+  const rand = o.rand || Math.random, st = o.settings, rt = o.ratings || {}, hist = o.history || [];
+  const noise = o.noise == null ? 0.3 : o.noise;
+  const used = new Set(o.exclude || []);
+  const prep = (o.prepRs || []).slice();
+  const targetMeal = Math.max(...st.persons.map(p => p.protein)) * st.share / 2;
+  const out = [];
+  for (let k = 0; k < o.count; k++) {
+    const all = prep.concat(out.map(id => BY_ID[id]));
+    const U = Math.max(5, all.length + (o.count - k));
+    const fishMax = st.fishMax === 0 ? 0 : Math.max(1, Math.round(st.fishMax * U / 5));
+    const redMax = Math.max(1, Math.round(U / 5));
+    let best = null;
+    o.pool.forEach(r => {
+      if (used.has(r.id) || out.includes(r.id)) return;
+      if (r.kind === 'fisch' && all.filter(x => x.kind === 'fisch').length >= fishMax) return;
+      if (r.red && all.filter(x => x.red).length >= redMax) return;
+      let s = -4 * Math.max(0, 1 - r.nu.p / (targetMeal * 0.95));
+      hist.forEach((h, wi) => { if (h.includes(r.id)) s -= [1.2, 0.6, 0.3][wi] || 0; });
+      s += Math.min(offerHits(r, o.offers).length, 3) * 0.5;
+      const q = rt[r.id]; if (q > 0) s += 0.2; else if (q < 0) s -= 3;
+      s -= 0.012 * activeMin(r);
+      if (o.motto && r.country === o.motto) s += 2;
+      s += noise * gauss(rand);
+      if (!best || s > best.s) best = { s, r };
+    });
+    if (!best) break;
+    out.push(best.r.id);
+  }
+  return out;
 }
 
 /* =========================================================
-   WOCHE AUFBAUEN
+   WOCHENRASTER
+   Zellen: Tag 0 (Sonntag) bis 6 (Samstag), dazu l (Mittag) oder d (Abend), also '0d', '1l' ...
+   Typ t: p vorgekocht, f frisch, o auswärts, x offen. r = Rezept, u = von Hand gesetzt.
    ========================================================= */
-const SESSIONS = [
-  { key: 'so', day: 'Sonntag', dish: [0] },
-  { key: 'mo', day: 'Montag', dish: [1, 2] },
-  { key: 'do', day: 'Donnerstag', dish: [3, 4] }
-];
+const CELLS = [];
+for (let d = 0; d < 7; d++) { CELLS.push(d + 'l'); CELLS.push(d + 'd'); }
+const MEAL_MIN = { l: 12.5 * 60, d: 19.5 * 60 };
+const FRESH_AT = { l: '11:30', d: '18:00' };
+const DEFAULT_SESS = [{ day: 0, time: '16:00' }, { day: 1, time: '18:00' }, { day: 4, time: '18:00' }];
+function defaultGrid() {
+  const g = {};
+  CELLS.forEach(k => { g[k] = { t: 'x' }; });
+  ['0d', '1l', '1d', '2l', '2d', '3l', '4d', '5l', '5d', '6l'].forEach(k => { g[k] = { t: 'p' }; });
+  return g;
+}
+const hm = s => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) : 18 * 60; };
+function cellTime(k) { return +k[0] * 1440 + MEAL_MIN[k[1]]; }
+function sessTime(s) { return s.day * 1440 + hm(s.time); }
+function sortSess(sess) { return sess.slice().sort((a, b) => sessTime(a) - sessTime(b)); }
+function copyGrid(g) { const o = {}; CELLS.forEach(k => { o[k] = Object.assign({}, g[k] || { t: 'x' }); }); return o; }
+function dishCounts(g) {
+  const c = {};
+  CELLS.forEach(k => { const x = g[k]; if (x && x.t === 'p' && x.r && BY_ID[x.r]) c[x.r] = (c[x.r] || 0) + 1; });
+  return c;
+}
+const spareOf = k => 2 * Math.ceil(k / 2) - k;
 
-function build(ids, st) {
-  const rs = ids.map(id => BY_ID[id]);
-  const targets = st.persons.map(p => p.protein * st.share / 2);
-  const guide = rs.map(r => {
-    const f = targets.map(t => {
-      const x = Math.round((t / r.nu.p) * 4) / 4;
-      return Math.min(1.5, Math.max(0.5, x));
+function needMap(g, onlyUser) {
+  const m = {};
+  CELLS.forEach(k => { const x = g[k]; if (x.t === 'p' && x.r && (!onlyUser || x.u)) { const t = cellTime(k); if (m[x.r] === undefined || t < m[x.r]) m[x.r] = t; } });
+  return m;
+}
+// Wann ist welches Gericht fertig? Ergebnis: { id: Startzeit des Kochtermins in Minuten }, dazu die Gruppen.
+function layout(ids, sessIn, need) {
+  const sess = sortSess(sessIn);
+  const rs = ids.map(id => BY_ID[id]).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
+  if (!rs.length || !sess.length) return { groups: [], sess: [], time: {} };
+  const sizes = sessionSizes(rs.length, sess.length);
+  let groups = assign(rs, sizes, { need, times: sess.map(sessTime) });
+  if (!groups) { groups = []; let p = 0; sizes.forEach(z => { groups.push(rs.slice(p, p + z)); p += z; }); }
+  const time = {};
+  groups.forEach((g, i) => g.forEach(r => { time[r.id] = sessTime(sess[i]); }));
+  return { groups, sess: sess.slice(0, groups.length), time };
+}
+
+// Legt Mahlzeit-Vorräte (tokens: {id: Anzahl}) auf leere p-Zellen. Früh verfügbar, frisches Hack und heikle Gerichte zuerst.
+function placeTokens(g0, sessIn, tokens0) {
+  const dishes = () => new Set(Object.keys(dishCounts(g0)).concat(Object.keys(tokens0)));
+  let assumed = dishes(), g = null;
+  for (let it = 0; it < 4; it++) {
+    g = copyGrid(g0);
+    const ids = [...assumed], lay = layout(ids, sessIn, needMap(g0, true));
+    const tok = {}; Object.keys(tokens0).forEach(id => { if (assumed.has(id)) tok[id] = tokens0[id]; });
+    const empty = CELLS.filter(k => g[k].t === 'p' && !g[k].r).sort((a, b) => cellTime(a) - cellTime(b));
+    empty.forEach(k => {
+      let best = null;
+      Object.keys(tok).forEach(id => {
+        if (tok[id] <= 0 || lay.time[id] === undefined || lay.time[id] > cellTime(k)) return;
+        const r = BY_ID[id], key = [r.early ? 0 : 1, REHEAT_RANK[r.reheat], lay.time[id]];
+        if (!best || key[0] < best.key[0] || (key[0] === best.key[0] && (key[1] < best.key[1] || (key[1] === best.key[1] && key[2] < best.key[2])))) best = { id, key };
+      });
+      if (best) { g[k].r = best.id; delete g[k].u; tok[best.id]--; }
     });
-    const needP = 2 * f.reduce((s, x) => s + x, 0);
-    return { f, needP, tight: needP > r.servings + 1e-9, cover: targets.map(t => r.nu.p / t) };
-  });
-  const sessions = SESSIONS.map(s => {
-    const list = s.dish.map(i => rs[i]);
-    const sc = sched(list);
-    const thaw = [];
+    const used = new Set(Object.keys(dishCounts(g)));
+    if (used.size === assumed.size && [...used].every(x => assumed.has(x))) break;
+    assumed = used;
+  }
+  return g;
+}
+
+// Neuer Vorschlag: von Hand gesetzte Zellen bleiben, der Rest wird neu gewählt.
+function fillGrid(grid, o) {
+  const g = copyGrid(grid);
+  CELLS.forEach(k => { if (!o.keep && !g[k].u) delete g[k].r; if (g[k].t !== 'p' && g[k].t !== 'f') { delete g[k].r; delete g[k].u; } if (g[k].t !== 'f') delete g[k].w; });
+  const st = o.settings, sess = o.sess;
+  const cnt = dishCounts(g);
+  const fixedIds = Object.keys(cnt), fixedRs = fixedIds.map(id => BY_ID[id]);
+  const empty = CELLS.filter(k => g[k].t === 'p' && !g[k].r);
+  const spare = fixedIds.reduce((s, id) => s + spareOf(cnt[id]), 0);
+  const nNew = Math.max(0, Math.ceil((empty.length - spare) / 2));
+  const pl = plan({ motto: o.motto, pool: o.pool, settings: st, diversity: o.diversity, history: o.history, offers: o.offers, avoid: o.avoid, ratings: o.ratings, rand: o.rand, noise: o.noise, fixed: fixedRs, n: nNew, sessions: sess.length });
+  if (!pl) return null;
+  const tokens = {};
+  fixedIds.forEach(id => { if (spareOf(cnt[id]) > 0) tokens[id] = spareOf(cnt[id]); });
+  pl.ids.forEach(id => { tokens[id] = 2; });
+  let out = placeTokens(g, sess, tokens);
+  // frische Gerichte
+  const prepRs = Object.keys(dishCounts(out)).map(id => BY_ID[id]);
+  const fresh = CELLS.filter(k => out[k].t === 'f' && !out[k].r);
+  const userFresh = CELLS.filter(k => out[k].t === 'f' && out[k].r).map(k => out[k].r);
+  const exclude = prepRs.map(r => r.id).concat(userFresh);
+  const ids = pickFresh({ motto: o.motto, pool: o.pool, count: fresh.length, exclude, prepRs: prepRs.concat(userFresh.map(id => BY_ID[id])), settings: st, offers: o.offers, ratings: o.ratings, history: o.history, rand: o.rand, noise: o.noise });
+  fresh.forEach((k, i) => { if (ids[i]) out[k].r = ids[i]; });
+  return { grid: out, key: pl.key, relaxed: pl.relaxed };
+}
+
+// Kochtermin geändert oder Zelle bearbeitet: automatisch gesetzte Zellen neu verteilen, Gerichte bleiben gleich.
+function remapGrid(grid, sess) {
+  const g = copyGrid(grid), tokens = {};
+  CELLS.forEach(k => { const x = g[k]; if (x.t === 'p' && x.r && !x.u) { tokens[x.r] = (tokens[x.r] || 0) + 1; delete x.r; } });
+  const cnt = dishCounts(g);
+  return placeTokens(g, sess, tokens);
+}
+
+function buildWeek(grid, sessIn, st) {
+  const counts = dishCounts(grid);
+  const ids = Object.keys(counts);
+  const lay = layout(ids, sessIn, needMap(grid, false));
+  const mkSess = (key, day, time, list, extra) => {
+    const sc = sched(list), thaw = [];
     list.forEach(r => r.i.forEach(([id]) => { if (ING[id].thaw && !thaw.includes(ING[id].n)) thaw.push(ING[id].n); }));
-    return Object.assign({}, s, { rs: list, sched: sc, thaw, dev: [...new Set(list.flatMap(devices))] });
+    return Object.assign({ key, day, time, rs: list, sched: sc, thaw, dev: [...new Set(list.flatMap(devices))], fresh: false }, extra || {});
+  };
+  const sessions = lay.groups.map((list, i) => mkSess('s' + i, lay.sess[i].day, lay.sess[i].time, list, { n: i + 1, w: lay.sess[i].w }));
+  CELLS.forEach(k => {
+    const x = grid[k];
+    if (x.t === 'f' && x.r && BY_ID[x.r]) sessions.push(mkSess('f' + k, +k[0], FRESH_AT[k[1]], [BY_ID[x.r]], { fresh: true, cell: k, w: x.w }));
   });
-  const sh = shop(rs);
+  sessions.sort((a, b) => sessTime(a) - sessTime(b));
+  const recs = [], facs = [];
+  ids.forEach(id => { recs.push(BY_ID[id]); facs.push(Math.ceil(counts[id] / 2)); });
+  sessions.filter(s => s.fresh).forEach(s => { recs.push(s.rs[0]); facs.push(0.5); });
+  const sh = shop(recs, facs);
   const packs = sh.items.reduce((s, x) => s + x.packs, 0);
   const rests = sh.items.filter(x => x.rest).length;
   const mk = sessions.reduce((s, x) => s + x.sched.mk, 0);
-  const avgP = rs.reduce((s, r) => s + r.nu.p, 0) / rs.length;
-  return { rs, guide, sessions, shop: sh, stats: { mk, packs, rests, avgP, kinds: sh.items.length }, targets };
+  const rsAll = [...new Set(recs)];
+  const avgP = rsAll.length ? rsAll.reduce((s, r) => s + r.nu.p, 0) / rsAll.length : 0;
+  const targets = st.persons.map(p => p.protein * st.share / 2);
+  return { rs: rsAll, prepIds: lay.groups.flat().map(r => r.id), counts, sessions, shop: sh, stats: { mk, packs, rests, avgP, kinds: sh.items.length }, targets, time: lay.time };
 }
 
-root.VK = { ING, RECIPES, BY_ID, AISLES, SESSIONS, plan, build, assign, sched, shop, nutri, activeMin, devices, offerHits, fmtQ, fmtAmt, fmtDur, fmtClock, fmtSize, wasteScore };
+root.VK = { countries, ING, RECIPES, BY_ID, AISLES, CELLS, MEAL_MIN, FRESH_AT, DEFAULT_SESS, defaultGrid, copyGrid, cellTime, sessTime, sortSess, dishCounts, layout, sessionSizes, plan, pickFresh, fillGrid, remapGrid, buildWeek, placeTokens, assign, sched, shop, nutri, activeMin, devices, offerHits, fmtQ, fmtAmt, fmtDur, fmtClock, fmtSize, wasteScore };
 if (typeof module !== 'undefined') module.exports = root.VK;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1251,31 +1743,45 @@ function addDays(isoDay, n) {
 }
 function fmtClock(m) { m = Math.round(m); return Math.floor(m / 60) + ':' + p2(m % 60); }
 
-/* input: { weekStart: 'YYYY-MM-DD' (Sonntag), times: {shop, so, mo, do}, shopText, sessions: [{key, title, who, mk, thaw: [], dishes: [name], events: [{start, rs, tn, k, m, t}]}] } */
+/* input: { weekStart: 'YYYY-MM-DD' (Sonntag), shop: {day, time} (day -1 = Samstag davor, 0..6 = Tag der Woche), shopText,
+   sessions: [{key, day 0..6, time, fresh, who, mk, thaw: [], dishes: [name], events: [{start, rs, tn, t}]}] } */
+const VTZ = ['BEGIN:VTIMEZONE', 'TZID:Europe/Berlin', 'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
+  'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD', 'END:VTIMEZONE'].join('\r\n');
 function buildICS(input) {
   const now = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
-  const dayOf = { so: 0, mo: 1, do: 4 };
   const ev = [];
   function add(uid, start, end, summary, desc, alarmMin) {
-    let s = ['BEGIN:VEVENT', 'UID:' + uid + '@vorkoch', 'DTSTAMP:' + now, 'DTSTART:' + start, 'DTEND:' + end, 'SUMMARY:' + icsEsc(summary)];
+    let s = ['BEGIN:VEVENT', 'UID:' + uid + '@vorkoch', 'DTSTAMP:' + now, 'DTSTART;TZID=Europe/Berlin:' + start, 'DTEND;TZID=Europe/Berlin:' + end, 'SUMMARY:' + icsEsc(summary)];
     if (desc) s.push('DESCRIPTION:' + icsEsc(desc));
     if (alarmMin != null) s = s.concat(['BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(summary), 'TRIGGER:-PT' + alarmMin + 'M', 'END:VALARM']);
     s.push('END:VEVENT');
     ev.push(s.map(fold).join('\r\n'));
   }
-  const ws = input.weekStart, t = input.times || {};
-  add('einkauf-' + ws, stamp(addDays(ws, -1), t.shop || '10:00'), stamp(addDays(ws, -1), t.shop || '10:00', 60), 'Einkaufen für die Woche', input.shopText || '', 60);
+  const ws = input.weekStart, sh = input.shop || { day: -1, time: '10:00' };
+  const names = input.names || ['Roman', 'Partnerin'], flt = input.filter === '0' || input.filter === '1' ? input.filter : 'all';
+  const mine = w => flt === 'all' || w === 'b' || w === flt;
+  const lab = w => w === 'b' ? 'zusammen' : (flt !== 'all' && w === flt ? 'du' : names[+w] || '?');
+  const shopDay = addDays(ws, sh.day), sw = sh.w === '0' || sh.w === '1' ? sh.w : 'b';
+  if (mine(sw)) add('einkauf-' + ws, stamp(shopDay, sh.time || '10:00'), stamp(shopDay, sh.time || '10:00', 60), 'Einkaufen (' + lab(sw) + ')', input.shopText || '', 60);
   input.sessions.forEach(s => {
-    const day = addDays(ws, dayOf[s.key]), tm = t[s.key] || '18:00';
+    const w = s.w === '0' || s.w === '1' ? s.w : 'b';
+    if (!mine(w)) return;
+    const day = addDays(ws, s.day), tm = s.time || '18:00';
     if (s.thaw && s.thaw.length) {
       const prev = addDays(day, -1);
       add('auftauen-' + s.key + '-' + ws, stamp(prev, '19:00'), stamp(prev, '19:15'), 'Auftauen: ' + s.thaw.join(', '), 'Für morgen: ' + s.dishes.join(' und '), 0);
     }
     const lines = [s.dishes.join(' und '), s.who, ''];
     s.events.forEach(e => lines.push(fmtClock(e.start) + '  ' + e.rs + (e.tn && e.tn !== e.rs ? ' (' + e.tn + ')' : '') + ': ' + e.t));
-    add('kochen-' + s.key + '-' + ws, stamp(day, tm), stamp(day, tm, Math.round(s.mk)), 'Kochen: ' + s.dishes.join(' + '), lines.join('\n'), 30);
+    add('kochen-' + s.key + '-' + ws, stamp(day, tm), stamp(day, tm, Math.round(s.mk)), (s.fresh ? 'Frisch kochen' : 'Vorkochen') + ' (' + lab(w) + '): ' + s.dishes.join(' + '), lines.join('\n'), 30);
   });
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Vorkoch//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'].join('\r\n') + '\r\n' + ev.join('\r\n') + '\r\nEND:VCALENDAR\r\n';
+  (input.meals || []).forEach(m => {
+    const day = addDays(ws, m.day), l = m.meal === 'l', tm = l ? '12:30' : '19:30';
+    add('essen-' + m.day + m.meal + '-' + ws, stamp(day, tm), stamp(day, tm, l ? 30 : 45), (l ? 'Mittag: ' : 'Abend: ') + m.name, m.note || '', null);
+  });
+  const head = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Vorkoch//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'X-WR-CALNAME:' + icsEsc(input.calName || 'Vorkoch'), 'X-WR-TIMEZONE:Europe/Berlin', 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
+  return head.join('\r\n') + '\r\n' + VTZ + '\r\n' + ev.join('\r\n') + '\r\nEND:VCALENDAR\r\n';
 }
 
 /* ---------- Teilen per Link ---------- */
@@ -1306,9 +1812,9 @@ function toDoc(S) {
   const mt = S.mt || { m: {}, ratings: {}, storeOv: {}, checked: {} };
   return {
     v: 1, m: Object.assign({}, mt.m),
-    plan: { ids: S.ids, key: S.key, weekStart: S.weekStart, recent: S.recent, history: S.history, relaxed: !!S.relaxed },
+    plan: { grid: S.grid, sess: S.sess, shopAt: S.shopAt, key: S.key, weekStart: S.weekStart, recent: S.recent, history: S.history, relaxed: !!S.relaxed },
     pool: { disabled: S.disabled },
-    settings: { settings: S.settings, diversity: S.diversity },
+    settings: { settings: S.settings, diversity: S.diversity, motto: S.motto || '', cal: S.cal || null },
     offers: S.offers || '',
     ratings: mapTo(S.ratings, mt.ratings), storeOv: mapTo(S.storeOv, mt.storeOv),
     checked: { key: S.checked.key, map: mapTo(S.checked.map, mt.checked) }
@@ -1335,12 +1841,11 @@ function merge(a, b) {
   });
   out.ratings = mergeMap(a.ratings, b.ratings);
   out.storeOv = mergeMap(a.storeOv, b.storeOv);
-  const wk = (out.plan && Array.isArray(out.plan.ids)) ? out.plan.ids.join(',') : '';
+  // Haken gehören zu einem Vorschlag (key = Woche/Zeitpunkt). Der neuere Vorschlag gewinnt, gleicher Vorschlag wird pro Posten gemischt.
+  const gen = k => +(String(k).split('/')[1]) || 0;
   const ca = a.checked || { key: '', map: {} }, cb = b.checked || { key: '', map: {} };
   if (ca.key === cb.key) out.checked = { key: ca.key, map: mergeMap(ca.map, cb.map) };
-  else if (cb.key === wk) out.checked = cb;
-  else if (ca.key === wk) out.checked = ca;
-  else out.checked = { key: wk, map: {} };
+  else out.checked = gen(ca.key) >= gen(cb.key) ? ca : cb;
   return out;
 }
 function canon(o) {
@@ -1358,12 +1863,24 @@ function applyDoc(S, doc, known) {
   if (!S.mt) S.mt = { m: {}, ratings: {}, storeOv: {}, checked: {} };
   S.mt.m = Object.assign({}, doc.m || {});
   const p = doc.plan;
-  if (p && Array.isArray(p.ids) && p.ids.length === 5 && p.ids.every(isId)) {
-    S.ids = p.ids.slice(); S.key = String(p.key || '');
+  if (p && p.grid && typeof p.grid === 'object') {
+    const g = {}; let okAll = true;
+    ['0', '1', '2', '3', '4', '5', '6'].forEach(d => ['l', 'd'].forEach(m => {
+      const c = p.grid[d + m];
+      if (!c || typeof c !== 'object' || !/^[pfox]$/.test(c.t)) { okAll = false; return; }
+      const o = { t: c.t };
+      if ((c.t === 'p' || c.t === 'f') && isId(c.r)) { o.r = c.r; if (c.u) o.u = 1; }
+      if (c.t === 'f' && /^[b01]$/.test(c.w || '')) o.w = c.w;
+      g[d + m] = o;
+    }));
+    if (okAll) S.grid = g;
+    S.key = String(p.key || '').slice(0, 400);
     S.weekStart = /^\d{4}-\d{2}-\d{2}$/.test(p.weekStart || '') ? p.weekStart : S.weekStart;
     S.recent = Array.isArray(p.recent) ? p.recent.filter(x => typeof x === 'string').slice(0, 6) : S.recent;
     S.history = Array.isArray(p.history) ? p.history.filter(h => Array.isArray(h) && h.every(isId)).slice(0, 3) : S.history;
     S.relaxed = !!p.relaxed;
+    if (Array.isArray(p.sess) && p.sess.length >= 1 && p.sess.length <= 4 && p.sess.every(s => s && Number.isInteger(s.day) && s.day >= 0 && s.day <= 6 && /^\d{1,2}:\d{2}$/.test(s.time || ''))) S.sess = p.sess.map(s => { const o = { day: s.day, time: s.time }; if (/^[b01]$/.test(s.w || '')) o.w = s.w; return o; });
+    if (p.shopAt && Number.isInteger(p.shopAt.day) && p.shopAt.day >= -1 && p.shopAt.day <= 6 && /^\d{1,2}:\d{2}$/.test(p.shopAt.time || '')) { S.shopAt = { day: p.shopAt.day, time: p.shopAt.time }; if (/^[01]$/.test(p.shopAt.w || '')) S.shopAt.w = p.shopAt.w; }
   }
   if (doc.pool && Array.isArray(doc.pool.disabled)) S.disabled = doc.pool.disabled.filter(isId);
   const st = doc.settings && doc.settings.settings;
@@ -1373,10 +1890,11 @@ function applyDoc(S, doc, known) {
     S.settings.vegMin = num(st.vegMin, 0, 5, S.settings.vegMin);
     S.settings.fishMax = num(st.fishMax, 0, 5, S.settings.fishMax);
     S.settings.moCook = st.moCook === 1 ? 1 : 0;
-    if (st.cook && typeof st.cook === 'object') {
-      S.settings.cook = Object.assign({}, S.settings.cook);
-      ['shop', 'so', 'mo', 'do'].forEach(k => { if (/^\d{1,2}:\d{2}$/.test(st.cook[k] || '')) S.settings.cook[k] = st.cook[k]; });
-    }
+  }
+  if (doc.settings) {
+    const mo = doc.settings.motto; S.motto = typeof mo === 'string' && /^[A-Za-zÄÖÜäöüß -]{0,20}$/.test(mo) ? mo : '';
+    const cl = doc.settings.cal;
+    S.cal = cl && /^[A-Za-z0-9_.-]{1,39}\/[A-Za-z0-9_.-]{1,100}$/.test(cl.repo || '') && /^[a-z0-9]{10,24}$/.test(cl.secret || '') ? { repo: cl.repo, secret: cl.secret } : (S.cal || null);
   }
   if (doc.settings && doc.settings.diversity != null) S.diversity = num(doc.settings.diversity, 0, 1, S.diversity);
   if (typeof doc.offers === 'string') S.offers = doc.offers.slice(0, 600);
@@ -1385,8 +1903,8 @@ function applyDoc(S, doc, known) {
   S.storeOv = {}; S.mt.storeOv = {};
   Object.keys(doc.storeOv || {}).forEach(k => { const x = doc.storeOv[k]; if (/^[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x) && (x[0] === 'd' || x[0] === 'm')) { S.storeOv[k] = x[0]; S.mt.storeOv[k] = x[1] || 0; } });
   const c = doc.checked;
-  S.checked = { key: S.ids ? S.ids.join(',') : '', map: {} }; S.mt.checked = {};
-  if (c && c.key === S.checked.key) {
+  S.checked = { key: String((c && c.key) || S.weekStart || '').slice(0, 40), map: {} }; S.mt.checked = {};
+  if (c) {
     Object.keys(c.map || {}).forEach(k => { const x = c.map[k]; if (/^(v_)?[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x)) { S.checked.map[k] = !!x[0]; S.mt.checked[k] = x[1] || 0; } });
   }
   return true;
@@ -1409,7 +1927,7 @@ function unpack(w) {
   return d;
 }
 
-root.VX = { buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack };
+root.VX = { b64std: s => { const by = Array.from(new TextEncoder().encode(s)); let bin = ''; by.forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); }, buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack };
 if (typeof module !== 'undefined') module.exports = root.VX;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1423,9 +1941,10 @@ const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 /* ---------- Zustand ---------- */
 function defaults() {
   return {
-    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0, cook: { shop: '10:00', so: '16:00', mo: '18:00', do: '18:00' } },
+    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0 },
+    grid: V.defaultGrid(), sess: V.DEFAULT_SESS.map(s => Object.assign({}, s)), shopAt: { day: -1, time: '10:00' },
     disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} },
-    offers: '', diversity: 0.5, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
+    offers: '', diversity: 0.5, motto: '', cal: null, calAt: 0, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
     ratings: {}, storeOv: {}, shopView: 'gang', sync: { url: '', code: '', fresh: false },
     mt: { m: {}, ratings: {}, storeOv: {}, checked: {} }
   };
@@ -1443,15 +1962,31 @@ function load() {
       }
     }
   } catch (e) { /* ohne Speicher weiterarbeiten */ }
-  d.settings.cook = Object.assign({ shop: '10:00', so: '16:00', mo: '18:00', do: '18:00' }, d.settings.cook || {});
+  // Umstieg von der alten Fassung mit festem Rhythmus
+  let old = null;
+  try { const raw = localStorage.getItem(KEY); old = raw ? JSON.parse(raw) : null; } catch (e) { old = null; }
+  if (old && !old.grid) {
+    const dy = Object.assign({ shop: 6, so: 0, mo: 1, do: 4 }, (old.settings && old.settings.days) || {});
+    const ck = Object.assign({ shop: '10:00', so: '16:00', mo: '18:00', do: '18:00' }, (old.settings && old.settings.cook) || {});
+    d.sess = [{ day: dy.so, time: ck.so }, { day: dy.mo, time: ck.mo }, { day: dy.do, time: ck.do }];
+    d.shopAt = { day: dy.shop === 6 ? -1 : dy.shop, time: ck.shop };
+    if (Array.isArray(old.ids) && old.ids.length === 5 && old.ids.every(id => V.BY_ID[id])) {
+      const tok = {}; old.ids.forEach(id => { tok[id] = 2; });
+      d.grid = V.placeTokens(V.defaultGrid(), d.sess, tok);
+    }
+  }
+  delete d.settings.cook; delete d.settings.days;
+  if (!d.grid || !V.CELLS.every(k => d.grid[k] && /^[pfox]$/.test(d.grid[k].t))) d.grid = V.defaultGrid();
+  if (!Array.isArray(d.sess) || !d.sess.length) d.sess = V.DEFAULT_SESS.map(s => Object.assign({}, s));
+  if (!d.shopAt || typeof d.shopAt !== 'object') d.shopAt = { day: -1, time: '10:00' };
   d.mt = Object.assign({ m: {}, ratings: {}, storeOv: {}, checked: {} }, d.mt || {});
   ['m', 'ratings', 'storeOv', 'checked'].forEach(k => { if (!d.mt[k] || typeof d.mt[k] !== 'object') d.mt[k] = {}; });
   if (!d.sync || typeof d.sync !== 'object') d.sync = { url: '', code: '', fresh: false };
   return d;
 }
-const TRANSIENT = ['msg', 'sheet', 'ci', 'timer', 'fresh', 'confirm', 'q', 'filter', 'ss'];
+const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs'];
 let S = load();
-function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timer = null; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.ss = null; }
+function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; }
 resetTransient();
 function save() { saveLocal(); schedSync(); }
 function touch(sec) { S.mt.m[sec] = Date.now(); }
@@ -1473,26 +2008,43 @@ function weekDays() {
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 function pool() { return V.RECIPES.filter(r => !S.disabled.includes(r.id)); }
+function sessList() { return V.sortSess(S.sess); }
+function syncIds() { S.ids = Object.keys(V.dishCounts(S.grid)); }
+function planOpts() { return { pool: pool(), settings: S.settings, diversity: S.diversity, history: S.history, offers: S.offers, avoid: S.recent, ratings: S.ratings, sess: sessList(), motto: S.motto }; }
+function hasFilled() { return V.CELLS.some(k => (S.grid[k].t === 'p' || S.grid[k].t === 'f') && S.grid[k].r); }
+function wantsMeals() { return V.CELLS.some(k => S.grid[k].t === 'p' || S.grid[k].t === 'f'); }
 function generate(advance) {
   const pl = pool();
   if (pl.length < 5) { S.msg = 'Im Pool sind weniger als fünf Rezepte aktiv. Aktiviere weitere unter „Rezepte“.'; return; }
-  const res = V.plan({ pool: pl, settings: S.settings, diversity: S.diversity, history: S.history, offers: S.offers, avoid: S.recent, ratings: S.ratings });
+  let base = V.copyGrid(S.grid);
+  if (advance) V.CELLS.forEach(k => { delete base[k].r; delete base[k].u; });
+  const res = V.fillGrid(base, planOpts());
   if (!res) { S.msg = 'Mit diesen Regeln lässt sich keine Woche bilden. Lockere die Regeln unter „Mehr“.'; return; }
   S.msg = '';
-  S.ids = res.ids; S.key = res.key; S.relaxed = res.relaxed;
+  S.grid = res.grid; S.key = res.key; S.relaxed = res.relaxed;
   S.recent = [res.key].concat(S.recent).slice(0, 6);
-  S.checked = { key: S.ids.join(','), map: {} }; S.mt.checked = {}; touch('plan');
+  syncIds(); touch('plan');
   if (advance) {
     const prev = S.weekStart ? new Date(S.weekStart + 'T12:00:00') : null;
     let nx = nextSunday();
     if (prev) { const p7 = new Date(prev); p7.setDate(p7.getDate() + 7); if (p7 > nx) nx = p7; }
     S.weekStart = iso(nx);
   } else if (!S.weekStart) S.weekStart = iso(nextSunday());
+  S.checked = { key: S.weekStart + '/' + Date.now(), map: {} }; S.mt.checked = {};
   save();
 }
-function valid() { return Array.isArray(S.ids) && S.ids.length === 5 && S.ids.every(id => V.BY_ID[id]); }
-if (!valid()) generate(false);
-
+// Nach jeder Änderung von Hand: Lücken füllen, automatische Felder neu verteilen.
+function editGrid(mutator) {
+  mutator(S.grid);
+  const res = pool().length >= 5 ? V.fillGrid(S.grid, Object.assign(planOpts(), { keep: true })) : null;
+  if (res) S.grid = res.grid;
+  S.grid = V.remapGrid(S.grid, sessList());
+  syncIds(); touch('plan'); save();
+}
+if (!S.checked || S.checked.key === undefined) S.checked = { key: '', map: {} };
+if (!S.weekStart) S.weekStart = iso(nextSunday());
+if (wantsMeals() && !hasFilled()) generate(false);
+syncIds();
 
 /* ---------- Abgleich zwischen Geräten (Firebase Realtime Database über REST) ---------- */
 const VX = window.VX;
@@ -1545,7 +2097,7 @@ async function syncNow() {
     if (!VX.same(result, local)) {
       if (typing()) { again = true; syncing = false; setTimeout(syncNow, 4000); return; }
       VX.applyDoc(S, result, V.BY_ID);
-      if (!valid()) generate(false);
+      syncIds();
       saveLocal(); render();
     }
     S.sync.fresh = false; saveLocal();
@@ -1574,22 +2126,30 @@ function checkHash() {
 
 /* ---------- Hilfen ---------- */
 let B = null;
-function rebuild() { B = valid() ? V.build(S.ids, S.settings) : null; }
+function rebuild() { try { B = V.buildWeek(S.grid, sessList(), S.settings); } catch (e) { B = null; } }
 function portion(r) {
   const f = B.targets.map(t => Math.min(1.5, Math.max(0.5, Math.round((t / r.nu.p) * 4) / 4)));
   const need = 2 * f.reduce((s, x) => s + x, 0);
   return { f, need, tight: need > r.servings + 1e-9 };
 }
 const names = () => S.settings.persons.map(p => p.name || '?');
-function cookWho(key) {
-  const n = names();
-  if (key === 'so') return 'Ihr kocht zusammen';
-  const mo = S.settings.moCook === 0 ? 0 : 1;
-  return (key === 'mo' ? n[mo] : n[1 - mo]) + ' kocht';
+function whoCode(s) {
+  if (s.w === 'b' || s.w === '0' || s.w === '1') return s.w;
+  if (s.fresh || s.rs.length === 1) return 'b';
+  const multi = B.sessions.filter(x => !x.fresh && x.rs.length > 1), i = multi.indexOf(s);
+  const first = S.settings.moCook === 0 ? 0 : 1;
+  return String(i % 2 === 0 ? first : 1 - first);
 }
-function dishIdx(rid) { return S.ids.indexOf(rid); }
-const dot = i => '<span class="dot" style="--c:var(--c' + (i + 1) + ')"></span>';
-const SESS_DAY = { so: 0, mo: 1, do: 4 };
+function cookWho(s) {
+  const n = names(), c = whoCode(s);
+  if (s.fresh) return c === 'b' ? 'Frisch gekocht, halbe Menge' : n[+c] + ' kocht frisch, halbe Menge';
+  return c === 'b' ? 'Ihr kocht zusammen' : n[+c] + ' kocht';
+}
+const shopCode = () => S.shopAt.w === '0' || S.shopAt.w === '1' ? S.shopAt.w : 'b';
+const whoOpts = (cur, auto) => (auto ? [['a', 'Automatisch']] : []).concat([['b', 'Zusammen'], ['0', names()[0]], ['1', names()[1]]]).map(([v, l]) => '<option value="' + v + '"' + ((cur || (auto ? 'a' : 'b')) === v ? ' selected' : '') + '>' + esc(l) + '</option>').join('');
+function dishIdx(rid) { const i = B ? B.prepIds.indexOf(rid) : -1; return i < 0 ? -1 : i % 5; }
+const dot = i => i < 0 ? '<span class="dot"></span>' : '<span class="dot" style="--c:var(--c' + (i + 1) + ')"></span>';
+const DAYLONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 const ICON = {
   up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>',
   down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>'
@@ -1602,25 +2162,51 @@ function rateBtns(id) {
 const STORES = { d: 'Aldi Nord oder Lidl', m: 'Marktkauf' };
 function storeOf(x) { return S.storeOv[x.id] || (x.spec ? 'm' : 'd'); }
 
-const SLOTS = [
-  [0, 'Mittag', 'free'], [0, 'Abend', 0, 0],
-  [1, 'Mittag', 0, 1], [1, 'Abend', 1, 0],
-  [2, 'Mittag', 1, 1], [2, 'Abend', 2, 1],
-  [3, 'Mittag', 2, 2], [3, 'Abend', 'half'],
-  [4, 'Mittag', 'half'], [4, 'Abend', 3, 0],
-  [5, 'Mittag', 3, 1], [5, 'Abend', 4, 1],
-  [6, 'Mittag', 4, 2], [6, 'Abend', 'free']
-];
 const AGE = ['frisch', '1 Tag alt', '2 Tage alt'];
+const TYPE_NAME = { p: 'Vorgekocht', f: 'Frisch', o: 'Auswärts', x: 'Offen' };
+const MEAL_NAME = { l: 'Mittag', d: 'Abend' };
 
 /* ---------- Plan ---------- */
-function slotHtml(s) {
-  if (s[2] === 'free') return '<div class="slot off">Frei oder auswärts</div>';
-  if (s[2] === 'half') return '<div class="slot off">Brot, Salat oder Reste</div>';
-  const r = B.rs[s[2]];
-  return '<button class="slot" data-act="recipe" data-rid="' + r.id + '"><span class="m">' + dot(s[2]) + AGE[s[3]] + '</span><b>' + esc(r.short) + '</b></button>';
+function cellWarn(k) {
+  const x = S.grid[k];
+  if (x.t === 'p' && !x.r) return 'Kein Gericht fertig';
+  if (x.t === 'f' && !x.r) return 'Kein Rezept';
+  if (x.t === 'p' && x.r && B.time[x.r] !== undefined && B.time[x.r] > V.cellTime(k)) return 'Noch nicht gekocht';
+  return '';
+}
+function cellSess(k) { const x = S.grid[k]; return x && x.t === 'p' && x.r ? B.sessions.find(s => !s.fresh && s.rs.some(r => r.id === x.r)) : null; }
+function cellWho(k) {
+  const x = S.grid[k];
+  if (x.t === 'f') return B.sessions.find(s => s.fresh && s.cell === k) ? whoCode(B.sessions.find(s => s.fresh && s.cell === k)) : 'b';
+  const s = cellSess(k); return s ? whoCode(s) : 'b';
+}
+const whoTag = c => c === '0' || c === '1' ? ' · ' + esc((names()[+c] || '?').charAt(0).toUpperCase()) : '';
+function slotHtml(k) {
+  const x = S.grid[k], w = cellWarn(k);
+  const wh = w ? '<span class="cw">' + w + '</span>' : '';
+  if ((x.t === 'p' || x.t === 'f') && x.r && V.BY_ID[x.r]) {
+    const r = V.BY_ID[x.r];
+    let m;
+    if (x.t === 'f') m = dot(-1) + 'frisch gekocht' + whoTag(cellWho(k));
+    else { const age = Math.max(0, +k[0] - Math.floor((B.time[x.r] || 0) / 1440)); m = dot(dishIdx(x.r)) + (age < 3 ? AGE[age] : age + ' Tage alt') + whoTag(cellWho(k)); }
+    return '<button class="slot" data-act="cell" data-k="' + k + '"><span class="m">' + m + '</span><b>' + esc(r.short) + '</b>' + wh + '</button>';
+  }
+  if (x.t === 'p' || x.t === 'f') return '<button class="slot warnslot" data-act="cell" data-k="' + k + '"><span class="m">' + TYPE_NAME[x.t] + '</span><b>–</b>' + wh + '</button>';
+  return '<button class="slot off" data-act="cell" data-k="' + k + '">' + (x.t === 'o' ? 'Auswärts' : 'Offen') + '</button>';
 }
 
+const dayOpts = (cur, withBefore) => (withBefore ? [[-1, 'Sa davor']] : []).concat([1, 2, 3, 4, 5, 6, 0].map(d => [d, DAYS[d]])).map(([d, l]) => '<option value="' + d + '"' + (cur === d ? ' selected' : '') + '>' + l + '</option>').join('');
+function termsCard() {
+  let h = '<h2 class="sec">Einkaufen und Kochen</h2><div class="grp">';
+  h += '<div class="row trow"><span class="grow">Einkaufen</span><select class="inl day" data-shopday aria-label="Einkaufen Tag">' + dayOpts(S.shopAt.day, true) + '</select><input class="inl" type="time" data-shoptime value="' + esc(S.shopAt.time) + '" aria-label="Einkaufen Uhrzeit"></div>';
+  S.sess.forEach((s, i) => {
+    h += '<div class="row trow"><span class="grow">Kochen ' + (i + 1) + '</span><select class="inl day" data-sday="' + i + '" aria-label="Kochtermin ' + (i + 1) + ' Tag">' + dayOpts(s.day, false) + '</select><input class="inl" type="time" data-stime="' + i + '" value="' + esc(s.time) + '" aria-label="Kochtermin ' + (i + 1) + ' Uhrzeit">' +
+      (S.sess.length > 1 ? '<button class="mini-x" data-act="sessdel" data-i="' + i + '" aria-label="Kochtermin ' + (i + 1) + ' entfernen">×</button>' : '') + '</div>';
+  });
+  if (S.sess.length < 4) h += '<button class="row" data-act="sessadd"><span class="grow" style="color:var(--accentfg);font-weight:600">Kochtermin hinzufügen</span></button>';
+  h += '</div><p class="foot">Die vorgekochten Gerichte verteilen sich auf diese Termine. Frisches Kochen läuft mittags um 11:30 und abends um 18:00 Uhr. Wenn du einen Termin verschiebst, ordnen sich die automatischen Felder neu. Wer kocht und einkauft, stellst du direkt im Feld ein.</p>';
+  return h;
+}
 function viewPlan() {
   const days = weekDays(), st = B.stats;
   let h = '<h1 class="ltitle">Diese Woche</h1><p class="lsub">' + days[0].date + ' bis ' + days[6].date + '</p>';
@@ -1629,26 +2215,29 @@ function viewPlan() {
   h += '<div class="stats">' +
     '<div class="stat"><small>Kochzeit pro Woche</small><b>' + V.fmtDur(st.mk) + '</b></div>' +
     '<div class="stat"><small>Packungen im Einkauf</small><b>' + st.packs + '</b></div>' +
-    '<div class="stat"><small>Protein pro Portion</small><b>Ø ' + Math.round(st.avgP) + ' g</b></div>' +
+    '<div class="stat"><small>Protein pro Portion</small><b>' + (st.avgP ? 'Ø ' + Math.round(st.avgP) + ' g' : '–') + '</b></div>' +
     '<div class="stat"><small>Angebrochene Reste</small><b>' + (st.rests === 0 ? 'keine' : st.rests + ' Posten') + '</b></div></div>';
   h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Passt, zum Einkauf</button></div>';
 
   h += '<div class="grp"><div class="dh"><span></span><span>Mittag</span><span>Abend</span></div>';
   for (let d = 0; d < 7; d++) {
-    const m = SLOTS.find(s => s[0] === d && s[1] === 'Mittag'), a = SLOTS.find(s => s[0] === d && s[1] === 'Abend');
-    h += '<div class="day' + (days[d].today ? ' today' : '') + '"><div class="dn"><b>' + days[d].n + '</b><span>' + days[d].num + '</span></div>' + slotHtml(m) + slotHtml(a) + '</div>';
+    h += '<div class="day' + (days[d].today ? ' today' : '') + '"><div class="dn"><b>' + days[d].n + '</b><span>' + days[d].num + '</span></div>' + slotHtml(d + 'l') + slotHtml(d + 'd') + '</div>';
   }
   h += '</div>';
 
   h += '<p class="cap">Anpassen</p><div class="grp">' +
-    '<button class="row" data-act="reroll"><span class="grow"><b>Neu würfeln</b></span><span class="val">andere Gerichte</span></button>' +
+    '<button class="row" data-act="reroll"><span class="grow"><b>Neu vorschlagen</b></span><span class="val">eigene Felder bleiben</span></button>' +
     '<button class="row" data-act="next"><span class="grow"><b>Woche abschließen</b></span><span class="val">nächste planen</span></button>' +
+    (S.cal && ghTok() ? '<button class="row" data-act="calpub"><span class="grow"><b>Kalender aktualisieren</b></span><span class="val">' + calAgo() + '</span></button>' : '') +
+    '<label class="row"><span class="grow"><b>Küche der Woche</b><div class="sub">bevorzugt beim Vorschlag</div></span><select class="inl day" data-motto aria-label="Küche der Woche" style="width:auto;max-width:150px"><option value="">Egal</option>' + V.countries().filter(c => c.n >= 2).map(c => '<option value="' + esc(c.name) + '"' + (S.motto === c.name ? ' selected' : '') + '>' + esc(c.name) + ' (' + c.n + ')</option>').join('') + '</select></label>' +
     '<div class="pad"><div class="flex" style="justify-content:space-between"><span class="sub">Reste verwerten</span><span class="sub">Vielfalt</span></div><input type="range" id="div" min="0" max="100" step="5" value="' + Math.round(S.diversity * 100) + '" aria-label="Reste verwerten oder Vielfalt"></div></div>';
 
-  h += '<h2 class="sec">Kochtermine</h2>';
+  h += termsCard();
+  h += '<h2 class="sec">Kochen diese Woche</h2>';
+  if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Noch nichts zu kochen. Lege Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
   B.sessions.forEach(s => {
-    const dd = days[SESS_DAY[s.key]];
-    h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + '</h3><p class="who">' + esc(cookWho(s.key)) + '</p>';
+    const dd = days[s.day];
+    h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + '</p>';
     s.rs.forEach(r => {
       const i = dishIdx(r.id), g = portion(r);
       const fq = g.f.map((x, k) => esc(names()[k]) + ' ' + V.fmtQ(x)).join(' · ');
@@ -1706,7 +2295,7 @@ function viewShop() {
     const k = 'v_' + x.id;
     h += '<label class="item small' + (map[k] ? ' done' : '') + '"><input type="checkbox" data-key="' + k + '" data-v="1"' + (map[k] ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + (x.spec ? '<span class="chip spec" style="margin-left:6px">Spezial</span>' : '') + '</b></span><span></span></label>';
   });
-  h += '</div><p class="foot">Fehlendes kommt auf die Liste. Tiefkühlware am Vorabend in den Kühlschrank legen. Hackfleisch gibt es nur an Sonntag und Montag, damit es frisch bleibt.</p>';
+  h += '</div><p class="foot">Fehlendes kommt auf die Liste. Tiefkühlware am Vorabend in den Kühlschrank legen. Hackfleisch kommt nur in die ersten beiden Kochtermine, damit es frisch bleibt.</p>';
   h += '<div class="actions"><button class="btn gray" data-act="copy">Liste kopieren</button><button class="btn gray" data-act="uncheck">Haken löschen</button></div><div id="copybox"></div>';
   return h;
 }
@@ -1733,10 +2322,11 @@ function gantt(s) {
 }
 function viewCook() {
   const days = weekDays();
-  let h = '<h1 class="ltitle">Kochen</h1><p class="lsub">Drei Termine pro Woche. Ofen und Herd laufen parallel, damit die Zeit kurz bleibt.</p>';
+  let h = '<h1 class="ltitle">Kochen</h1><p class="lsub">Ofen und Herd laufen parallel, damit die Zeit kurz bleibt.</p>';
+  if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Diese Woche ist nichts zu kochen. Lege auf der Woche-Seite Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
   B.sessions.forEach(s => {
-    const dd = days[SESS_DAY[s.key]];
-    h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + '</h3><p class="who">' + esc(cookWho(s.key)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
+    const dd = days[s.day];
+    h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
     if (s.thaw.length) h += '<p class="thaw">Am Vorabend in den Kühlschrank legen: ' + esc(s.thaw.join(', ')) + '</p>';
     h += gantt(s);
     h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button></div>';
@@ -1767,14 +2357,22 @@ function recipeBody(r) {
   return h;
 }
 
+const CARBS = ['Nudeln', 'Reis', 'Kartoffel', 'Brot', 'Sonstige'];
+function carbOf(r) {
+  const b = r.base;
+  return b === 'Nudeln' || b === 'Reis' ? b : b === 'Kartoffel' || b === 'Süßkartoffel' ? 'Kartoffel' : b === 'Brot' || b === 'Wraps' ? 'Brot' : 'Sonstige';
+}
 function filteredRecipes() {
   const q = (S.q || '').trim().toLowerCase(), f = S.filter;
   return V.RECIPES.filter(r => {
     if (f === 'veg' || f === 'fisch' || f === 'fleisch') { if (r.kind !== f) return false; }
     else if (f === 'new') { if (!r.isNew) return false; }
+    else if (f === 'rewe') { if (r.src !== 'REWE Rezeptideen') return false; }
     else if (f === 'off') { if (!S.disabled.includes(r.id)) return false; }
+    if (S.country && r.country !== S.country) return false;
+    if (S.carb && carbOf(r) !== S.carb) return false;
     if (!q) return true;
-    return (r.name + ' ' + r.cuisine + ' ' + r.i.map(x => V.ING[x[0]].n).join(' ')).toLowerCase().includes(q);
+    return (r.name + ' ' + r.cuisine + ' ' + r.country + ' ' + r.i.map(x => V.ING[x[0]].n).join(' ')).toLowerCase().includes(q);
   });
 }
 function recipeList() {
@@ -1787,8 +2385,8 @@ function recipeList() {
     h += '<p class="cap">' + KIND[k] + ' · ' + l.length + '</p><div class="grp">';
     l.forEach(r => {
       const off = S.disabled.includes(r.id);
-      h += '<div class="rrow' + (off ? ' offrec' : '') + '"><button class="open" data-act="recipe" data-rid="' + r.id + '"><b>' + esc(r.name) + (r.isNew ? '<span class="chip neu">neu</span>' : '') + '</b>' +
-        '<small>' + esc(r.cuisine) + ' · ' + Math.round(r.nu.p) + ' g Protein · ' + V.fmtDur(V.sched([r]).mk) + (r.spec.length ? ' · Spezialzutat' : '') + '</small></button>' +
+      h += '<div class="rrow' + (off ? ' offrec' : '') + '"><button class="open" data-act="recipe" data-rid="' + r.id + '"><b>' + esc(r.name) + (r.isNew ? '<span class="chip neu">neu</span>' : '') + (r.src ? '<span class="chip neu" style="background:var(--fill);color:var(--ink2)">REWE</span>' : '') + '</b>' +
+        '<small>' + esc(r.country === r.cuisine ? r.country : r.country + ' · ' + r.cuisine) + ' · ' + Math.round(r.nu.p) + ' g Protein · ' + V.fmtDur(V.sched([r]).mk) + (r.spec.length ? ' · Spezialzutat' : '') + '</small></button>' +
         '<label class="sw"><input type="checkbox" data-pool="' + r.id + '"' + (off ? '' : ' checked') + ' aria-label="' + esc(r.short) + ' im Pool"><i></i></label></div>';
     });
     h += '</div>';
@@ -1796,10 +2394,12 @@ function recipeList() {
   return h;
 }
 function viewRecipes() {
-  const FIL = [['all', 'Alle'], ['new', 'Neu'], ['veg', 'Vegetarisch'], ['fisch', 'Fisch'], ['fleisch', 'Fleisch'], ['off', 'Abgewählt']];
+  const FIL = [['all', 'Alle'], ['new', 'Neu'], ['rewe', 'REWE Rezeptideen'], ['veg', 'Vegetarisch'], ['fisch', 'Fisch'], ['fleisch', 'Fleisch'], ['off', 'Abgewählt']];
   let h = '<h1 class="ltitle">Rezepte</h1><p class="lsub"><span id="poolcnt">' + pool().length + ' von ' + V.RECIPES.length + '</span> im Pool. Schalter an heißt: darf geplant werden.</p>';
   h += '<div class="search"><input type="search" id="q" placeholder="Suchen, zum Beispiel Linsen oder Indisch" value="' + esc(S.q) + '" aria-label="Rezepte suchen"></div>';
   h += '<div class="filters" role="group" aria-label="Filter" style="margin-top:10px">' + FIL.map(([k, l]) => '<button data-act="filter" data-f="' + k + '" aria-pressed="' + (S.filter === k) + '">' + l + '</button>').join('') + '</div>';
+  h += '<div class="filters" role="group" aria-label="Kohlenhydratquelle" style="margin-top:2px"><button data-act="carb" data-c="" aria-pressed="' + (!S.carb) + '">Alle Beilagen</button>' + CARBS.map(c => '<button data-act="carb" data-c="' + c + '" aria-pressed="' + (S.carb === c) + '">' + c + ' ' + V.RECIPES.filter(r => carbOf(r) === c).length + '</button>').join('') + '</div>';
+  h += '<div class="filters" role="group" aria-label="Land oder Region" style="margin-top:2px"><button data-act="country" data-c="" aria-pressed="' + (!S.country) + '">Alle Länder</button>' + V.countries().map(c => '<button data-act="country" data-c="' + esc(c.name) + '" aria-pressed="' + (S.country === c.name) + '">' + esc(c.name) + ' ' + c.n + '</button>').join('') + '</div>';
   h += '<div id="rlist">' + recipeList() + '</div>';
   h += '<div class="actions"><button class="btn gray" data-act="poolall">Alle aufnehmen</button><button class="btn gray" data-act="poolnone">Alle abwählen</button><button class="btn gray" data-act="copysel">Auswahl kopieren</button></div><div id="copybox"></div>';
   h += '<p class="foot">Koriander, Innereien und scharfe Gerichte sind ausgeschlossen.</p>';
@@ -1839,14 +2439,11 @@ function viewSettings() {
   h += '<p class="cap">Wochenregeln</p><div class="grp">' +
     '<label class="row"><span class="grow">Mindestens vegetarisch</span><select class="inl" data-set="vegMin">' + [2, 3, 4].map(n => opt(n, st.vegMin, n + ' von 5')).join('') + '</select></label>' +
     '<label class="row"><span class="grow">Höchstens Fisch</span><select class="inl" data-set="fishMax">' + [0, 1, 2].map(n => opt(n, st.fishMax, n + ' von 5')).join('') + '</select></label>' +
-    '<label class="row"><span class="grow">Montag kocht</span><select class="inl" data-set="moCook">' + opt(0, st.moCook, esc(p[0].name)) + opt(1, st.moCook, esc(p[1].name)) + '</select></label></div>' +
-    '<p class="foot">Regeln gelten ab dem nächsten Würfeln. Der Rhythmus ist fest: Sonntag zusammen ein Gericht, Montag und Donnerstag je zwei.</p>';
+    '<label class="row"><span class="grow">Kocht zuerst allein</span><select class="inl" data-set="moCook">' + opt(0, st.moCook, esc(p[0].name)) + opt(1, st.moCook, esc(p[1].name)) + '</select></label></div>' +
+    '<p class="foot">Regeln gelten ab dem nächsten Vorschlag. Sie werden auf die Zahl der vorgekochten Gerichte umgerechnet. Ist nur ein Gericht an einem Termin, kocht ihr zusammen.</p>';
   h += '<p class="cap">Darstellung</p><div class="pad" style="padding:0"><div class="seg">' + [['auto', 'Automatisch'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => '<button data-act="theme" data-t="' + k + '" aria-pressed="' + (S.theme === k) + '">' + l + '</button>').join('') + '</div></div>';
-  h += '<p class="cap">Kalender</p><div class="grp">' +
-    [['shop', 'Einkaufen (Samstag)'], ['so', 'Kochen Sonntag'], ['mo', 'Kochen Montag'], ['do', 'Kochen Donnerstag']].map(([k, l]) =>
-      '<label class="row"><span class="grow">' + l + '</span><input class="inl" type="time" data-cook="' + k + '" value="' + esc(st.cook[k]) + '" aria-label="' + l + '"></label>').join('') +
-    '<div class="pad"><div class="flex"><button class="btn sm" data-act="ics">Kalenderdatei laden</button><button class="btn sm gray" data-act="icscopy">Als Text kopieren</button></div></div></div>' +
-    '<p class="foot">Die Datei enthält Einkauf, Kochen und die Erinnerung zum Auftauen am Vorabend um 19 Uhr. Öffnen, und der Kalender fragt, ob er die Termine übernehmen soll.</p><div id="calbox"></div>';
+  h += '<p class="cap">Kalender abonnieren</p><div id="calsub">' + calBox() + '</div>';
+  h += '<p class="cap">Kalenderdatei</p><div class="grp"><div class="pad"><p class="sub" style="margin-bottom:10px">Einmalig in einen Kalender übernehmen, ohne Abo.</p><div class="flex"><button class="btn sm" data-act="ics">Datei laden</button><button class="btn sm gray" data-act="icscopy">Als Text kopieren</button></div></div></div><div id="calbox"></div>';
   h += '<p class="cap">Gemeinsamer Plan</p><div id="syncbox">' + syncBox() + '</div>';
   h += '<p class="cap">Daten</p><div class="grp"><div class="pad"><p class="sub">Ohne gemeinsamen Plan liegt alles nur in diesem Browser auf diesem Gerät. Der Installationsmodus auf dem Home-Bildschirm und Safari speichern getrennt.</p></div>' +
     '<button class="row" data-act="resetall" style="color:var(--danger)"><span class="grow"><b>' + (S.confirm ? 'Wirklich alles zurücksetzen?' : 'Alles zurücksetzen') + '</b></span>' + (S.confirm ? '<span class="val">Tippe noch einmal</span>' : '') + '</button></div>';
@@ -1865,9 +2462,38 @@ function sheetHtml() {
     if (!r) return '';
     const off = S.disabled.includes(r.id);
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(r.name) + '"><div class="shd"><span class="grab"></span><h3>' + esc(r.name) + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div>' +
-      '<div class="shb rb"><p class="sub" style="margin-bottom:12px">' + esc(r.cuisine) + ' · ' + KIND[r.kind] + '</p>' + recipeBody(r) +
+      '<div class="shb rb"><p class="sub" style="margin-bottom:12px">' + esc(r.cuisine) + ' · ' + KIND[r.kind] + (r.src ? ' · nach einer Idee aus „' + esc(r.src) + '“, in eigener Fassung' : '') + '</p>' + recipeBody(r) +
       '<div class="flex" style="justify-content:space-between;margin-top:14px"><span class="sub">Hat es geschmeckt?</span>' + rateBtns(r.id) + '</div>' +
       '<div class="actions"><button class="btn ' + (off ? '' : 'gray') + '" data-act="pool" data-rid="' + r.id + '">' + (off ? 'In den Pool aufnehmen' : 'Aus dem Pool nehmen') + '</button></div></div></div>';
+  }
+  if (sh.t === 'cell') {
+    const k = sh.k, x = S.grid[k];
+    if (!x) return '';
+    const days = weekDays(), dd = days[+k[0]];
+    const typeSeg = '<div class="seg">' + ['p', 'f', 'o', 'x'].map(t => '<button data-act="celltype" data-t="' + t + '" aria-pressed="' + (x.t === t) + '">' + TYPE_NAME[t] + '</button>').join('') + '</div>';
+    let body = typeSeg;
+    if ((x.t === 'p' || x.t === 'f') && x.r && V.BY_ID[x.r]) {
+      let ws = '', wl = 'Wer kocht', wsel = '';
+      if (x.t === 'f') wsel = '<select class="inl day who" data-cwho aria-label="Wer kocht">' + whoOpts(x.w, true) + '</select>';
+      else { const cs = cellSess(k); if (cs) { wl = 'Wer kocht · ' + DAYLONG[cs.day].slice(0, 2) + ' ' + cs.time; wsel = '<select class="inl day who" data-pwho="' + (cs.n - 1) + '" aria-label="Wer kocht">' + whoOpts(sessList()[cs.n - 1].w, true) + '</select>'; } }
+      body += '<div class="grp" style="margin-top:12px">' + (wsel ? '<div class="row trow"><span class="grow">' + esc(wl) + '</span>' + wsel + '</div>' : '') +
+        '<div class="row trow"><span class="grow">Wer kauft ein</span><select class="inl day who" data-shopwho aria-label="Wer kauft ein">' + whoOpts(shopCode(), false) + '</select></div></div>' +
+        '<p class="foot" style="margin:6px 4px 0">' + (x.t === 'p' ? 'Gilt für den ganzen Kochtermin. Einkaufen gilt für die ganze Woche.' : 'Einkaufen gilt für die ganze Woche.') + '</p>';
+    }
+    if (x.t === 'p' || x.t === 'f') {
+      const week = x.t === 'p' ? B.prepIds : [];
+      const row = (id, label, sub, on) => '<button class="row" data-act="cellr" data-rid="' + id + '"><span class="grow"><b>' + esc(label) + '</b>' + (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</span>' + (on ? '<span class="val">✓</span>' : '') + '</button>';
+      let list = row('', 'Automatisch', x.t === 'p' ? 'aus den vorgekochten Gerichten' : 'Vorschlag des Planers', !x.u);
+      if (week.length) {
+        list += '<p class="sub" style="padding:10px 16px 2px">Diese Woche vorgekocht</p>';
+        week.forEach(id => { const r = V.BY_ID[id], t = B.time[id], late = t !== undefined && t > V.cellTime(k); list += row(id, r.name, 'gekocht ' + DAYLONG[Math.floor(t / 1440)] + (late ? ' (zu spät für dieses Feld)' : ''), x.u && x.r === id); });
+      }
+      list += '<p class="sub" style="padding:10px 16px 2px">Alle Rezepte</p>';
+      V.RECIPES.filter(r => !week.includes(r.id)).forEach(r => { list += row(r.id, r.name, KIND[r.kind] + ' · ' + r.cuisine, x.u && x.r === r.id); });
+      body += '<div class="grp cl" style="margin-top:12px">' + list + '</div>';
+      if (x.r && V.BY_ID[x.r]) body += '<div class="flex" style="justify-content:space-between;margin-top:14px"><span class="sub">Hat es geschmeckt?</span>' + rateBtns(x.r) + '</div>';
+    } else body += '<p class="sub" style="margin-top:14px">' + (x.t === 'o' ? 'Ihr esst auswärts. Dafür wird nichts gekocht oder eingekauft.' : 'Hier ist nichts geplant. Dafür wird nichts gekocht oder eingekauft.') + '</p>';
+    return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Mahlzeit wählen"><div class="shd"><span class="grab"></span><h3>' + dd.n + ' ' + dd.date + ' · ' + MEAL_NAME[k[1]] + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div><div class="shb">' + body + '</div></div>';
   }
   if (sh.t === 'join') {
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Gemeinsamer Plan"><div class="shd"><span class="grab"></span><h3>Gemeinsamer Plan</h3><button class="btn sm soft" data-act="close">Abbrechen</button></div>' +
@@ -1883,18 +2509,15 @@ function sheetHtml() {
     const i = Math.min(S.ci, ev.length - 1), e = ev[i], di = dishIdx(e.rid), last = i === ev.length - 1;
     const multi = s.sched.rows.filter(x => x.rid === e.rid).length > 1;
     const par = ev.filter(o => o !== e && o.k === 'p' && o.start <= e.start + 1e-9 && o.end > e.start + 1e-9);
-    let h = '<div class="sheet full" role="dialog" aria-modal="true" aria-label="Kochmodus"><div class="shd"><button class="lnk" data-act="close">Beenden</button><b>' + SESS_DAY_NAME(s.key) + '</b><span class="sub">' + (i + 1) + ' von ' + ev.length + '</span></div>' +
+    let h = '<div class="sheet full" role="dialog" aria-modal="true" aria-label="Kochmodus"><div class="shd"><button class="lnk" data-act="close">Beenden</button><b>' + SESS_DAY_NAME(s) + '</b><span class="sub">' + (i + 1) + ' von ' + ev.length + '</span></div>' +
       '<div class="cm-top" style="padding:0 max(16px, env(safe-area-inset-left, 0px))">' + ev.map((_, k) => '<i class="' + (k <= i ? 'on' : '') + '"></i>').join('') + '</div>' +
-      '<div class="cm-body"><div class="cm-clock">' + (e.start < 1 ? 'Zu Beginn' : 'Nach ' + V.fmtDur(e.start)) + '</div>' +
+      '<div class="cm-body">' + timersHtml() + '<div class="cm-clock">' + (e.start < 1 ? 'Zu Beginn' : 'Nach ' + V.fmtDur(e.start)) + '</div>' +
       '<div class="cm-dish">' + dot(di) + esc(e.rs) + (multi ? ' · ' + esc(e.tn) : '') + '</div>' +
       '<div class="cm-text">' + esc(e.t) + '</div>' +
       '<div class="cm-kind ' + e.k + '">' + (e.k === 'a' ? 'Du bist dran · ' + e.m + ' Min' : 'Läuft von allein · ' + e.m + ' Min') + (e.d ? ' · ' + esc(e.d) : '') + '</div>';
-    if (S.timer) {
-      const left = (S.timer.end - Date.now()) / 1000;
-      h += '<div class="timer' + (left <= 0 ? ' done' : '') + '"><div><div class="sub">' + esc(S.timer.label) + '</div><b id="tmr">' + (left <= 0 ? 'Fertig' : fmtMS(left)) + '</b></div><button class="btn sm gray" data-act="timerstop">Stoppen</button></div>';
-    } else {
-      h += '<button class="btn soft" data-act="timer" data-min="' + e.m + '" data-label="' + esc(e.rs + ': ' + e.m + ' Min') + '">Timer starten (' + e.m + ' Min)</button>';
-    }
+    const tid = s.key + ':' + i, tmin = (S.tadj && S.tadj[tid]) || e.m, own = (S.timers || []).find(x => x.id === tid);
+    h += own ? '<p class="sub" style="margin:0">Timer für diesen Schritt läuft oben.</p>' :
+      '<div class="tset"><button class="btn gray sm" data-act="tadj" data-id="' + esc(tid) + '" data-d="-1" data-m="' + e.m + '" aria-label="Weniger Minuten">−</button><button class="btn soft" data-act="timer" data-id="' + esc(tid) + '" data-min="' + tmin + '" data-label="' + esc(e.rs + (multi ? ' · ' + e.tn : '') + ': ' + e.t.slice(0, 34) + (e.t.length > 34 ? '…' : '')) + '">Timer starten (' + tmin + ' Min)</button><button class="btn gray sm" data-act="tadj" data-id="' + esc(tid) + '" data-d="1" data-m="' + e.m + '" aria-label="Mehr Minuten">+</button></div><p class="sub" style="margin:6px 0 0">Zeit passt nicht? Mit − und + ändern, zum Beispiel nach der Packungsangabe.</p>';
     if (par.length) h += '<div class="cm-par"><p>Gleichzeitig läuft</p><ul>' + par.map(o => '<li>' + dot(dishIdx(o.rid)) + esc(o.rs + (s.sched.rows.filter(x => x.rid === o.rid).length > 1 ? ' · ' + o.tn : '') + ' bis ' + V.fmtClock(o.end)) + '</li>').join('') + '</ul></div>';
     if (i === 0 && s.thaw.length) h += '<p class="thaw">Aufgetaut sein sollte: ' + esc(s.thaw.join(', ')) + '</p>';
     h += '</div><div class="cm-foot"><button class="btn gray" data-act="cmprev"' + (i === 0 ? ' disabled style="opacity:.4"' : '') + '>Zurück</button><button class="btn" data-act="cmnext">' + (last ? 'Fertig' : 'Weiter') + '</button></div></div>';
@@ -1902,7 +2525,15 @@ function sheetHtml() {
   }
   return '';
 }
-function SESS_DAY_NAME(k) { return { so: 'Sonntag', mo: 'Montag', do: 'Donnerstag' }[k]; }
+function timersHtml() {
+  const t = S.timers || [];
+  if (!t.length) return '';
+  return '<div class="timers">' + t.map(x => {
+    const left = (x.end - Date.now()) / 1000;
+    return '<div class="timer' + (left <= 0 ? ' done' : '') + '"><div><div class="sub">' + esc(x.label) + '</div><b data-tmr="' + esc(x.id) + '">' + (left <= 0 ? 'Fertig' : fmtMS(left)) + '</b></div><button class="btn sm gray" data-act="timerstop" data-id="' + esc(x.id) + '">' + (left <= 0 ? 'OK' : 'Stoppen') + '</button></div>';
+  }).join('') + '</div>';
+}
+function SESS_DAY_NAME(s) { return DAYLONG[s.day] + (s.fresh ? ', frisch' : ''); }
 
 /* ---------- Rendern ---------- */
 const app = document.getElementById('app');
@@ -1942,6 +2573,76 @@ function listText() {
   t += '\nZuhause prüfen\n' + B.shop.vorrat.map(x => '- ' + x.n).join('\n') + '\n';
   return t;
 }
+/* ---------- Kalender abonnieren: Dateien über die GitHub-API ins eigene Repo legen ---------- */
+const GH_KEY = 'vorkoch.gh';
+function ghTok() { try { return localStorage.getItem(GH_KEY) || ''; } catch (e) { return ''; } }
+function ghSet(t) { try { if (t) localStorage.setItem(GH_KEY, t); else localStorage.removeItem(GH_KEY); } catch (e) { /* egal */ } }
+const REPO_RE = /^[A-Za-z0-9_.-]{1,39}\/[A-Za-z0-9_.-]{1,100}$/;
+function calUrl(w) {
+  if (!S.cal) return '';
+  const p = S.cal.repo.split('/'), o = p[0].toLowerCase(), r = p[1].toLowerCase();
+  return 'https://' + o + '.github.io/' + (r === o + '.github.io' ? '' : p[1] + '/') + 'kalender/' + S.cal.secret + '-' + w + '.ics';
+}
+function icsInput(filter) {
+  const meals = [];
+  V.CELLS.forEach(k => {
+    const x = S.grid[k];
+    if ((x.t === 'p' || x.t === 'f') && x.r && V.BY_ID[x.r]) meals.push({ day: +k[0], meal: k[1], name: V.BY_ID[x.r].short, note: x.t === 'f' ? 'frisch gekocht' : 'vorgekocht' });
+  });
+  const n = names();
+  return {
+    weekStart: S.weekStart || iso(nextSunday()), shop: Object.assign({ w: shopCode() }, S.shopAt), shopText: listText(), names: n, filter,
+    calName: filter === 'all' ? 'Vorkoch' : 'Vorkoch ' + n[+filter], meals,
+    sessions: B.sessions.map(s => ({ key: s.key, day: s.day, time: s.time, fresh: s.fresh, w: whoCode(s), who: cookWho(s), mk: s.sched.mk, thaw: s.thaw, dishes: s.rs.map(r => r.name),
+      events: s.sched.events.map(e => ({ start: e.start, rs: e.rs, tn: e.tn, t: e.t })) }))
+  };
+}
+async function ghPut(tok, repo, path, text) {
+  const api = 'https://api.github.com/repos/' + repo + '/contents/' + path;
+  const hd = { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+  const fail = st => new Error(st === 401 ? 'Token ungültig oder abgelaufen.' : st === 403 || st === 404 ? 'Kein Zugriff. Der Token braucht „Contents: Read and write“ für genau dieses Repo, und der Repo-Name muss stimmen.' : 'GitHub-Fehler ' + st + '.');
+  const one = async () => {
+    let sha, r;
+    try { r = await fetch(api, { headers: hd, cache: 'no-store' }); } catch (e) { throw new Error('Keine Verbindung.'); }
+    if (r.status === 200) sha = (await r.json()).sha; else if (r.status !== 404) throw fail(r.status);
+    const body = { message: 'Kalender aktualisiert', content: VX.b64std(text) }; if (sha) body.sha = sha;
+    try { r = await fetch(api, { method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, hd), body: JSON.stringify(body) }); } catch (e) { throw new Error('Keine Verbindung.'); }
+    if (!r.ok) { const er = fail(r.status); er.status = r.status; throw er; }
+  };
+  try { await one(); } catch (e) { if (e.status === 409 || e.status === 422) await one(); else throw e; }
+}
+async function publishCal() {
+  const tok = ghTok();
+  if (!S.cal || !tok || !B) return;
+  S.cs = { state: 'busy', msg: 'Veröffentliche …' }; render();
+  try {
+    for (const f of [['all', 'alle'], ['0', '0'], ['1', '1']]) await ghPut(tok, S.cal.repo, 'kalender/' + S.cal.secret + '-' + f[1] + '.ics', VX.buildICS(icsInput(f[0])));
+    S.calAt = Date.now(); saveLocal();
+    S.cs = { state: 'ok', msg: 'Veröffentlicht. GitHub braucht ein bis zwei Minuten, Google danach oft noch Stunden.' };
+  } catch (e) { S.cs = { state: 'err', msg: e.message || 'Fehler' }; }
+  render();
+}
+function calAgo() {
+  if (!S.calAt) return 'noch nie';
+  const m = Math.round((Date.now() - S.calAt) / 60000);
+  return m < 1 ? 'gerade eben' : m < 60 ? 'vor ' + m + ' Min' : m < 1440 ? 'vor ' + Math.round(m / 60) + ' Std' : 'vor ' + Math.round(m / 1440) + ' Tagen';
+}
+function calBox() {
+  const cs = S.cs, tok = ghTok();
+  const msg = cs ? '<p class="' + (cs.state === 'err' ? 'warn' : 'sub') + '" style="margin-top:8px">' + esc(cs.msg) + '</p>' : '';
+  if (!S.cal) {
+    return '<div class="grp"><div class="pad"><p class="sub" style="margin-bottom:10px">Dein Google Kalender zeigt dann automatisch Einkauf, Kochtermine und Mahlzeiten. Es gibt eine Version für alle, eine für ' + esc(names()[0]) + ' und eine für ' + esc(names()[1]) + '.</p>' +
+      '<ol class="mini"><li>github.com, Profilbild, Settings, ganz unten Developer settings, Personal access tokens, Fine-grained tokens, Generate new token.</li><li>Repository access: Only select repositories, dein Vorkoch-Repo. Permissions, Repository, Contents: Read and write. Erzeugen und den Token kopieren.</li><li>Unten Repo und Token eintragen und einrichten.</li></ol>' +
+      '<div style="display:grid;gap:8px;margin-top:12px"><input type="text" id="calrepo" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="benutzername/repo-name" aria-label="GitHub-Repo"><input type="password" id="caltok" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Token (github_pat_…)" aria-label="GitHub-Token"><button class="btn sm" data-act="calsetup">Einrichten und veröffentlichen</button></div>' + msg + '</div></div>' +
+      '<p class="foot">Der Token bleibt nur auf diesem Gerät. Die Kalender-Adressen enthalten ein Zufallswort und lassen sich nicht erraten, aber nicht geheim: Wer die Adresse kennt, sieht Termine und Gerichte.</p>';
+  }
+  const rows = [['alle', 'Für alle'], ['0', names()[0]], ['1', names()[1]]].map(([w, l]) => '<button class="row" data-act="calcopy" data-w="' + w + '"><span class="grow">Adresse kopieren: <b>' + esc(l) + '</b></span></button>').join('');
+  return '<div class="grp"><div class="row"><span class="grow"><b>Eingerichtet</b><div class="sub">' + esc(S.cal.repo) + ' · zuletzt veröffentlicht: ' + calAgo() + '</div></span></div>' + rows +
+    (tok ? '<button class="row" data-act="calpub"><span class="grow"><b>Jetzt aktualisieren</b></span></button>' :
+      '<div class="pad"><p class="sub" style="margin-bottom:8px">Zum Veröffentlichen braucht dieses Gerät den Token.</p><div class="flex"><input type="password" id="caltok" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Token" aria-label="GitHub-Token"><button class="btn sm" data-act="caltok">Speichern</button></div></div>') +
+    '<button class="row" data-act="caloff" style="color:var(--danger)"><span class="grow">Kalender trennen</span></button></div>' + msg + '<div id="calurl"></div>' +
+    '<p class="foot">Einmal in Google Kalender am Computer: Weitere Kalender, plus, Per URL, Adresse einfügen. Danach erscheint er auch auf dem Handy. Google holt Änderungen nur alle paar Stunden. Deshalb nach dem Planen hier aktualisieren, spätestens am Vorabend. Hinweis: In GitHub Desktop vor dem nächsten Hochladen erst „Fetch origin“ und „Pull“ drücken, weil die App neue Dateien ins Repo legt.</p>';
+}
 function copyOut(txt, okMsg, rows, boxId) {
   const box = document.getElementById(boxId || 'copybox');
   if (!box) return;
@@ -1951,16 +2652,21 @@ function copyOut(txt, okMsg, rows, boxId) {
 function setTab(t) { S.tab = t; S.sheet = null; S.fresh = true; save(); render(); window.scrollTo(0, 0); }
 function closeSheet() { if (S.sheet && S.sheet.t === 'cook') lockScreen(false); S.sheet = null; render(); }
 let tick = null;
+function beep() {
+  try { const C = window.AudioContext || window.webkitAudioContext, c = new C(), o = c.createOscillator(); o.connect(c.destination); o.frequency.value = 880; o.start(); setTimeout(() => { o.stop(); c.close(); }, 500); } catch (e) { /* egal */ }
+}
 function startTick() {
   if (tick || typeof setInterval !== 'function') return;
   tick = setInterval(() => {
-    if (!S.timer) { clearInterval(tick); tick = null; return; }
-    const left = (S.timer.end - Date.now()) / 1000, el = document.getElementById('tmr');
-    if (left <= 0 && !S.timer.fired) {
-      S.timer.fired = true;
-      try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) { /* egal */ }
-      if (S.sheet) render();
-    } else if (el && left > 0) el.textContent = fmtMS(left);
+    const ts = S.timers || [];
+    if (!ts.length) { clearInterval(tick); tick = null; return; }
+    let fire = false;
+    ts.forEach(x => {
+      const left = (x.end - Date.now()) / 1000;
+      if (left <= 0 && !x.fired) { x.fired = true; fire = true; }
+      else if (left > 0) { const el = document.querySelector('[data-tmr="' + x.id + '"]'); if (el) el.textContent = fmtMS(left); }
+    });
+    if (fire) { try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) { /* egal */ } beep(); if (S.sheet) render(); }
   }, 500);
 }
 
@@ -1981,9 +2687,21 @@ document.addEventListener('click', e => {
     if (S.ci >= n - 1) closeSheet(); else { S.ci++; render(); }
   }
   else if (act === 'cmprev') { if (S.sheet && S.sheet.t === 'cook' && S.ci > 0) { S.ci--; render(); } }
-  else if (act === 'timer') { S.timer = { end: Date.now() + (+b.dataset.min) * 60000, label: b.dataset.label || 'Timer' }; startTick(); render(); }
-  else if (act === 'timerstop') { S.timer = null; render(); }
+  else if (act === 'timer') {
+    const id = b.dataset.id || b.dataset.label || 'Timer';
+    if (!S.timers) S.timers = [];
+    if (!S.timers.some(x => x.id === id)) S.timers.push({ id, end: Date.now() + (+b.dataset.min) * 60000, label: b.dataset.label || 'Timer' });
+    startTick(); render();
+  }
+  else if (act === 'tadj') {
+    const id = b.dataset.id, cur = (S.tadj && S.tadj[id]) || +b.dataset.m || 1;
+    if (!S.tadj) S.tadj = {};
+    S.tadj[id] = Math.max(1, Math.min(240, cur + (+b.dataset.d) * (cur >= 20 ? 5 : 1))); render();
+  }
+  else if (act === 'timerstop') { S.timers = (S.timers || []).filter(x => x.id !== b.dataset.id); render(); }
   else if (act === 'filter') { S.filter = b.dataset.f; render(); }
+  else if (act === 'carb') { S.carb = b.dataset.c || ''; render(); }
+  else if (act === 'country') { S.country = b.dataset.c || ''; render(); }
   else if (act === 'theme') { S.theme = b.dataset.t; applyTheme(); save(); render(); }
   else if (act === 'poolall') { S.disabled = []; touch('pool'); save(); render(); }
   else if (act === 'poolnone') { S.disabled = V.RECIPES.map(r => r.id); touch('pool'); save(); render(); }
@@ -1998,6 +2716,29 @@ document.addEventListener('click', e => {
   }
   else if (act === 'uncheck') { Object.keys(S.checked.map).forEach(k => { S.checked.map[k] = false; touchKey('checked', k); }); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
+  else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
+  else if (act === 'celltype') {
+    const k = S.sheet && S.sheet.k, t = b.dataset.t;
+    if (!k || !/^[pfox]$/.test(t)) return;
+    editGrid(g => { g[k] = { t }; });
+    if (t === 'o' || t === 'x') S.sheet = null;
+    render();
+  }
+  else if (act === 'cellr') {
+    const k = S.sheet && S.sheet.k, id = b.dataset.rid;
+    if (!k) return;
+    editGrid(g => { const t = g[k].t, w = g[k].w; g[k] = id && V.BY_ID[id] ? { t, r: id, u: 1 } : { t }; if (t === 'f' && w) g[k].w = w; });
+    S.sheet = null; render();
+  }
+  else if (act === 'sessadd') {
+    if (S.sess.length >= 4) return;
+    S.sess.push({ day: 2, time: '18:00' }); S.sess = V.sortSess(S.sess);
+    editGrid(() => {}); render();
+  }
+  else if (act === 'sessdel') {
+    const i = +b.dataset.i; if (S.sess.length <= 1 || !(i >= 0 && i < S.sess.length)) return;
+    S.sess.splice(i, 1); editGrid(() => {}); render();
+  }
   else if (act === 'rate') {
     const id = b.dataset.rid, v = +b.dataset.v;
     S.ratings[id] = S.ratings[id] === v ? 0 : v; touchKey('ratings', id); save(); render();
@@ -2008,11 +2749,7 @@ document.addEventListener('click', e => {
     if (x) { S.storeOv[id] = storeOf(x) === 'm' ? 'd' : 'm'; touchKey('storeOv', id); save(); render(); }
   }
   else if (act === 'ics' || act === 'icscopy') {
-    const txt = VX.buildICS({
-      weekStart: S.weekStart || iso(nextSunday()), times: S.settings.cook, shopText: listText(),
-      sessions: B.sessions.map(s => ({ key: s.key, who: cookWho(s.key), mk: s.sched.mk, thaw: s.thaw, dishes: s.rs.map(r => r.name),
-        events: s.sched.events.map(e => ({ start: e.start, rs: e.rs, tn: e.tn, t: e.t })) }))
-    });
+    const txt = VX.buildICS(icsInput('all'));
     if (act === 'icscopy') { copyOut(txt, 'Kopiert. In eine Textdatei mit der Endung .ics einfügen und öffnen.', 8, 'calbox'); return; }
     try {
       const url = URL.createObjectURL(new Blob([txt], { type: 'text/calendar' }));
@@ -2021,6 +2758,17 @@ document.addEventListener('click', e => {
       const box = document.getElementById('calbox'); if (box) box.innerHTML = '<p class="foot">Falls nichts passiert, nimm „Als Text kopieren“.</p>';
     } catch (err) { copyOut(txt, 'Kopiert. In eine Textdatei mit der Endung .ics einfügen und öffnen.', 8, 'calbox'); }
   }
+  else if (act === 'calsetup') {
+    const r = (document.getElementById('calrepo') || {}).value || '', t = ((document.getElementById('caltok') || {}).value || '').trim();
+    const repo = r.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\/+$/, '').replace(/\.git$/, '');
+    if (!REPO_RE.test(repo)) { S.cs = { state: 'err', msg: 'Das Repo muss so aussehen: benutzername/repo-name.' }; render(); return; }
+    if (!/^[A-Za-z0-9_]{20,255}$/.test(t)) { S.cs = { state: 'err', msg: 'Das sieht nicht nach einem GitHub-Token aus.' }; render(); return; }
+    ghSet(t); S.cal = { repo, secret: newCode().slice(0, 16) }; touch('settings'); saveLocal(); schedSync(); publishCal();
+  }
+  else if (act === 'calpub') publishCal();
+  else if (act === 'caltok') { const t = ((document.getElementById('caltok') || {}).value || '').trim(); if (/^[A-Za-z0-9_]{20,255}$/.test(t)) { ghSet(t); S.cs = null; render(); } else { S.cs = { state: 'err', msg: 'Das sieht nicht nach einem GitHub-Token aus.' }; render(); } }
+  else if (act === 'calcopy') copyOut(calUrl(b.dataset.w), 'Adresse kopiert. In Google Kalender „Per URL“ einfügen.', 3, 'calurl');
+  else if (act === 'caloff') { S.cal = null; S.cs = null; ghSet(''); touch('settings'); saveLocal(); schedSync(); render(); }
   else if (act === 'connect') {
     const i = document.getElementById('syncurl'), u = normUrl(i ? i.value : '');
     if (!u) { ssSet('err', 'Das ist keine Firebase-Adresse. Sie endet auf firebasedatabase.app oder firebaseio.com.'); const el = document.getElementById('syncbox'); if (el) el.innerHTML = syncBox(); return; }
@@ -2039,7 +2787,7 @@ document.addEventListener('click', e => {
     VX.applyDoc(S, sh.doc, V.BY_ID);
     const n = Date.now(); ['plan', 'pool', 'settings', 'offers'].forEach(k => { S.mt.m[k] = n; });
     ['ratings', 'storeOv', 'checked'].forEach(k => Object.keys(k === 'checked' ? S.checked.map : S[k]).forEach(id => { S.mt[k][id] = n; }));
-    S.sheet = null; if (!valid()) generate(false);
+    S.sheet = null; syncIds();
     save(); render();
   }
   else if (act === 'resetall') {
@@ -2051,9 +2799,24 @@ document.addEventListener('click', e => {
 
 document.addEventListener('change', e => {
   const t = e.target;
-  if (t.dataset && t.dataset.cook) {
-    const k = t.dataset.cook;
-    if (/^\d{1,2}:\d{2}$/.test(t.value)) { S.settings.cook[k] = t.value; touch('settings'); save(); }
+  if (t.dataset && t.dataset.shopday !== undefined) {
+    const v = +t.value; if (v >= -1 && v <= 6) { S.shopAt.day = v; touch('plan'); save(); }
+  } else if (t.dataset && t.dataset.shoptime !== undefined) {
+    if (/^\d{1,2}:\d{2}$/.test(t.value)) { S.shopAt.time = t.value; touch('plan'); save(); }
+  } else if (t.dataset && t.dataset.shopwho !== undefined) {
+    if (/^[b01]$/.test(t.value)) { if (t.value === 'b') delete S.shopAt.w; else S.shopAt.w = t.value; touch('plan'); save(); render(); }
+  } else if (t.dataset && t.dataset.swho !== undefined) {
+    const i = +t.dataset.swho; if (S.sess[i] && /^[ab01]$/.test(t.value)) { if (t.value === 'a') delete S.sess[i].w; else S.sess[i].w = t.value; touch('plan'); save(); render(); }
+  } else if (t.dataset && t.dataset.pwho !== undefined) {
+    const o = sessList()[+t.dataset.pwho]; if (o && /^[ab01]$/.test(t.value)) { if (t.value === 'a') delete o.w; else o.w = t.value; touch('plan'); save(); render(); }
+  } else if (t.dataset && t.dataset.cwho !== undefined) {
+    const k = S.sheet && S.sheet.k; if (k && /^[ab01]$/.test(t.value)) { editGrid(g => { if (t.value === 'a') delete g[k].w; else g[k].w = t.value; }); render(); }
+  } else if (t.dataset && t.dataset.motto !== undefined) {
+    S.motto = t.value && V.countries().some(c => c.name === t.value) ? t.value : ''; touch('settings'); save(); render();
+  } else if (t.dataset && t.dataset.sday !== undefined) {
+    const i = +t.dataset.sday, v = +t.value; if (S.sess[i] && v >= 0 && v <= 6) { S.sess[i].day = v; S.sess = V.sortSess(S.sess); editGrid(() => {}); render(); }
+  } else if (t.dataset && t.dataset.stime !== undefined) {
+    const i = +t.dataset.stime; if (S.sess[i] && /^\d{1,2}:\d{2}$/.test(t.value)) { S.sess[i].time = t.value; S.sess = V.sortSess(S.sess); editGrid(() => {}); render(); }
   } else if (t.id === 'syncurl') { /* wird beim Verbinden gelesen */ }
   else if (t.dataset && t.dataset.pool) {
     const id = t.dataset.pool, k = S.disabled.indexOf(id);
