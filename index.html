@@ -340,6 +340,23 @@ input[type=password], input[type=url], input[type=email] { width: 100%; min-heig
   .frow { gap: 10px; padding: 6px 12px; }
   .row { padding-left: 14px; padding-right: 14px; }
 }
+
+/* Wochenleiste */
+.wbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 6px; margin: 6px 0 0; }
+.wmid { text-align: center; min-width: 0; }
+.wmid .ltitle { margin: 10px 0 2px; font-size: 28px; }
+.wmid .lsub { margin: 0 0 8px; }
+.wnav { width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--card); color: var(--accentfg); font-size: 28px; line-height: 1; padding: 0 0 3px; box-shadow: var(--shadow); cursor: pointer; }
+.wnav:active { background: var(--fill); }
+.wnav:disabled { opacity: .3; cursor: default; }
+.wback { text-align: center; margin: -4px 0 8px; }
+
+/* Gerichtsbilder */
+.dimg { border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 9; margin-bottom: 12px; background: var(--fill); max-width: 100%; }
+.dimg svg { display: block; width: 100%; height: 100%; }
+.thumb { flex: none; width: 56px; height: 56px; border-radius: 12px; overflow: hidden; background: var(--fill); }
+.thumb svg { display: block; width: 100%; height: 100%; }
+.rrow.offrec .thumb { opacity: .5; }
 </style>
 <div id="app"></div>
 <nav id="tabs" aria-label="Bereiche"><div class="in"><button type="button" data-act="tab" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button type="button" data-act="tab" data-tab="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Einkauf</button><button type="button" data-act="tab" data-tab="cook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h2M20 10h2M9 3c0 1.6 1 1.6 1 3.5M14 3c0 1.6 1 1.6 1 3.5"/></svg>Kochen</button><button type="button" data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Rezepte</button><button type="button" data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Mehr</button></div></nav>
@@ -1734,6 +1751,257 @@ root.VK = { countries, ING, RECIPES, BY_ID, AISLES, CELLS, MEAL_MIN, FRESH_AT, D
 if (typeof module !== 'undefined') module.exports = root.VK;
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* Vorkoch: gezeichnete Gerichtsbilder. Jedes Rezept bekommt eine kleine Illustration von oben, aus seinen Zutaten und seiner Zubereitungsart gebaut.
+   Reine Funktion: VA.art(rezept, { thumb }) -> SVG-Text. Keine Fotos, keine fremden Bilder. */
+(function (root) {
+  'use strict';
+  const W = 320, H = 180, CX = 160, CY = 92;
+
+  /* Zutat -> [Farbe, Form, Größe]. Alles, was hier fehlt (Gewürze, Öl, Soßen), wird nicht gezeichnet. */
+  const VIS = {
+    linsen: ['#C9772E', 'dot', 3.2], berglinsen: ['#6E5233', 'dot', 3.2], linsen_dose: ['#7A5A38', 'dot', 3.2],
+    spinat: ['#2F8F4A', 'leaf', 9], tomaten: ['#D8402D', 'chunk', 8], reis: ['#FBF6EA', 'grain'], kichererbsen: ['#E2B866', 'dot', 4.2],
+    feta: ['#FFFDF4', 'cube', 6], paprika: ['#E5462C', 'strip', 10], zucchini: ['#78B552', 'coin', 6], halloumi: ['#F1D58A', 'slice', 9],
+    bulgur: ['#E3C687', 'grain'], couscous: ['#EBD39A', 'grain'], quinoa: ['#E8D8A8', 'grain'], brokkoli: ['#2E7D3A', 'floret', 6], tofu: ['#F3E4BD', 'cube', 7],
+    karotten: ['#F28C28', 'coin', 5], huehnchen: ['#D9A86C', 'chunk', 9], lachs: ['#F4906F', 'fillet'], seelachs: ['#EFE4D2', 'fillet'], garnelen: ['#F59A72', 'shrimp'],
+    nudeln: ['#EFD28A', 'pasta'], reisnudeln: ['#F3E6C0', 'pasta'], ramen: ['#F0D585', 'pasta'], eier: ['#FFF6D6', 'egg'], kartoffeln: ['#E9C97F', 'wedge', 9],
+    suesskartoffel: ['#EC9A44', 'wedge', 9], champignons: ['#CDB89C', 'mush', 7], lauch: ['#A9CF74', 'ring', 5], aubergine: ['#5E3F7C', 'chunk', 8], mais: ['#F7D43B', 'dot', 3.4],
+    kidney: ['#8E2D2D', 'dot', 4], weisse: ['#F4EEDB', 'dot', 4.2], erbsen: ['#6EBE46', 'dot', 3.6], putenhack: ['#9B5E3E', 'crumb'], rinderhack: ['#8A4B33', 'crumb'],
+    mozzarella: ['#FFFFFF', 'cube', 6], brot: ['#CFA062', 'chunk', 9], hokkaido: ['#EA7F2A', 'chunk', 8], blumenkohl: ['#F2EEE2', 'floret', 6], wok: ['#5DAA4B', 'strip', 9],
+    spaetzle: ['#E9CC7B', 'crumb'], schweinefilet: ['#D7A079', 'chunk', 9], cabanossi: ['#A8452F', 'coin', 6], rindergulasch: ['#8A4B33', 'chunk', 9],
+    salat: ['#79B955', 'leaf', 9], gurke: ['#9ACD6A', 'coin', 6], polenta: ['#F2CB4E', 'cube', 8], kuerbiskerne: ['#6F8F3C', 'dot', 3], walnuesse: ['#B58A5A', 'chunk', 6],
+    thunfisch: ['#C98F7B', 'chunk', 8], aprikosen: ['#F4A640', 'chunk', 6], huettenkaese: ['#FFFFFF', 'crumb']
+  };
+  const GARNISH = { skyr: 1, frischkaese: 1, petersilie: 1, zitrone: 1, parmesan: 1 };
+
+  /* Zubereitungsart je Gericht */
+  const CAT = {
+    linsensuppe: 'soup', hokkaido: 'soup', bohneneintopf: 'soup', linseneintopf: 'soup', pho: 'soup', kokossuppe: 'soup', cabanossi_eintopf: 'soup', ramen_tofu: 'soup', chili: 'soup', chili_sin: 'soup',
+    dal: 'curry', tofucurry: 'curry', lachs_curry: 'curry', chana: 'curry', palak_tofu: 'curry', butter_chicken: 'curry', curry_couscous: 'curry', karibisch: 'curry', tajine: 'curry',
+    pilzgulasch: 'curry', kartoffelpfanne: 'curry', seelachs: 'curry', erdnuss_tofu: 'curry', teriyaki: 'curry', wok: 'curry',
+    garnelen_pasta: 'pasta', bolognese: 'pasta', thunfisch_pasta: 'pasta', stroganoff: 'pasta', geschnetzeltes: 'pasta', cacciatore: 'pasta', kuerbis_pasta: 'pasta', viet_nudel: 'pasta',
+    burrito: 'bowl', viet_hack: 'bowl', thai_hack: 'bowl', linsen_bowl: 'bowl', halloumi: 'bowl', thunfisch_bohnen: 'bowl',
+    lasagne: 'bake', enchilada: 'bake', moussaka: 'bake', kartoffelauflauf: 'bake', hack_polenta: 'bake', gigantes: 'bake', ratatouille: 'bake', ofengemuese: 'bake', blumenkohl_ofen: 'bake',
+    shakshuka: 'pan', frittata: 'pan',
+    ofenhaehnchen: 'tray', shawarma: 'tray', koefte: 'tray', frikadellen: 'tray', lachs_kartoffel: 'tray', lachs_bulgur: 'tray', lachs_spinat_reis: 'tray', seelachs_lauch: 'tray', spinatknoedel: 'tray'
+  };
+
+  const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
+  const mk = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const f = n => Math.round(n * 10) / 10;
+  const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16); const c = i => Math.max(0, Math.min(255, Math.round(((n >> i) & 255) * k))); return 'rgb(' + c(16) + ',' + c(8) + ',' + c(0) + ')'; };
+
+  /* ---- einzelne Zutaten zeichnen ---- */
+  function piece(kind, c, x, y, s, R) {
+    const rot = Math.round(R() * 180), st = shade(c, .78);
+    const g = 'transform="rotate(' + rot + ' ' + f(x) + ' ' + f(y) + ')"';
+    switch (kind) {
+      case 'dot': return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(s * (.8 + R() * .4)) + '" fill="' + c + '"/>';
+      case 'chunk': return '<rect x="' + f(x - s / 2) + '" y="' + f(y - s * .4) + '" width="' + f(s) + '" height="' + f(s * .8) + '" rx="2.4" fill="' + c + '" stroke="' + st + '" stroke-width=".8" ' + g + '/>';
+      case 'cube': return '<rect x="' + f(x - s / 2) + '" y="' + f(y - s / 2) + '" width="' + f(s) + '" height="' + f(s) + '" rx="1.6" fill="' + c + '" stroke="' + st + '" stroke-width=".7" ' + g + '/>';
+      case 'coin': return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(s) + '" fill="' + c + '" stroke="' + st + '" stroke-width=".8"/><circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(s * .5) + '" fill="none" stroke="' + st + '" stroke-width=".6" opacity=".55"/>';
+      case 'strip': return '<rect x="' + f(x - s * .8) + '" y="' + f(y - s * .22) + '" width="' + f(s * 1.6) + '" height="' + f(s * .44) + '" rx="' + f(s * .22) + '" fill="' + c + '" ' + g + '/>';
+      case 'leaf': return '<g ' + g + '><ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="' + f(s * .85) + '" ry="' + f(s * .42) + '" fill="' + c + '"/><path d="M' + f(x - s * .8) + ' ' + f(y) + 'H' + f(x + s * .8) + '" stroke="' + shade(c, .7) + '" stroke-width=".8"/></g>';
+      case 'floret': return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(s * .75) + '" fill="' + c + '"/><circle cx="' + f(x - s * .5) + '" cy="' + f(y + s * .25) + '" r="' + f(s * .5) + '" fill="' + c + '"/><circle cx="' + f(x + s * .5) + '" cy="' + f(y + s * .2) + '" r="' + f(s * .5) + '" fill="' + c + '"/><circle cx="' + f(x) + '" cy="' + f(y - s * .1) + '" r="' + f(s * .3) + '" fill="' + shade(c, 1.2) + '" opacity=".5"/>';
+      case 'wedge': return '<path d="M' + f(x - s * .6) + ' ' + f(y + s * .35) + 'Q' + f(x) + ' ' + f(y - s * .7) + ' ' + f(x + s * .6) + ' ' + f(y + s * .35) + 'Z" fill="' + c + '" stroke="' + st + '" stroke-width=".8" stroke-linejoin="round" ' + g + '/>';
+      case 'slice': return '<ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="' + f(s * .6) + '" ry="' + f(s * .38) + '" fill="' + c + '" stroke="' + st + '" stroke-width=".8" ' + g + '/><path d="M' + f(x - s * .35) + ' ' + f(y) + 'H' + f(x + s * .35) + '" stroke="' + shade(c, .85) + '" stroke-width="1" ' + g + '/>';
+      case 'ring': return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(s * .7) + '" fill="none" stroke="' + c + '" stroke-width="2.2"/>';
+      case 'mush': return '<path d="M' + f(x - s * .65) + ' ' + f(y) + 'a' + f(s * .65) + ' ' + f(s * .55) + ' 0 0 1 ' + f(s * 1.3) + ' 0z" fill="' + c + '" stroke="' + st + '" stroke-width=".7" ' + g + '/><rect x="' + f(x - s * .15) + '" y="' + f(y) + '" width="' + f(s * .3) + '" height="' + f(s * .4) + '" fill="#EFE3D0" ' + g + '/>';
+      case 'crumb': return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="2.4" fill="' + c + '"/><circle cx="' + f(x + 3) + '" cy="' + f(y + 2) + '" r="2" fill="' + shade(c, .85) + '"/><circle cx="' + f(x - 2) + '" cy="' + f(y + 3) + '" r="1.8" fill="' + shade(c, 1.1) + '"/>';
+      case 'grain': return '<ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="2.6" ry="1.2" fill="' + c + '" ' + g + '/>';
+      case 'egg': return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="9" fill="#FFFFFF" stroke="#E7DFC8" stroke-width=".8"/><circle cx="' + f(x) + '" cy="' + f(y) + '" r="4" fill="#F6B21A"/>';
+      case 'fillet': return '<path d="M' + f(x - 15) + ' ' + f(y) + 'Q' + f(x - 12) + ' ' + f(y - 9) + ' ' + f(x) + ' ' + f(y - 8) + 'Q' + f(x + 14) + ' ' + f(y - 7) + ' ' + f(x + 17) + ' ' + f(y) + 'Q' + f(x + 12) + ' ' + f(y + 9) + ' ' + f(x) + ' ' + f(y + 8) + 'Q' + f(x - 12) + ' ' + f(y + 8) + ' ' + f(x - 15) + ' ' + f(y) + 'Z" fill="' + c + '" stroke="' + st + '" stroke-width=".8" ' + g + '/>';
+      case 'shrimp': return '<path d="M' + f(x - 7) + ' ' + f(y + 4) + 'Q' + f(x - 8) + ' ' + f(y - 7) + ' ' + f(x + 2) + ' ' + f(y - 6) + 'Q' + f(x + 9) + ' ' + f(y - 4) + ' ' + f(x + 6) + ' ' + f(y + 4) + '" fill="none" stroke="' + c + '" stroke-width="5" stroke-linecap="round" ' + g + '/>';
+      case 'herb': return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="1.5" fill="' + c + '"/>';
+      default: return '';
+    }
+  }
+
+  /* Bestandteile eines Gerichts: Zutaten mit Darstellung, ohne Gewürze, in Rezeptreihenfolge */
+  function parts(r) {
+    const seen = {}, out = [];
+    r.i.forEach(([id]) => { if (VIS[id] && !seen[id]) { seen[id] = 1; out.push({ id, c: VIS[id][0], k: VIS[id][1], s: VIS[id][2] || 5 }); } });
+    return out;
+  }
+  const has = (r, id) => r.i.some(x => x[0] === id);
+
+  function sauceColor(r) {
+    if (has(r, 'kokos') && (has(r, 'currypaste') || has(r, 'curry'))) return '#E9B65A';
+    if (has(r, 'kokos')) return '#EFD9A6';
+    if (has(r, 'tomaten') || has(r, 'tomatenmark')) return has(r, 'skyr') || has(r, 'frischkaese') ? '#D5603F' : '#C63D28';
+    if (has(r, 'hokkaido')) return '#E8862E';
+    if (has(r, 'linsen')) return '#D98F3F';
+    if (has(r, 'spinat') && has(r, 'frischkaese')) return '#8DB66A';
+    if (has(r, 'sojasauce')) return '#8A5A32';
+    if (has(r, 'skyr') || has(r, 'frischkaese') || has(r, 'paprikapulver')) return '#E7C18A';
+    return '#C99A5C';
+  }
+  const grainOf = r => ['reis', 'couscous', 'bulgur', 'quinoa', 'spaetzle', 'polenta'].find(id => has(r, id)) || '';
+
+  /* ---- Bausteine ---- */
+  const inCircle = (R, rad) => { const a = R() * 6.2832, d = Math.sqrt(R()) * rad; return [Math.cos(a) * d, Math.sin(a) * d]; };
+  function scatter(list, n, cx, cy, rad, R, skip) {
+    let s = '';
+    if (!list.length) return s;
+    for (let i = 0; i < n; i++) {
+      const p = list[i % list.length]; if (skip && skip[p.id]) continue;
+      const [dx, dy] = inCircle(R, rad);
+      s += piece(p.k, p.c, cx + dx, cy + dy, p.s, R);
+    }
+    return s;
+  }
+  const plate = (cx, cy, rad) => '<circle cx="' + cx + '" cy="' + (cy + 5) + '" r="' + (rad + 2) + '" fill="#000" opacity=".13"/><circle cx="' + cx + '" cy="' + cy + '" r="' + rad + '" fill="#FBFAF6" stroke="#E4DED2" stroke-width="1.5"/><circle cx="' + cx + '" cy="' + cy + '" r="' + (rad - 9) + '" fill="none" stroke="#EFEADF" stroke-width="2"/>';
+  const bowlRim = (cx, cy, rad, liquid) => '<circle cx="' + cx + '" cy="' + (cy + 5) + '" r="' + (rad + 2) + '" fill="#000" opacity=".15"/><circle cx="' + cx + '" cy="' + cy + '" r="' + rad + '" fill="#F3EFE6" stroke="#DCD5C6" stroke-width="1.5"/><circle cx="' + cx + '" cy="' + cy + '" r="' + (rad - 9) + '" fill="' + liquid + '"/><circle cx="' + (cx - 10) + '" cy="' + (cy - 12) + '" r="' + (rad - 26) + '" fill="#fff" opacity=".1"/>';
+  const dollop = (x, y, s) => '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + s + '" fill="#FFFFFF" stroke="#E8E2D4" stroke-width=".8"/><path d="M' + f(x - s * .5) + ' ' + f(y) + 'q' + f(s * .5) + ' ' + f(-s * .7) + ' ' + f(s) + ' 0" fill="none" stroke="#E3DCCB" stroke-width="1"/>';
+  const lemon = (x, y) => '<path d="M' + (x - 9) + ' ' + y + 'a9 9 0 0 1 18 0z" fill="#F6E25A" stroke="#D9C43A" stroke-width=".9"/><path d="M' + x + ' ' + y + 'v-8M' + (x - 5) + ' ' + y + 'l2-7M' + (x + 5) + ' ' + y + 'l-2-7" stroke="#FBF1A6" stroke-width=".8"/>';
+  const herbs = (cx, cy, rad, R, n) => { let s = ''; for (let i = 0; i < n; i++) { const [dx, dy] = inCircle(R, rad); s += piece('herb', '#3E9A45', cx + dx, cy + dy, 1, R); } return s; };
+
+  /* ---- Maler ---- */
+  function paintSoup(r, P, R) {
+    const liq = sauceColor(r), rad = 66;
+    let s = bowlRim(CX, CY, rad, liq);
+    const pcs = P.filter(p => !['reis', 'nudeln', 'brot', 'reisnudeln', 'ramen'].includes(p.id));
+    if (has(r, 'reisnudeln') || has(r, 'ramen')) { for (let i = 0; i < 9; i++) { const a = R() * 3, x = CX - 28 + R() * 40, y = CY - 20 + i * 7; s += '<path d="M' + f(x) + ' ' + f(y) + 'q18 -6 36 0" fill="none" stroke="' + VIS[has(r, 'ramen') ? 'ramen' : 'reisnudeln'][0] + '" stroke-width="3.2" stroke-linecap="round"/>'; } }
+    s += scatter(pcs, 26, CX, CY, rad - 18, R);
+    if (has(r, 'reis') && !has(r, 'kokos')) s += scatter([{ id: 'reis', c: '#FBF6EA', k: 'grain' }], 20, CX + 18, CY + 14, 20, R);
+    if (has(r, 'eier')) s += piece('egg', '#fff', CX + 26, CY - 22, 1, R);
+    if (has(r, 'skyr')) s += dollop(CX - 4, CY + 2, 12);
+    s += herbs(CX, CY, rad - 20, R, 10);
+    if (has(r, 'brot')) s += '<rect x="228" y="36" width="52" height="22" rx="8" fill="#CFA062" stroke="#B98745" stroke-width="1" transform="rotate(-18 254 47)"/>';
+    return s;
+  }
+  function paintCurry(r, P, R) {
+    const sc = sauceColor(r), gr = grainOf(r);
+    let s = plate(CX, CY, 68);
+    s += '<path d="M' + (CX - 52) + ' ' + (CY + 6) + 'C' + (CX - 56) + ' ' + (CY - 40) + ' ' + (CX - 8) + ' ' + (CY - 50) + ' ' + (CX + 4) + ' ' + (CY - 14) + 'C' + (CX + 12) + ' ' + (CY + 26) + ' ' + (CX + 2) + ' ' + (CY + 50) + ' ' + (CX - 28) + ' ' + (CY + 48) + 'C' + (CX - 52) + ' ' + (CY + 44) + ' ' + (CX - 48) + ' ' + (CY + 28) + ' ' + (CX - 52) + ' ' + (CY + 6) + 'Z" fill="' + sc + '" stroke="' + shade(sc.length === 7 ? sc : '#C99A5C', .8) + '" stroke-width="1"/>';
+    const pcs = P.filter(p => !['reis', 'couscous', 'bulgur', 'quinoa', 'spaetzle', 'polenta', 'kokos'].includes(p.id));
+    s += scatter(pcs, 16, CX - 24, CY, 26, R);
+    if (gr) {
+      const col = gr === 'polenta' ? '#F2CB4E' : (VIS[gr] ? VIS[gr][0] : '#FBF6EA');
+      s += '<ellipse cx="' + (CX + 32) + '" cy="' + (CY + 2) + '" rx="25" ry="36" fill="' + (gr === 'reis' ? '#FFFFFF' : col) + '" opacity=".96" stroke="#E5DFD0" stroke-width="1"/>';
+      s += scatter([{ id: gr, c: gr === 'reis' ? '#EDE4CF' : shade(col, .85), k: gr === 'spaetzle' ? 'crumb' : 'grain' }], 34, CX + 32, CY + 2, 24, R);
+    }
+    if (has(r, 'skyr') || has(r, 'frischkaese')) s += dollop(CX - 14, CY - 4, 9);
+    s += herbs(CX - 16, CY, 28, R, 8);
+    if (has(r, 'zitrone')) s += lemon(CX + 44, CY + 52);
+    if (has(r, 'erdnussbutter') || has(r, 'sojasauce')) s += '<circle cx="' + (CX + 52) + '" cy="' + (CY - 40) + '" r="2" fill="#FBF6EA" opacity=".9"/>';
+    return s;
+  }
+  function paintPasta(r, P, R) {
+    const noodle = has(r, 'reisnudeln') ? '#F3E6C0' : '#EFD28A', sc = sauceColor(r);
+    let s = plate(CX, CY, 68);
+    for (let i = 0; i < 9; i++) { const rr = 8 + i * 5.4, ox = (R() - .5) * 5, oy = (R() - .5) * 5; s += '<circle cx="' + f(CX + ox) + '" cy="' + f(CY + oy) + '" r="' + f(rr) + '" fill="none" stroke="' + noodle + '" stroke-width="4.2" opacity="' + f(.75 + R() * .25) + '"/>'; }
+    s += '<circle cx="' + (CX + 2) + '" cy="' + (CY - 2) + '" r="26" fill="' + sc + '" opacity=".8"/>';
+    const pcs = P.filter(p => !['nudeln', 'reisnudeln', 'ramen'].includes(p.id));
+    s += scatter(pcs, 18, CX, CY - 2, 30, R);
+    if (has(r, 'eier') || has(r, 'wok')) s += scatter([{ id: 'wok', c: '#5DAA4B', k: 'strip', s: 8 }], 5, CX, CY, 34, R);
+    if (has(r, 'skyr')) s += dollop(CX + 4, CY - 4, 9);
+    s += herbs(CX, CY, 34, R, 12);
+    return s;
+  }
+  function paintBowl(r, P, R) {
+    let s = bowlRim(CX, CY, 68, '#F8F4EA');
+    const secs = P.filter(p => p.k !== 'pasta' && !GARNISH[p.id]).slice(0, 5), n = Math.max(3, secs.length), rad = 59;
+    secs.forEach((p, i) => {
+      const a0 = -Math.PI / 2 + i * 2 * Math.PI / n, a1 = a0 + 2 * Math.PI / n, big = (a1 - a0) > Math.PI ? 1 : 0;
+      const x0 = CX + rad * Math.cos(a0), y0 = CY + rad * Math.sin(a0), x1 = CX + rad * Math.cos(a1), y1 = CY + rad * Math.sin(a1);
+      const base = p.k === 'grain' ? '#FDFBF4' : p.k === 'dot' || p.k === 'crumb' ? shade(p.c, .55) : '#F4EFE2';
+      s += '<path d="M' + CX + ' ' + CY + 'L' + f(x0) + ' ' + f(y0) + 'A' + rad + ' ' + rad + ' 0 ' + big + ' 1 ' + f(x1) + ' ' + f(y1) + 'Z" fill="' + base + '" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>';
+      const am = (a0 + a1) / 2;
+      for (let j = 0; j < 14; j++) { const aa = a0 + (a1 - a0) * (.12 + R() * .76), dd = 14 + R() * (rad - 22); s += piece(p.k === 'pasta' ? 'strip' : p.k, p.c, CX + dd * Math.cos(aa), CY + dd * Math.sin(aa), p.s, R); }
+    });
+    s += '<circle cx="' + CX + '" cy="' + CY + '" r="13" fill="#FFFFFF" stroke="#E8E2D4" stroke-width=".9"/>';
+    if (has(r, 'skyr')) s += '<circle cx="' + CX + '" cy="' + CY + '" r="8" fill="#F8F6EE"/>'; else if (has(r, 'eier')) s += '<circle cx="' + CX + '" cy="' + CY + '" r="6" fill="#F6B21A"/>'; else if (has(r, 'zitrone')) s += '<circle cx="' + CX + '" cy="' + CY + '" r="7" fill="#F6E25A"/>';
+    return s;
+  }
+  function paintBake(r, P, R) {
+    const cheesy = has(r, 'mozzarella') || has(r, 'parmesan') || has(r, 'huettenkaese') || has(r, 'feta') || has(r, 'skyr') || has(r, 'eier');
+    const top = has(r, 'moussaka') ? '#E6C27A' : cheesy ? '#E4B24C' : (sauceColor(r));
+    const x = 54, y = 34, w = 212, h = 116;
+    let s = '<rect x="' + (x + 3) + '" y="' + (y + 8) + '" width="' + w + '" height="' + h + '" rx="20" fill="#000" opacity=".14"/>';
+    s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="20" fill="#8F8B84"/><rect x="' + (x + 6) + '" y="' + (y + 6) + '" width="' + (w - 12) + '" height="' + (h - 12) + '" rx="15" fill="#B9B5AD"/>';
+    s += '<rect x="' + (x + 12) + '" y="' + (y + 12) + '" width="' + (w - 24) + '" height="' + (h - 24) + '" rx="11" fill="' + top + '"/>';
+    // gebräunte Flecken
+    for (let i = 0; i < 14; i++) { const px = x + 22 + R() * (w - 44), py = y + 22 + R() * (h - 44); s += '<ellipse cx="' + f(px) + '" cy="' + f(py) + '" rx="' + f(5 + R() * 9) + '" ry="' + f(3 + R() * 5) + '" fill="' + shade(top.length === 7 ? top : '#E4B24C', .82) + '" opacity=".55"/>'; }
+    const pcs = P.filter(p => !['nudeln'].includes(p.id));
+    for (let i = 0; i < 30; i++) { const p = pcs[i % Math.max(1, pcs.length)]; if (!p) break; s += piece(p.k, p.c, x + 24 + R() * (w - 48), y + 24 + R() * (h - 48), p.s * .9, R); }
+    // Portionsschnitte
+    s += '<path d="M' + (x + w / 2) + ' ' + (y + 14) + 'v' + (h - 28) + 'M' + (x + 16) + ' ' + (y + h / 2) + 'h' + (w - 32) + '" stroke="#000" stroke-opacity=".13" stroke-width="1.6" stroke-linecap="round"/>';
+    s += herbs(x + w / 2, y + h / 2, 70, R, 12);
+    return s;
+  }
+  function paintPan(r, P, R) {
+    const shak = has(r, 'tomaten');
+    let s = '<circle cx="' + (CX - 6) + '" cy="' + (CY + 6) + '" r="70" fill="#000" opacity=".15"/><rect x="' + (CX + 56) + '" y="' + (CY - 8) + '" width="70" height="16" rx="8" fill="#3B3A38"/>';
+    s += '<circle cx="' + (CX - 8) + '" cy="' + CY + '" r="70" fill="#34322F"/><circle cx="' + (CX - 8) + '" cy="' + CY + '" r="62" fill="' + (shak ? '#C63D28' : '#F2C94C') + '"/>';
+    if (shak) {
+      s += scatter(P.filter(p => ['tomaten', 'paprika', 'kichererbsen', 'zwiebel'].includes(p.id)), 22, CX - 8, CY, 52, R);
+      for (let i = 0; i < 4; i++) { const a = i * 1.57 + .5, px = CX - 8 + Math.cos(a) * 28, py = CY + Math.sin(a) * 28; s += piece('egg', '#fff', px, py, 1, R); }
+      s += scatter([{ id: 'feta', c: '#FFFDF4', k: 'cube', s: 5 }], 8, CX - 8, CY, 44, R);
+      s += herbs(CX - 8, CY, 50, R, 14);
+    } else {
+      s += scatter(P.filter(p => ['spinat', 'kartoffeln'].includes(p.id)), 18, CX - 8, CY, 50, R);
+      s += scatter([{ id: 'feta', c: '#FFFDF4', k: 'cube', s: 5 }], 8, CX - 8, CY, 48, R);
+      s += '<path d="M' + (CX - 8) + ' ' + (CY - 56) + 'V' + (CY + 56) + 'M' + (CX - 62) + ' ' + CY + 'H' + (CX + 46) + 'M' + (CX - 46) + ' ' + (CY - 38) + 'L' + (CX + 30) + ' ' + (CY + 38) + 'M' + (CX + 30) + ' ' + (CY - 38) + 'L' + (CX - 46) + ' ' + (CY + 38) + '" stroke="#B8892E" stroke-opacity=".35" stroke-width="1.4"/>';
+    }
+    return s;
+  }
+  function paintTray(r, P, R) {
+    let s = plate(CX, CY, 68);
+    const id = r.id;
+    if (id === 'spinatknoedel') {
+      [[-24, -14], [10, -22], [-6, 14]].forEach(([dx, dy]) => { s += '<circle cx="' + (CX + dx) + '" cy="' + (CY + dy) + '" r="19" fill="#9DBF6E" stroke="#7FA254" stroke-width="1.2"/>'; s += scatter([{ id: 'p', c: '#6A8F3C', k: 'dot', s: 1.6 }], 8, CX + dx, CY + dy, 15, R); });
+      s += scatter([{ id: 'parmesan', c: '#F3E3A5', k: 'herb' }], 18, CX, CY, 34, R).replace(/r="1.5"/g, 'r="2"');
+      s += dollop(CX + 36, CY + 22, 11);
+      return s;
+    }
+    // Eiweiß-Teil links
+    if (has(r, 'huehnchen')) {
+      [[-34, -14, -20], [-30, 14, 18]].forEach(([dx, dy, a]) => { s += '<g transform="rotate(' + a + ' ' + (CX + dx) + ' ' + (CY + dy) + ')"><ellipse cx="' + (CX + dx) + '" cy="' + (CY + dy) + '" rx="18" ry="11" fill="#C8873F" stroke="#A66B2A" stroke-width="1"/><rect x="' + (CX + dx + 14) + '" y="' + (CY + dy - 3) + '" width="14" height="6" rx="3" fill="#F3E9D6" stroke="#D9CDB3" stroke-width=".8"/><circle cx="' + (CX + dx + 29) + '" cy="' + (CY + dy - 3) + '" r="3.4" fill="#F3E9D6"/><circle cx="' + (CX + dx + 29) + '" cy="' + (CY + dy + 3) + '" r="3.4" fill="#F3E9D6"/></g>'; });
+    } else if (has(r, 'lachs') || has(r, 'seelachs')) {
+      const c = has(r, 'seelachs') ? (has(r, 'brot') ? '#E2B56B' : '#EFE4D2') : '#F4906F';
+      s += piece('fillet', c, CX - 30, CY - 2, 1, () => .5).replace(/ ?transform="[^"]*"/, ' transform="scale(1.5) translate(' + f(-(CX - 30) / 3) + ' ' + f(-(CY - 2) / 3) + ')"');
+    } else if (has(r, 'putenhack') || has(r, 'rinderhack')) {
+      [[-36, -18], [-30, 14], [-8, -2]].forEach(([dx, dy]) => { s += '<circle cx="' + (CX + dx) + '" cy="' + (CY + dy) + '" r="14" fill="#9B5E3E" stroke="#7B4529" stroke-width="1.2"/><circle cx="' + (CX + dx - 4) + '" cy="' + (CY + dy - 4) + '" r="5" fill="#fff" opacity=".12"/>'; });
+    } else {
+      s += scatter(P.slice(0, 2), 5, CX - 30, CY, 14, R);
+    }
+    // Beilagen rechts
+    const sides = P.filter(p => ['kartoffeln', 'suesskartoffel', 'brokkoli', 'erbsen', 'couscous', 'bulgur', 'reis', 'zucchini', 'paprika', 'blumenkohl', 'kichererbsen', 'lauch', 'spinat', 'karotten'].includes(p.id)).slice(0, 3);
+    sides.forEach((p, i) => {
+      const bx = CX + 26 + (i % 2) * 6, by = CY - 30 + i * 28;
+      if (p.k === 'grain') s += '<ellipse cx="' + bx + '" cy="' + by + '" rx="22" ry="12" fill="' + (p.id === 'reis' ? '#FFFFFF' : p.c) + '" stroke="#E5DFD0"/>' + scatter([{ id: p.id, c: shade(p.c, .85), k: 'grain' }], 16, bx, by, 14, R);
+      else s += scatter([p], p.k === 'dot' ? 14 : 5, bx, by, 17, R);
+    });
+    if (has(r, 'skyr') || has(r, 'frischkaese')) s += dollop(CX + 44, CY + 34, 9);
+    if (has(r, 'zitrone')) s += lemon(CX - 6, CY + 44);
+    s += herbs(CX, CY, 46, R, 8);
+    return s;
+  }
+
+  const PAINT = { soup: paintSoup, curry: paintCurry, pasta: paintPasta, bowl: paintBowl, bake: paintBake, pan: paintPan, tray: paintTray };
+  const cache = {};
+
+  function art(r, o) {
+    const thumb = !!(o && o.thumb), key = r.id + (thumb ? 't' : '');
+    if (cache[key]) return cache[key];
+    const R = mk(hash(r.id)), h = hash(r.cuisine || r.id) % 360, P = parts(r), kind = CAT[r.id] || 'bowl';
+    const c1 = 'hsl(' + h + ',42%,86%)', c2 = 'hsl(' + ((h + 28) % 360) + ',44%,76%)', gid = 'vg' + hash(key).toString(36);
+    let s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="' + (thumb ? 'xMidYMid slice' : 'xMidYMid slice') + '" role="img" aria-label="Illustration: ' + String(r.short || r.name).replace(/[<>&"]/g, '') + '" class="dart">' +
+      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + c1 + '"/><stop offset="1" stop-color="' + c2 + '"/></linearGradient></defs>' +
+      '<rect width="' + W + '" height="' + H + '" fill="url(#' + gid + ')"/>';
+    // Tischtuch: feine Streifen und ein Zipfel Serviette
+    s += '<g opacity=".16" stroke="#fff" stroke-width="10">' + [0, 1, 2, 3, 4, 5, 6, 7].map(i => '<path d="M' + (i * 48 - 20) + ' -10l-40 200"/>').join('') + '</g>';
+    if (!thumb) s += '<path d="M268 0h52v70z" fill="#fff" opacity=".42"/><path d="M0 120L52 180H0z" fill="#fff" opacity=".3"/>';
+    s += PAINT[kind](r, P, R);
+    s += '</svg>';
+    cache[key] = s;
+    return s;
+  }
+  root.VA = { art, CAT };
+  if (typeof module !== 'undefined') module.exports = root.VA;
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* Zusatzfunktionen ohne Oberfläche: Kalenderdatei, Teilen per Link, Abgleich zwischen Geräten.
    Alles reine Funktionen, mit Node testbar. */
 (function (root) {
@@ -1789,6 +2057,7 @@ function buildICS(input) {
     s.push('END:VEVENT');
     ev.push(s.map(fold).join('\r\n'));
   }
+  function addWeek(input) {
   const ws = input.weekStart, sh = input.shop || { day: -1, time: '' };
   const names = input.names || ['Roman', 'Partnerin'], flt = input.filter === '0' || input.filter === '1' ? input.filter : 'all';
   const mine = w => flt === 'all' || w === 'b' || w === flt;
@@ -1816,6 +2085,9 @@ function buildICS(input) {
     const day = addDays(ws, m.day), l = m.meal === 'l', tm = l ? '12:30' : '19:30';
     add('essen-' + m.day + m.meal + '-' + ws, stamp(day, tm), stamp(day, tm, l ? 30 : 45), (l ? 'Mittag: ' : 'Abend: ') + m.name, m.note || '', null);
   });
+  }
+  addWeek(input);
+  (input.more || []).forEach(addWeek);
   const head = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Vorkoch//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     'X-WR-CALNAME:' + icsEsc(input.calName || 'Vorkoch'), 'X-WR-TIMEZONE:Europe/Berlin', 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
   return head.join('\r\n') + '\r\n' + VTZ + '\r\n' + ev.join('\r\n') + '\r\nEND:VCALENDAR\r\n';
@@ -1846,15 +2118,16 @@ function decodeShare(hash) {
 const SECTIONS = ['plan', 'pool', 'settings', 'offers'];
 function mapTo(vals, times) { const o = {}; Object.keys(vals || {}).forEach(k => { o[k] = [vals[k], (times && times[k]) || 0]; }); return o; }
 function toDoc(S) {
-  const mt = S.mt || { m: {}, ratings: {}, storeOv: {}, checked: {} };
+  const mt = S.mt || { m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} };
   return {
-    v: 1, m: Object.assign({}, mt.m),
-    plan: { grid: S.grid, sess: S.sess, shopAt: S.shopAt, key: S.key, weekStart: S.weekStart, recent: S.recent, history: S.history, relaxed: !!S.relaxed },
+    v: 2, m: Object.assign({}, mt.m),
+    plan: { recent: S.recent || [], history: S.history || [] },
+    weeks: mapTo(S.weeks || {}, mt.weeks),
     pool: { disabled: S.disabled },
     settings: { settings: S.settings, diversity: S.diversity, motto: S.motto || '', cal: S.cal || null },
     offers: S.offers || '',
     ratings: mapTo(S.ratings, mt.ratings), storeOv: mapTo(S.storeOv, mt.storeOv),
-    checked: { key: S.checked.key, map: mapTo(S.checked.map, mt.checked) }
+    checked: { key: '', map: mapTo(S.checked.map, mt.checked) }
   };
 }
 function mergeMap(a, b) {
@@ -1869,20 +2142,19 @@ function mergeMap(a, b) {
 function merge(a, b) {
   if (!b) return a;
   if (!a) return b;
-  const out = { v: 1, m: {} };
+  const out = { v: 2, m: {} };
   SECTIONS.forEach(sec => {
     const ta = (a.m && a.m[sec]) || 0, tb = (b.m && b.m[sec]) || 0;
     const w = ta >= tb ? a : b;
     out.m[sec] = Math.max(ta, tb);
     out[sec] = w[sec];
   });
+  // Wochen und Bewertungen werden pro Eintrag gemischt, der neuere Eintrag gewinnt.
+  out.weeks = mergeMap(a.weeks, b.weeks);
   out.ratings = mergeMap(a.ratings, b.ratings);
   out.storeOv = mergeMap(a.storeOv, b.storeOv);
-  // Haken gehören zu einem Vorschlag (key = Woche/Zeitpunkt). Der neuere Vorschlag gewinnt, gleicher Vorschlag wird pro Posten gemischt.
-  const gen = k => +(String(k).split('/')[1]) || 0;
-  const ca = a.checked || { key: '', map: {} }, cb = b.checked || { key: '', map: {} };
-  if (ca.key === cb.key) out.checked = { key: ca.key, map: mergeMap(ca.map, cb.map) };
-  else out.checked = gen(ca.key) >= gen(cb.key) ? ca : cb;
+  // Haken tragen die Woche im Schlüssel (Datum|Posten), deshalb reicht das Mischen pro Posten.
+  out.checked = { key: '', map: mergeMap((a.checked || {}).map, (b.checked || {}).map) };
   return out;
 }
 function canon(o) {
@@ -1893,31 +2165,45 @@ function canon(o) {
 function same(a, b) { return canon(a) === canon(b); }
 
 /* Fremde Daten prüfen und in den Zustand schreiben. known = Menge gültiger Rezept-IDs. Gibt true zurück, wenn etwas übernommen wurde. */
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function cleanWeek(rec, isId) {
+  if (!rec || typeof rec !== 'object' || !rec.grid || typeof rec.grid !== 'object') return null;
+  const g = {};
+  for (const d of ['0', '1', '2', '3', '4', '5', '6']) for (const m of ['l', 'd']) {
+    const c = rec.grid[d + m];
+    if (!c || typeof c !== 'object' || !/^[pfox]$/.test(c.t)) return null;
+    const o = { t: c.t };
+    if ((c.t === 'p' || c.t === 'f') && isId(c.r)) { o.r = c.r; if (c.u) o.u = 1; }
+    if (c.t === 'f' && /^[b01]$/.test(c.w || '')) o.w = c.w;
+    g[d + m] = o;
+  }
+  const tm = t => /^(\d{1,2}:\d{2})?$/.test(typeof t === 'string' ? t : '');
+  if (!Array.isArray(rec.sess) || rec.sess.length < 1 || rec.sess.length > 4 || !rec.sess.every(s => s && Number.isInteger(s.day) && s.day >= 0 && s.day <= 6 && tm(s.time))) return null;
+  const sa = rec.shopAt;
+  if (!sa || !Number.isInteger(sa.day) || sa.day < -1 || sa.day > 6 || !tm(sa.time)) return null;
+  const sess = rec.sess.map(s => { const o = { day: s.day, time: typeof s.time === 'string' ? s.time : '' }; if (/^[b01]$/.test(s.w || '')) o.w = s.w; return o; });
+  const shopAt = { day: sa.day, time: typeof sa.time === 'string' ? sa.time : '' }; if (/^[01]$/.test(sa.w || '')) shopAt.w = sa.w;
+  return { grid: g, sess, shopAt, key: String(rec.key || '').slice(0, 400), relaxed: !!rec.relaxed };
+}
 function applyDoc(S, doc, known) {
-  if (!doc || doc.v !== 1) return false;
+  if (!doc || doc.v !== 2) return false;
   const isId = id => typeof id === 'string' && known[id];
   const num = (x, lo, hi, d) => (typeof x === 'number' && isFinite(x)) ? Math.min(hi, Math.max(lo, x)) : d;
-  if (!S.mt) S.mt = { m: {}, ratings: {}, storeOv: {}, checked: {} };
+  if (!S.mt) S.mt = { m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} };
   S.mt.m = Object.assign({}, doc.m || {});
   const p = doc.plan;
-  if (p && p.grid && typeof p.grid === 'object') {
-    const g = {}; let okAll = true;
-    ['0', '1', '2', '3', '4', '5', '6'].forEach(d => ['l', 'd'].forEach(m => {
-      const c = p.grid[d + m];
-      if (!c || typeof c !== 'object' || !/^[pfox]$/.test(c.t)) { okAll = false; return; }
-      const o = { t: c.t };
-      if ((c.t === 'p' || c.t === 'f') && isId(c.r)) { o.r = c.r; if (c.u) o.u = 1; }
-      if (c.t === 'f' && /^[b01]$/.test(c.w || '')) o.w = c.w;
-      g[d + m] = o;
-    }));
-    if (okAll) S.grid = g;
-    S.key = String(p.key || '').slice(0, 400);
-    S.weekStart = /^\d{4}-\d{2}-\d{2}$/.test(p.weekStart || '') ? p.weekStart : S.weekStart;
-    S.recent = Array.isArray(p.recent) ? p.recent.filter(x => typeof x === 'string').slice(0, 6) : S.recent;
-    S.history = Array.isArray(p.history) ? p.history.filter(h => Array.isArray(h) && h.every(isId)).slice(0, 3) : S.history;
-    S.relaxed = !!p.relaxed;
-    if (Array.isArray(p.sess) && p.sess.length >= 1 && p.sess.length <= 4 && p.sess.every(s => s && Number.isInteger(s.day) && s.day >= 0 && s.day <= 6 && /^(\d{1,2}:\d{2})?$/.test(typeof s.time === 'string' ? s.time : ''))) S.sess = p.sess.map(s => { const o = { day: s.day, time: typeof s.time === 'string' ? s.time : '' }; if (/^[b01]$/.test(s.w || '')) o.w = s.w; return o; });
-    if (p.shopAt && Number.isInteger(p.shopAt.day) && p.shopAt.day >= -1 && p.shopAt.day <= 6 && /^(\d{1,2}:\d{2})?$/.test(typeof p.shopAt.time === 'string' ? p.shopAt.time : '')) { S.shopAt = { day: p.shopAt.day, time: typeof p.shopAt.time === 'string' ? p.shopAt.time : '' }; if (/^[01]$/.test(p.shopAt.w || '')) S.shopAt.w = p.shopAt.w; }
+  if (p) {
+    S.recent = Array.isArray(p.recent) ? p.recent.filter(x => typeof x === 'string').slice(0, 6) : (S.recent || []);
+    S.history = Array.isArray(p.history) ? p.history.filter(h => Array.isArray(h) && h.every(isId)).slice(0, 3) : (S.history || []);
+  }
+  if (doc.weeks && typeof doc.weeks === 'object') {
+    S.weeks = {}; S.mt.weeks = {};
+    Object.keys(doc.weeks).forEach(ws => {
+      const e = doc.weeks[ws];
+      if (!DATE_RE.test(ws) || !Array.isArray(e)) return;
+      const r = cleanWeek(e[0], isId);
+      if (r) { S.weeks[ws] = r; S.mt.weeks[ws] = e[1] || 0; }
+    });
   }
   if (doc.pool && Array.isArray(doc.pool.disabled)) S.disabled = doc.pool.disabled.filter(isId);
   const st = doc.settings && doc.settings.settings;
@@ -1940,9 +2226,9 @@ function applyDoc(S, doc, known) {
   S.storeOv = {}; S.mt.storeOv = {};
   Object.keys(doc.storeOv || {}).forEach(k => { const x = doc.storeOv[k]; if (/^[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x) && (x[0] === 'd' || x[0] === 'm')) { S.storeOv[k] = x[0]; S.mt.storeOv[k] = x[1] || 0; } });
   const c = doc.checked;
-  S.checked = { key: String((c && c.key) || S.weekStart || '').slice(0, 40), map: {} }; S.mt.checked = {};
+  S.checked = { key: '', map: {} }; S.mt.checked = {};
   if (c) {
-    Object.keys(c.map || {}).forEach(k => { const x = c.map[k]; if (/^(v_)?[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x)) { S.checked.map[k] = !!x[0]; S.mt.checked[k] = x[1] || 0; } });
+    Object.keys(c.map || {}).forEach(k => { const x = c.map[k]; if (/^\d{4}-\d{2}-\d{2}\|(v_)?[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x)) { S.checked.map[k] = !!x[0]; S.mt.checked[k] = x[1] || 0; } });
   }
   return true;
 }
@@ -1951,16 +2237,34 @@ function applyDoc(S, doc, known) {
 function pack(doc) {
   const w = Object.assign({}, doc);
   ['plan', 'pool', 'settings'].forEach(k => { w[k] = JSON.stringify(doc[k] === undefined ? null : doc[k]); });
+  w.weeks = {};
+  Object.keys(doc.weeks || {}).forEach(ws => { const e = doc.weeks[ws]; if (Array.isArray(e)) w.weeks[ws] = [JSON.stringify(e[0]), e[1] || 0]; });
   return w;
 }
+// Alte Dokumente (Fassung 1, nur eine Woche) werden beim Lesen in die neue Form gebracht.
+function upgrade1(d) {
+  const p = d.plan || {}, ws = DATE_RE.test(p.weekStart || '') ? p.weekStart : '', t = (d.m && d.m.plan) || 0;
+  d.weeks = {};
+  if (ws && p.grid) d.weeks[ws] = [{ grid: p.grid, sess: p.sess, shopAt: p.shopAt, key: p.key || '', relaxed: !!p.relaxed }, t];
+  d.plan = { recent: Array.isArray(p.recent) ? p.recent : [], history: Array.isArray(p.history) ? p.history : [] };
+  const map = {};
+  Object.keys(d.checked.map || {}).forEach(k => { if (ws) map[ws + '|' + k] = d.checked.map[k]; });
+  d.checked = { key: '', map };
+  d.v = 2;
+}
 function unpack(w) {
-  if (!w || typeof w !== 'object' || w.v !== 1) return null;
+  if (!w || typeof w !== 'object' || (w.v !== 1 && w.v !== 2)) return null;
   const d = Object.assign({}, w);
   try { ['plan', 'pool', 'settings'].forEach(k => { d[k] = typeof w[k] === 'string' ? JSON.parse(w[k]) : w[k]; }); } catch (e) { return null; }
   d.m = d.m && typeof d.m === 'object' ? d.m : {};
   d.ratings = d.ratings || {}; d.storeOv = d.storeOv || {};
   d.checked = d.checked && typeof d.checked === 'object' ? { key: String(d.checked.key || ''), map: d.checked.map || {} } : { key: '', map: {} };
   if (typeof d.offers !== 'string') d.offers = '';
+  if (w.v === 1) upgrade1(d);
+  else {
+    d.weeks = {};
+    Object.keys(w.weeks || {}).forEach(ws => { const e = w.weeks[ws]; if (Array.isArray(e) && typeof e[0] === 'string') { try { d.weeks[ws] = [JSON.parse(e[0]), e[1] || 0]; } catch (err) { /* Woche überspringen */ } } });
+  }
   return d;
 }
 
@@ -1980,10 +2284,10 @@ function defaults() {
   return {
     settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0 },
     grid: V.defaultGrid(), sess: V.DEFAULT_SESS.map(s => Object.assign({}, s)), shopAt: { day: -1, time: '' },
-    disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} },
+    disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} }, weeks: {},
     offers: '', diversity: 0.5, motto: '', cal: null, calAt: 0, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
     ratings: {}, storeOv: {}, shopView: 'gang', sync: { url: '', code: '', fresh: false },
-    mt: { m: {}, ratings: {}, storeOv: {}, checked: {} }
+    mt: { m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} }
   };
 }
 function load() {
@@ -2016,9 +2320,20 @@ function load() {
   if (!d.grid || !V.CELLS.every(k => d.grid[k] && /^[pfox]$/.test(d.grid[k].t))) d.grid = V.defaultGrid();
   if (!Array.isArray(d.sess) || !d.sess.length) d.sess = V.DEFAULT_SESS.map(s => Object.assign({}, s));
   if (!d.shopAt || typeof d.shopAt !== 'object') d.shopAt = { day: -1, time: '' };
-  d.mt = Object.assign({ m: {}, ratings: {}, storeOv: {}, checked: {} }, d.mt || {});
-  ['m', 'ratings', 'storeOv', 'checked'].forEach(k => { if (!d.mt[k] || typeof d.mt[k] !== 'object') d.mt[k] = {}; });
+  d.mt = Object.assign({ m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} }, d.mt || {});
+  ['m', 'ratings', 'storeOv', 'checked', 'weeks'].forEach(k => { if (!d.mt[k] || typeof d.mt[k] !== 'object') d.mt[k] = {}; });
   if (!d.sync || typeof d.sync !== 'object') d.sync = { url: '', code: '', fresh: false };
+  if (!d.weeks || typeof d.weeks !== 'object' || Array.isArray(d.weeks)) d.weeks = {};
+  if (!Object.keys(d.weeks).length && d.grid) {
+    let ws = /^\d{4}-\d{2}-\d{2}$/.test(d.weekStart || '') ? d.weekStart : '';
+    if (!ws) { const t = new Date(); t.setHours(12, 0, 0, 0); t.setDate(t.getDate() + ((7 - t.getDay()) % 7)); ws = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); }
+    d.weekStart = ws;
+    d.weeks[ws] = { grid: d.grid, sess: d.sess, shopAt: d.shopAt, key: d.key || '', relaxed: !!d.relaxed };
+    d.mt.weeks[ws] = (d.mt.m && d.mt.m.plan) || 1;
+    const cm = {}, ct = {};
+    Object.keys((d.checked && d.checked.map) || {}).forEach(k => { const nk = k.indexOf('|') > 0 ? k : ws + '|' + k; cm[nk] = d.checked.map[k]; ct[nk] = (d.mt.checked && d.mt.checked[k]) || 0; });
+    d.checked = { key: '', map: cm }; d.mt.checked = ct;
+  }
   return d;
 }
 const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs'];
@@ -2029,7 +2344,7 @@ let calTimer = null, calBusy = false, calFail = 0;
 function save() { saveLocal(); schedSync(); calSoon(); }
 function touch(sec) { S.mt.m[sec] = Date.now(); }
 function touchKey(sec, id) { S.mt[sec][id] = Date.now(); }
-function saveLocal() { try { const c = Object.assign({}, S); TRANSIENT.forEach(k => delete c[k]); localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) { /* egal */ } }
+function saveLocal() { commitWeek(); try { const c = Object.assign({}, S); TRANSIENT.forEach(k => delete c[k]); localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) { /* egal */ } }
 
 const pad = n => String(n).padStart(2, '0');
 function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -2043,12 +2358,71 @@ function weekDays() {
   const s = new Date((S.weekStart || iso(nextSunday())) + 'T12:00:00'), today = iso(new Date());
   return DAYS.map((n, i) => { const d = new Date(s); d.setDate(s.getDate() + i); return { n, num: d.getDate(), date: d.getDate() + '.' + (d.getMonth() + 1) + '.', today: iso(d) === today }; });
 }
+/* ---------- Wochen: jede Woche liegt unter ihrem Sonntag in S.weeks; S.grid, S.sess, S.shopAt sind die Arbeitskopie der angezeigten Woche ---------- */
+const DATE_OK = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+function addDaysIso(ws, n) { const d = new Date(ws + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); }
+function thisSunday() { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - d.getDay()); return iso(d); }
+function defaultWeek() { return iso(nextSunday()); }
+function weekRec() { return { grid: V.copyGrid(S.grid), sess: S.sess.map(s => Object.assign({}, s)), shopAt: Object.assign({}, S.shopAt), key: S.key || '', relaxed: !!S.relaxed }; }
+function commitWeek() {
+  if (!S.weeks || !DATE_OK(S.weekStart) || !S.grid || !S.sess || !S.shopAt) return;
+  const cur = weekRec(), old = S.weeks[S.weekStart];
+  if (old && window.VX && window.VX.same(old, cur)) return;
+  S.weeks[S.weekStart] = cur; S.mt.weeks[S.weekStart] = Date.now();
+}
+function loadWeek(ws) {
+  const r = S.weeks[ws]; if (!r) return false;
+  S.weekStart = ws; S.grid = V.copyGrid(r.grid); S.sess = V.sortSess(r.sess.map(s => Object.assign({}, s))); S.shopAt = Object.assign({}, r.shopAt); S.key = r.key || ''; S.relaxed = !!r.relaxed;
+  syncIds(); return true;
+}
+function wkHasMeals(r) { return V.CELLS.some(k => r.grid[k] && (r.grid[k].t === 'p' || r.grid[k].t === 'f') && r.grid[k].r); }
+function nearestWeek(ws) {
+  const ks = Object.keys(S.weeks).filter(k => k !== ws).sort(), before = ks.filter(k => k < ws);
+  const k = before.length ? before[before.length - 1] : ks[0];
+  return k ? S.weeks[k] : null;
+}
+function histFor() {
+  const t = new Date(S.weekStart + 'T12:00:00').getTime();
+  const near = Object.keys(S.weeks).filter(k => k !== S.weekStart).sort((x, y) => Math.abs(new Date(x + 'T12:00:00') - t) - Math.abs(new Date(y + 'T12:00:00') - t)).slice(0, 3);
+  const h = near.map(k => Object.keys(V.dishCounts(S.weeks[k].grid)));
+  return h.concat((S.history || []).slice(0, 3 - h.length));
+}
+const tk = id => S.weekStart + '|' + id;
+function clearTicks(ws) { Object.keys(S.checked.map).forEach(k => { if (k.indexOf(ws + '|') === 0 && S.checked.map[k]) { S.checked.map[k] = false; touchKey('checked', k); } }); }
+function weekRange() { const d = weekDays(); return d[0].date + ' bis ' + d[6].date; }
+function weekLabel() {
+  const diff = Math.round((new Date(S.weekStart + 'T12:00:00') - new Date(thisSunday() + 'T12:00:00')) / 604800000);
+  return diff === 0 ? 'Diese Woche' : diff === 1 ? 'Nächste Woche' : diff === -1 ? 'Letzte Woche' : diff > 1 ? 'In ' + diff + ' Wochen' : 'Vor ' + (-diff) + ' Wochen';
+}
+function canGo(ws) { return !!S.weeks[ws] || (ws >= thisSunday() && ws <= addDaysIso(defaultWeek(), 21)); }
+function openWeek(ws) {
+  commitWeek();
+  S.msg = '';
+  if (S.weeks[ws]) { loadWeek(ws); return; }
+  const near = nearestWeek(ws);
+  S.weekStart = ws;
+  if (near) { S.grid = V.copyGrid(near.grid); S.sess = V.sortSess(near.sess.map(s => Object.assign({}, s))); S.shopAt = Object.assign({}, near.shopAt); }
+  S.key = ''; S.relaxed = false;
+  generate(true);
+  commitWeek(); syncIds();
+}
+function initView() {
+  const t = thisSunday(), dflt = defaultWeek();
+  let ws = DATE_OK(S.weekStart) ? S.weekStart : dflt;
+  if (ws < t) ws = dflt;
+  const have = Object.keys(S.weeks).sort();
+  if (!S.weeks[ws] && have.length) { const fut = have.filter(k => k >= t); if (fut.length) ws = fut.includes(dflt) ? dflt : fut[0]; }
+  if (S.weeks[ws]) loadWeek(ws);
+  else if (have.length) openWeek(ws);
+  else S.weekStart = ws;
+}
+function reloadView() { if (!(DATE_OK(S.weekStart) && loadWeek(S.weekStart))) initView(); }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 function pool() { return V.RECIPES.filter(r => !S.disabled.includes(r.id)); }
 function sessList() { return V.sortSess(S.sess); }
 function syncIds() { S.ids = Object.keys(V.dishCounts(S.grid)); }
-function planOpts() { return { pool: pool(), settings: S.settings, diversity: S.diversity, history: S.history, offers: S.offers, avoid: S.recent, ratings: S.ratings, sess: sessList(), motto: S.motto }; }
+function planOpts() { return { pool: pool(), settings: S.settings, diversity: S.diversity, history: histFor(), offers: S.offers, avoid: S.recent, ratings: S.ratings, sess: sessList(), motto: S.motto }; }
 function hasFilled() { return V.CELLS.some(k => (S.grid[k].t === 'p' || S.grid[k].t === 'f') && S.grid[k].r); }
 function wantsMeals() { return V.CELLS.some(k => S.grid[k].t === 'p' || S.grid[k].t === 'f'); }
 function generate(advance) {
@@ -2062,13 +2436,8 @@ function generate(advance) {
   S.grid = res.grid; S.key = res.key; S.relaxed = res.relaxed;
   S.recent = [res.key].concat(S.recent).slice(0, 6);
   syncIds(); touch('plan');
-  if (advance) {
-    const prev = S.weekStart ? new Date(S.weekStart + 'T12:00:00') : null;
-    let nx = nextSunday();
-    if (prev) { const p7 = new Date(prev); p7.setDate(p7.getDate() + 7); if (p7 > nx) nx = p7; }
-    S.weekStart = iso(nx);
-  } else if (!S.weekStart) S.weekStart = iso(nextSunday());
-  S.checked = { key: S.weekStart + '/' + Date.now(), map: {} }; S.mt.checked = {};
+  if (!S.weekStart) S.weekStart = defaultWeek();
+  clearTicks(S.weekStart);
   save();
 }
 // Nach jeder Änderung von Hand: Lücken füllen, automatische Felder neu verteilen.
@@ -2080,7 +2449,7 @@ function editGrid(mutator) {
   syncIds(); touch('plan'); save();
 }
 if (!S.checked || S.checked.key === undefined) S.checked = { key: '', map: {} };
-if (!S.weekStart) S.weekStart = iso(nextSunday());
+initView();
 if (wantsMeals() && !hasFilled()) generate(false);
 syncIds();
 
@@ -2127,6 +2496,7 @@ async function syncNow() {
     const raw = await jfetch(ep);
     const remote = raw === null ? null : VX.unpack(raw);
     if (raw !== null && !remote) throw new Error('Unbekanntes Datenformat unter diesem Code.');
+    commitWeek();
     const local = VX.toDoc(S);
     let result;
     if (!remote) result = local;
@@ -2135,7 +2505,7 @@ async function syncNow() {
     if (!VX.same(result, local)) {
       if (typing()) { again = true; syncing = false; setTimeout(syncNow, 4000); return; }
       VX.applyDoc(S, result, V.BY_ID);
-      syncIds();
+      reloadView();
       saveLocal(); render(); calSoon(5000);
     }
     S.sync.fresh = false; saveLocal();
@@ -2151,7 +2521,14 @@ setInterval(() => { try { if (document.visibilityState !== 'hidden') syncNow(); 
 document.addEventListener('visibilitychange', () => { try { if (document.visibilityState === 'visible') { syncNow(); calSoon(4000); } } catch (e) { /* egal */ } });
 function baseUrl() { try { return location.href.split('#')[0]; } catch (e) { return ''; } }
 function inviteLink() { return baseUrl() + VX.encodeShare('j', { u: S.sync.url, c: S.sync.code }); }
-function snapLink() { return baseUrl() + VX.encodeShare('s', VX.toDoc(S)); }
+function snapLink() {
+  commitWeek();
+  const d = VX.toDoc(S), t = thisSunday(), w = {}, c = {};
+  Object.keys(d.weeks).forEach(k => { if (k >= t) w[k] = d.weeks[k]; });
+  Object.keys(d.checked.map).forEach(k => { if (k.split('|')[0] >= t) c[k] = d.checked.map[k]; });
+  d.weeks = w; d.checked = { key: '', map: c };
+  return baseUrl() + VX.encodeShare('s', d);
+}
 function checkHash() {
   let h = '';
   try { h = location.hash; } catch (e) { return; }
@@ -2159,7 +2536,7 @@ function checkHash() {
   if (!d) return;
   try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* egal */ }
   if (d.kind === 'j' && d.data && normUrl(d.data.u) && CODE_RE.test(d.data.c || '')) S.sheet = { t: 'join', u: normUrl(d.data.u), c: d.data.c };
-  else if (d.kind === 's' && d.data && d.data.v === 1) S.sheet = { t: 'snap', doc: d.data };
+  else if (d.kind === 's' && d.data && (d.data.v === 2 || d.data.v === 1)) { const doc = d.data.v === 1 ? VX.unpack(d.data) : d.data; if (doc) S.sheet = { t: 'snap', doc }; }
 }
 
 /* ---------- Hilfen ---------- */
@@ -2252,7 +2629,9 @@ function termsCard() {
 }
 function viewPlan() {
   const days = weekDays(), st = B.stats;
-  let h = '<h1 class="ltitle">Diese Woche</h1><p class="lsub">' + days[0].date + ' bis ' + days[6].date + '</p>';
+  const prevWs = addDaysIso(S.weekStart, -7), nextWs = addDaysIso(S.weekStart, 7), dflt = defaultWeek();
+  let h = '<div class="wbar"><button class="wnav" data-act="wk" data-d="-1" aria-label="Vorherige Woche"' + (canGo(prevWs) ? '' : ' disabled') + '>‹</button><div class="wmid"><h1 class="ltitle">' + weekLabel() + '</h1><p class="lsub">' + days[0].date + ' bis ' + days[6].date + '</p></div><button class="wnav" data-act="wk" data-d="1" aria-label="Nächste Woche"' + (canGo(nextWs) ? '' : ' disabled') + '>›</button></div>';
+  if (S.weekStart !== dflt && canGo(dflt)) h += '<div class="wback"><button class="lnk" data-act="wkgo">Zurück zur Planungswoche</button></div>';
   if (S.msg) h += '<p class="alert">' + esc(S.msg) + '</p>';
   if (S.cs && S.cs.auto && S.cs.state === 'err') h += '<p class="alert">Kalender konnte nicht automatisch aktualisiert werden: ' + esc(S.cs.msg) + '</p>';
   if (S.relaxed) h += '<p class="alert">Der Pool ist für deine Regeln zu klein. Die Mindestzahl vegetarischer Gerichte wurde dieses Mal nicht eingehalten.</p>';
@@ -2264,6 +2643,7 @@ function viewPlan() {
   h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Passt, zum Einkauf</button></div>';
 
   h += termsCard();
+  h += '<p class="cap" style="margin-left:2px">Essensplan</p>';
   h += '<div class="grp"><div class="dh"><span></span><span>Mittag</span><span>Abend</span></div>';
   for (let d = 0; d < 7; d++) {
     h += '<div class="day' + (days[d].today ? ' today' : '') + '"><div class="dn"><b>' + days[d].n + '</b><span>' + days[d].num + '</span></div>' + slotHtml(d + 'l') + slotHtml(d + 'd') + '</div>';
@@ -2272,7 +2652,6 @@ function viewPlan() {
 
   h += '<p class="cap">Anpassen</p><div class="grp">' +
     '<button class="row" data-act="reroll"><span class="grow"><b>Neu vorschlagen</b></span><span class="val">eigene Felder bleiben</span></button>' +
-    '<button class="row" data-act="next"><span class="grow"><b>Woche abschließen</b></span><span class="val">nächste planen</span></button>' +
     (S.cal ? '<button class="row" data-act="calpub"><span class="grow"><b>Kalender aktualisieren</b></span><span class="val">' + (ghTok() ? 'automatisch · ' : 'Token fehlt · ') + calAgo() + '</span></button>' : '') +
     '<label class="row"><span class="grow"><b>Küche der Woche</b><div class="sub">bevorzugt beim Vorschlag</div></span><select class="inl day" data-motto aria-label="Küche der Woche" style="width:auto;max-width:150px"><option value="">Egal</option>' + V.countries().filter(c => c.n >= 2).map(c => '<option value="' + esc(c.name) + '"' + (S.motto === c.name ? ' selected' : '') + '>' + esc(c.name) + ' (' + c.n + ')</option>').join('') + '</select></label>' +
     '<div class="pad"><div class="flex" style="justify-content:space-between"><span class="sub">Reste verwerten</span><span class="sub">Vielfalt</span></div><input type="range" id="div" min="0" max="100" step="5" value="' + Math.round(S.diversity * 100) + '" aria-label="Reste verwerten oder Vielfalt"></div></div>';
@@ -2304,15 +2683,15 @@ function viewPlan() {
 /* ---------- Einkauf ---------- */
 function itemHtml(x, map, mv) {
   const st = storeOf(x);
-  return '<label class="item' + (map[x.id] ? ' done' : '') + '"><input type="checkbox" data-key="' + x.id + '"' + (map[x.id] ? ' checked' : '') + '><span class="box"></span>' +
+  return '<label class="item' + (map[tk(x.id)] ? ' done' : '') + '"><input type="checkbox" data-key="' + x.id + '"' + (map[tk(x.id)] ? ' checked' : '') + '><span class="box"></span>' +
     '<span class="itx"><b>' + esc(x.n) + (!mv && st === 'm' ? '<span class="chip spec" style="margin-left:6px">Marktkauf</span>' : '') + '</b><small>' + esc(x.needTxt) + ' gebraucht · ' + esc(x.forR.join(', ')) + '</small>' +
     (x.rest ? '<small class="rest">Rest: ' + esc(x.leftTxt) + '</small>' : '') + '</span><span class="ipk">' + esc(x.txt) + '</span>' +
     (mv ? '<button type="button" class="mv" data-act="store" data-id="' + x.id + '" aria-label="' + esc(x.n) + ' zu ' + (st === 'm' ? 'Aldi oder Lidl' : 'Marktkauf') + ' verschieben">' + (st === 'm' ? 'zu Aldi/Lidl' : 'zu Marktkauf') + '</button>' : '') + '</label>';
 }
 function viewShop() {
   const items = B.shop.items, map = S.checked.map, by = S.shopView === 'laden';
-  const done = items.filter(x => map[x.id]).length;
-  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Posten in ganzen Packungen für die ganze Woche.</p>';
+  const done = items.filter(x => map[tk(x.id)]).length;
+  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Posten in ganzen Packungen für ' + weekRange() + '.</p>';
   h += '<div class="seg" style="margin-bottom:6px">' + [['gang', 'Nach Gang'], ['laden', 'Nach Laden']].map(([k, l]) => '<button data-act="shopview" data-v="' + k + '" aria-pressed="' + (S.shopView === k || (k === 'gang' && !by)) + '">' + l + '</button>').join('') + '</div>';
   h += '<div class="flex" style="justify-content:space-between;align-items:baseline;margin:10px 2px 0"><span class="sub">Erledigt</span><b id="prog">' + done + ' von ' + items.length + '</b></div><div class="pbar"><i id="pbar" style="width:' + (items.length ? done / items.length * 100 : 0) + '%"></i></div>';
   if (by) {
@@ -2337,7 +2716,7 @@ function viewShop() {
   h += '<p class="cap">Zuhause prüfen</p><div class="grp">';
   B.shop.vorrat.forEach(x => {
     const k = 'v_' + x.id;
-    h += '<label class="item small' + (map[k] ? ' done' : '') + '"><input type="checkbox" data-key="' + k + '" data-v="1"' + (map[k] ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + (x.spec ? '<span class="chip spec" style="margin-left:6px">Spezial</span>' : '') + '</b></span><span></span></label>';
+    h += '<label class="item small' + (map[tk(k)] ? ' done' : '') + '"><input type="checkbox" data-key="' + k + '" data-v="1"' + (map[tk(k)] ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + (x.spec ? '<span class="chip spec" style="margin-left:6px">Spezial</span>' : '') + '</b></span><span></span></label>';
   });
   h += '</div><p class="foot">Fehlendes kommt auf die Liste. Tiefkühlware am Vorabend in den Kühlschrank legen. Hackfleisch kommt nur in die ersten beiden Kochtermine, damit es frisch bleibt.</p>';
   h += '<div class="actions"><button class="btn gray" data-act="copy">Liste kopieren</button><button class="btn gray" data-act="uncheck">Haken löschen</button></div><div id="copybox"></div>';
@@ -2366,7 +2745,7 @@ function gantt(s) {
 }
 function viewCook() {
   const days = weekDays();
-  let h = '<h1 class="ltitle">Kochen</h1><p class="lsub">Ofen und Herd laufen parallel, damit die Zeit kurz bleibt.</p>';
+  let h = '<h1 class="ltitle">Kochen</h1><p class="lsub">' + weekRange() + ' · Ofen und Herd laufen parallel, damit die Zeit kurz bleibt.</p>';
   if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Diese Woche ist nichts zu kochen. Lege auf der Woche-Seite Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
   B.sessions.forEach(s => {
     const dd = days[s.day];
@@ -2383,6 +2762,9 @@ function viewCook() {
 }
 
 /* ---------- Rezepte ---------- */
+/* Gezeichnete Gerichtsbilder (art.js). Ein eigenes Foto bilder/<id>.jpg kann später darüber gelegt werden. */
+function dishImg(r) { try { return window.VA ? '<div class="dimg">' + window.VA.art(r) + '</div>' : ''; } catch (e) { return ''; } }
+function dishThumb(r) { try { return window.VA ? '<span class="thumb" aria-hidden="true">' + window.VA.art(r, { thumb: 1 }).replace(' role="img"', '').replace(/ aria-label="[^"]*"/, '') + '</span>' : ''; } catch (e) { return ''; } }
 function recipeBody(r) {
   const g = portion(r);
   let h = '<div class="chips"><span class="chip">' + Math.round(r.nu.p) + ' g Protein</span><span class="chip">' + Math.round(r.nu.f) + ' g Ballaststoffe</span><span class="chip">' + Math.round(r.nu.k) + ' kcal</span>' +
@@ -2429,7 +2811,7 @@ function recipeList() {
     h += '<p class="cap">' + KIND[k] + ' · ' + l.length + '</p><div class="grp">';
     l.forEach(r => {
       const off = S.disabled.includes(r.id);
-      h += '<div class="rrow' + (off ? ' offrec' : '') + '"><button class="open" data-act="recipe" data-rid="' + r.id + '"><b>' + esc(r.name) + (r.isNew ? '<span class="chip neu">neu</span>' : '') + (r.src ? '<span class="chip neu" style="background:var(--fill);color:var(--ink2)">REWE</span>' : '') + '</b>' +
+      h += '<div class="rrow' + (off ? ' offrec' : '') + '">' + dishThumb(r) + '<button class="open" data-act="recipe" data-rid="' + r.id + '"><b>' + esc(r.name) + (r.isNew ? '<span class="chip neu">neu</span>' : '') + (r.src ? '<span class="chip neu" style="background:var(--fill);color:var(--ink2)">REWE</span>' : '') + '</b>' +
         '<small>' + esc(r.country === r.cuisine ? r.country : r.country + ' · ' + r.cuisine) + ' · ' + Math.round(r.nu.p) + ' g Protein · ' + V.fmtDur(V.sched([r]).mk) + (r.spec.length ? ' · Spezialzutat' : '') + '</small></button>' +
         '<label class="sw"><input type="checkbox" data-pool="' + r.id + '"' + (off ? '' : ' checked') + ' aria-label="' + esc(r.short) + ' im Pool"><i></i></label></div>';
     });
@@ -2506,7 +2888,7 @@ function sheetHtml() {
     if (!r) return '';
     const off = S.disabled.includes(r.id);
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(r.name) + '"><div class="shd"><span class="grab"></span><h3>' + esc(r.name) + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div>' +
-      '<div class="shb rb"><p class="sub" style="margin-bottom:12px">' + esc(r.cuisine) + ' · ' + KIND[r.kind] + (r.src ? ' · nach einer Idee aus „' + esc(r.src) + '“, in eigener Fassung' : '') + '</p>' + recipeBody(r) +
+      '<div class="shb rb">' + dishImg(r) + '<p class="sub" style="margin-bottom:12px">' + esc(r.cuisine) + ' · ' + KIND[r.kind] + (r.src ? ' · nach einer Idee aus „' + esc(r.src) + '“, in eigener Fassung' : '') + '</p>' + recipeBody(r) +
       '<div class="flex" style="justify-content:space-between;margin-top:14px"><span class="sub">Hat es geschmeckt?</span>' + rateBtns(r.id) + '</div>' +
       '<div class="actions"><button class="btn ' + (off ? '' : 'gray') + '" data-act="pool" data-rid="' + r.id + '">' + (off ? 'In den Pool aufnehmen' : 'Aus dem Pool nehmen') + '</button></div></div></div>';
   }
@@ -2683,7 +3065,23 @@ async function ghPut(tok, repo, path, text) {
 const SIG_KEY = 'vorkoch.calsig';
 function sigGet() { try { return localStorage.getItem(SIG_KEY) || ''; } catch (e) { return ''; } }
 function sigSet(v) { try { localStorage.setItem(SIG_KEY, v); } catch (e) { /* egal */ } }
-function calFiles() { return [['all', 'alle'], ['0', '0'], ['1', '1']].map(f => ({ path: 'kalender/' + S.cal.secret + '-' + f[1] + '.ics', text: VX.buildICS(icsInput(f[0])) })); }
+function withWeek(ws, fn) {
+  const bak = { grid: S.grid, sess: S.sess, shopAt: S.shopAt, key: S.key, relaxed: S.relaxed, weekStart: S.weekStart, shopView: S.shopView }, bB = B;
+  try {
+    if (ws !== S.weekStart) { const r = S.weeks[ws]; S.grid = r.grid; S.sess = r.sess; S.shopAt = r.shopAt; S.key = r.key; S.relaxed = r.relaxed; S.weekStart = ws; }
+    S.shopView = 'gang'; rebuild(); return fn();
+  } finally { Object.assign(S, bak); B = bB; }
+}
+// Der Kalender enthält diese und alle geplanten kommenden Wochen.
+function icsMulti(filter) {
+  commitWeek();
+  const t = thisSunday();
+  let list = Object.keys(S.weeks).filter(k => k >= t && wkHasMeals(S.weeks[k])).sort();
+  if (!list.length) list = [S.weekStart];
+  const ins = list.map(ws => withWeek(ws, () => icsInput(filter)));
+  const first = ins.shift(); first.more = ins; return first;
+}
+function calFiles() { return [['all', 'alle'], ['0', '0'], ['1', '1']].map(f => ({ path: 'kalender/' + S.cal.secret + '-' + f[1] + '.ics', text: VX.buildICS(icsMulti(f[0])) })); }
 function calSig(files) { const s = files.map(f => stripStamp(f.text)).join('\u0001') + '|' + S.cal.repo; let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + ':' + s.length; }
 // Automatisch veröffentlichen: nach jeder Änderung, wenn dieses Gerät den Token hat und sich der Inhalt wirklich geändert hat.
 function calSoon(ms) {
@@ -2776,7 +3174,8 @@ document.addEventListener('click', e => {
   const act = b.dataset.act;
   if (act === 'tab') setTab(b.dataset.tab);
   else if (act === 'reroll') { generate(false); render(); }
-  else if (act === 'next') { S.history = [S.ids.slice()].concat(S.history).slice(0, 3); generate(true); render(); window.scrollTo(0, 0); }
+  else if (act === 'wk') { const t = addDaysIso(S.weekStart, 7 * (+b.dataset.d < 0 ? -1 : 1)); if (canGo(t)) { openWeek(t); render(); window.scrollTo(0, 0); } }
+  else if (act === 'wkgo') { openWeek(defaultWeek()); render(); window.scrollTo(0, 0); }
   else if (act === 'offerplan') { const i = document.getElementById('offers'); S.offers = i ? i.value : S.offers; touch('offers'); generate(false); render(); }
   else if (act === 'recipe') { S.sheet = { t: 'recipe', id: b.dataset.rid }; render(); }
   else if (act === 'cookstart') { S.sheet = { t: 'cook', key: b.dataset.key }; S.ci = 0; lockScreen(true); render(); }
@@ -2814,7 +3213,7 @@ document.addEventListener('click', e => {
     if (k >= 0) S.disabled.splice(k, 1); else S.disabled.push(id);
     touch('pool'); save(); render();
   }
-  else if (act === 'uncheck') { Object.keys(S.checked.map).forEach(k => { S.checked.map[k] = false; touchKey('checked', k); }); save(); render(); }
+  else if (act === 'uncheck') { clearTicks(S.weekStart); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
   else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
@@ -2850,7 +3249,7 @@ document.addEventListener('click', e => {
     if (x) { S.storeOv[id] = storeOf(x) === 'm' ? 'd' : 'm'; touchKey('storeOv', id); save(); render(); }
   }
   else if (act === 'ics' || act === 'icscopy') {
-    const txt = VX.buildICS(icsInput('all'));
+    const txt = VX.buildICS(icsMulti('all'));
     if (act === 'icscopy') { copyOut(txt, 'Kopiert. In eine Textdatei mit der Endung .ics einfügen und öffnen.', 8, 'calbox'); return; }
     try {
       const url = URL.createObjectURL(new Blob([txt], { type: 'text/calendar' }));
@@ -2886,8 +3285,10 @@ document.addEventListener('click', e => {
   else if (act === 'snapok') {
     const sh = S.sheet; if (!sh || sh.t !== 'snap') return;
     VX.applyDoc(S, sh.doc, V.BY_ID);
+    reloadView();
     const n = Date.now(); ['plan', 'pool', 'settings', 'offers'].forEach(k => { S.mt.m[k] = n; });
     ['ratings', 'storeOv', 'checked'].forEach(k => Object.keys(k === 'checked' ? S.checked.map : S[k]).forEach(id => { S.mt[k][id] = n; }));
+    Object.keys(S.weeks).forEach(ws => { S.mt.weeks[ws] = n; });
     S.sheet = null; syncIds();
     save(); render();
   }
@@ -2939,9 +3340,9 @@ document.addEventListener('change', e => {
     const c = document.getElementById('poolcnt'); if (c) c.textContent = pool().length + ' von ' + V.RECIPES.length;
     save();
   } else if (t.matches('input[type=checkbox][data-key]')) {
-    S.checked.map[t.dataset.key] = t.checked; touchKey('checked', t.dataset.key);
+    S.checked.map[tk(t.dataset.key)] = t.checked; touchKey('checked', tk(t.dataset.key));
     const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
-    const items = B.shop.items, n = items.filter(x => S.checked.map[x.id]).length, pr = document.getElementById('prog'), pb = document.getElementById('pbar');
+    const items = B.shop.items, n = items.filter(x => S.checked.map[tk(x.id)]).length, pr = document.getElementById('prog'), pb = document.getElementById('pbar');
     if (pr) pr.textContent = n + ' von ' + items.length;
     if (pb) pb.style.width = (items.length ? n / items.length * 100 : 0) + '%';
     save();
