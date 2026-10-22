@@ -307,23 +307,39 @@ input[type=time].inl { width: 130px; }
 .grp.cl .row:active { background: var(--fill); }
 .grp.cl .sub { font-size: 12.5px; }
 
-.trow { gap: 8px; }
-.trow .grow { white-space: nowrap; flex: 1 1 auto; }
-.trow select.inl.day { width: 84px; flex: none; }
-.trow input[type=time].inl { width: 112px; flex: none; }
-.trow select.inl.day { width: 118px; }
-.trow input[type=time].inl { border: 0; background: var(--fill) !important; border-radius: 10px; padding: 8px 10px; width: 118px; text-align: center; }
-.trow select.inl.who, select.inl.who { width: auto; min-width: 140px; max-width: 200px; }
-
 .timers { display: grid; gap: 8px; margin-bottom: 14px; }
 .tset { display: flex; gap: 8px; align-items: stretch; } .tset .soft { flex: 1; } .tset .sm { min-width: 48px; font-size: 20px; }
 
-/* Einkaufen und Kochen: feste Spalten, damit nichts überlappt oder abgeschnitten wird (schmale Handys) */
-.row.trow.tt { display: grid; grid-template-columns: minmax(0, 1fr) 92px 100px 36px; gap: 6px; padding: 10px 12px; align-items: center; }
-.row.trow.tt .grow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 16px; }
-.row.trow.tt select.inl.day { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: left; text-align-last: left; padding: 8px 2px; font-size: 16px; text-overflow: ellipsis; }
-.row.trow.tt input[type=time].inl { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; padding: 8px 4px; font-size: 16px; text-align: center; -webkit-appearance: none; appearance: none; }
-.row.trow.tt .mini-x, .row.trow.tt .tsp { width: 36px; height: 36px; }
+/* Termine: Kärtchen über dem Raster, Formularzeilen im Dialog (kurze Beschriftung links, Feld rechts, nichts überlagert sich) */
+.terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tchip { min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; border: 0; border-radius: 14px; padding: 10px 12px; background: var(--card); box-shadow: var(--shadow); cursor: pointer; }
+.tchip:active { background: var(--fill); }
+.tchip.shop { grid-column: 1 / -1; }
+.tchip b { font-size: 14.5px; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tchip span { font-size: 12.5px; color: var(--ink2); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tchip.add { justify-content: center; align-items: center; min-height: 52px; background: none; box-shadow: none; border: 1px dashed var(--line); color: var(--accentfg); font-size: 14px; font-weight: 600; }
+@media (min-width: 560px) { .terms { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } .tchip.shop { grid-column: auto; } }
+
+.frow { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 6px 16px; min-height: 54px; }
+.frow > span { white-space: nowrap; }
+.frow select, .frow input { width: 100%; min-width: 0; max-width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 10px; background: var(--fill); color: var(--ink); font-size: 16px; text-align: left; text-align-last: left; text-overflow: ellipsis; -webkit-appearance: none; appearance: none; }
+.frow select { background-image: linear-gradient(45deg, transparent 50%, var(--ink2) 50%), linear-gradient(135deg, var(--ink2) 50%, transparent 50%); background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+.frow input[type=time] { display: block; }
+
+/* Schmale Handys (iPhone mini, 320 bis 400 px): nichts quetschen, nichts überlagern */
+input[type=password], input[type=url], input[type=email] { width: 100%; min-height: 46px; padding: 10px 14px; border: 0; border-radius: 12px; background: var(--fill); color: var(--ink); font-size: 16px; -webkit-appearance: none; appearance: none; }
+@media (max-width: 400px) {
+  .item { grid-template-columns: 30px minmax(0, 1fr); row-gap: 2px; }
+  .item .ipk { grid-column: 2; text-align: left; max-width: none; font-size: 13.5px; }
+  .item .mv { grid-column: 2; }
+  .seg button { font-size: 13px; padding: 0 2px; }
+  .stat b { font-size: 21px; }
+  .stat { padding: 12px 14px; }
+  .ltitle { font-size: 30px; }
+  .sheet .shd h3 { font-size: 18px; }
+  .frow { gap: 10px; padding: 6px 12px; }
+  .row { padding-left: 14px; padding-right: 14px; }
+}
 </style>
 <div id="app"></div>
 <nav id="tabs" aria-label="Bereiche"><div class="in"><button type="button" data-act="tab" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button type="button" data-act="tab" data-tab="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Einkauf</button><button type="button" data-act="tab" data-tab="cook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h2M20 10h2M9 3c0 1.6 1 1.6 1 3.5M14 3c0 1.6 1 1.6 1 3.5"/></svg>Kochen</button><button type="button" data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Rezepte</button><button type="button" data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Mehr</button></div></nav>
@@ -1589,7 +1605,8 @@ const CELLS = [];
 for (let d = 0; d < 7; d++) { CELLS.push(d + 'l'); CELLS.push(d + 'd'); }
 const MEAL_MIN = { l: 12.5 * 60, d: 19.5 * 60 };
 const FRESH_AT = { l: '11:30', d: '18:00' };
-const DEFAULT_SESS = [{ day: 0, time: '16:00' }, { day: 1, time: '18:00' }, { day: 4, time: '18:00' }];
+// time '' = im Lauf des Tages (zählt für die Planung als 18:00, im Kalender ganztägig)
+const DEFAULT_SESS = [{ day: 0, time: '' }, { day: 1, time: '' }, { day: 4, time: '' }];
 function defaultGrid() {
   const g = {};
   CELLS.forEach(k => { g[k] = { t: 'x' }; });
@@ -1764,23 +1781,36 @@ function buildICS(input) {
     s.push('END:VEVENT');
     ev.push(s.map(fold).join('\r\n'));
   }
-  const ws = input.weekStart, sh = input.shop || { day: -1, time: '10:00' };
+  function addAllDay(uid, dayIso, summary, desc, alarmHours) {
+    const d0 = dayIso.replace(/-/g, ''), d1 = addDays(dayIso, 1).replace(/-/g, '');
+    let s = ['BEGIN:VEVENT', 'UID:' + uid + '@vorkoch', 'DTSTAMP:' + now, 'DTSTART;VALUE=DATE:' + d0, 'DTEND;VALUE=DATE:' + d1, 'SUMMARY:' + icsEsc(summary), 'TRANSP:TRANSPARENT'];
+    if (desc) s.push('DESCRIPTION:' + icsEsc(desc));
+    if (alarmHours != null) s = s.concat(['BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(summary), 'TRIGGER:PT' + alarmHours + 'H', 'END:VALARM']);
+    s.push('END:VEVENT');
+    ev.push(s.map(fold).join('\r\n'));
+  }
+  const ws = input.weekStart, sh = input.shop || { day: -1, time: '' };
   const names = input.names || ['Roman', 'Partnerin'], flt = input.filter === '0' || input.filter === '1' ? input.filter : 'all';
   const mine = w => flt === 'all' || w === 'b' || w === flt;
   const lab = w => w === 'b' ? 'zusammen' : (flt !== 'all' && w === flt ? 'du' : names[+w] || '?');
   const shopDay = addDays(ws, sh.day), sw = sh.w === '0' || sh.w === '1' ? sh.w : 'b';
-  if (mine(sw)) add('einkauf-' + ws, stamp(shopDay, sh.time || '10:00'), stamp(shopDay, sh.time || '10:00', 60), 'Einkaufen (' + lab(sw) + ')', input.shopText || '', 60);
+  if (mine(sw)) {
+    if (sh.time) add('einkauf-' + ws, stamp(shopDay, sh.time), stamp(shopDay, sh.time, 60), 'Einkaufen (' + lab(sw) + ')', input.shopText || '', 60);
+    else addAllDay('einkauf-' + ws, shopDay, 'Einkaufen (' + lab(sw) + ')', input.shopText || '', 8);
+  }
   input.sessions.forEach(s => {
     const w = s.w === '0' || s.w === '1' ? s.w : 'b';
     if (!mine(w)) return;
-    const day = addDays(ws, s.day), tm = s.time || '18:00';
+    const day = addDays(ws, s.day), tm = s.time || '';
     if (s.thaw && s.thaw.length) {
       const prev = addDays(day, -1);
       add('auftauen-' + s.key + '-' + ws, stamp(prev, '19:00'), stamp(prev, '19:15'), 'Auftauen: ' + s.thaw.join(', '), 'Für morgen: ' + s.dishes.join(' und '), 0);
     }
     const lines = [s.dishes.join(' und '), s.who, ''];
     s.events.forEach(e => lines.push(fmtClock(e.start) + '  ' + e.rs + (e.tn && e.tn !== e.rs ? ' (' + e.tn + ')' : '') + ': ' + e.t));
-    add('kochen-' + s.key + '-' + ws, stamp(day, tm), stamp(day, tm, Math.round(s.mk)), (s.fresh ? 'Frisch kochen' : 'Vorkochen') + ' (' + lab(w) + '): ' + s.dishes.join(' + '), lines.join('\n'), 30);
+    const ksum = (s.fresh ? 'Frisch kochen' : 'Vorkochen') + ' (' + lab(w) + '): ' + s.dishes.join(' + ');
+    if (tm) add('kochen-' + s.key + '-' + ws, stamp(day, tm), stamp(day, tm, Math.round(s.mk)), ksum, lines.join('\n'), 30);
+    else addAllDay('kochen-' + s.key + '-' + ws, day, ksum, lines.join('\n'), 8);
   });
   (input.meals || []).forEach(m => {
     const day = addDays(ws, m.day), l = m.meal === 'l', tm = l ? '12:30' : '19:30';
@@ -1886,8 +1916,8 @@ function applyDoc(S, doc, known) {
     S.recent = Array.isArray(p.recent) ? p.recent.filter(x => typeof x === 'string').slice(0, 6) : S.recent;
     S.history = Array.isArray(p.history) ? p.history.filter(h => Array.isArray(h) && h.every(isId)).slice(0, 3) : S.history;
     S.relaxed = !!p.relaxed;
-    if (Array.isArray(p.sess) && p.sess.length >= 1 && p.sess.length <= 4 && p.sess.every(s => s && Number.isInteger(s.day) && s.day >= 0 && s.day <= 6 && /^\d{1,2}:\d{2}$/.test(s.time || ''))) S.sess = p.sess.map(s => { const o = { day: s.day, time: s.time }; if (/^[b01]$/.test(s.w || '')) o.w = s.w; return o; });
-    if (p.shopAt && Number.isInteger(p.shopAt.day) && p.shopAt.day >= -1 && p.shopAt.day <= 6 && /^\d{1,2}:\d{2}$/.test(p.shopAt.time || '')) { S.shopAt = { day: p.shopAt.day, time: p.shopAt.time }; if (/^[01]$/.test(p.shopAt.w || '')) S.shopAt.w = p.shopAt.w; }
+    if (Array.isArray(p.sess) && p.sess.length >= 1 && p.sess.length <= 4 && p.sess.every(s => s && Number.isInteger(s.day) && s.day >= 0 && s.day <= 6 && /^(\d{1,2}:\d{2})?$/.test(typeof s.time === 'string' ? s.time : ''))) S.sess = p.sess.map(s => { const o = { day: s.day, time: typeof s.time === 'string' ? s.time : '' }; if (/^[b01]$/.test(s.w || '')) o.w = s.w; return o; });
+    if (p.shopAt && Number.isInteger(p.shopAt.day) && p.shopAt.day >= -1 && p.shopAt.day <= 6 && /^(\d{1,2}:\d{2})?$/.test(typeof p.shopAt.time === 'string' ? p.shopAt.time : '')) { S.shopAt = { day: p.shopAt.day, time: typeof p.shopAt.time === 'string' ? p.shopAt.time : '' }; if (/^[01]$/.test(p.shopAt.w || '')) S.shopAt.w = p.shopAt.w; }
   }
   if (doc.pool && Array.isArray(doc.pool.disabled)) S.disabled = doc.pool.disabled.filter(isId);
   const st = doc.settings && doc.settings.settings;
@@ -1934,7 +1964,7 @@ function unpack(w) {
   return d;
 }
 
-root.VX = { b64std: s => { const by = Array.from(new TextEncoder().encode(s)); let bin = ''; by.forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); }, buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack };
+root.VX = { b64dec, b64std: s => { const by = Array.from(new TextEncoder().encode(s)); let bin = ''; by.forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); }, buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack };
 if (typeof module !== 'undefined') module.exports = root.VX;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1949,7 +1979,7 @@ const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 function defaults() {
   return {
     settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0 },
-    grid: V.defaultGrid(), sess: V.DEFAULT_SESS.map(s => Object.assign({}, s)), shopAt: { day: -1, time: '10:00' },
+    grid: V.defaultGrid(), sess: V.DEFAULT_SESS.map(s => Object.assign({}, s)), shopAt: { day: -1, time: '' },
     disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} },
     offers: '', diversity: 0.5, motto: '', cal: null, calAt: 0, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
     ratings: {}, storeOv: {}, shopView: 'gang', sync: { url: '', code: '', fresh: false },
@@ -1985,7 +2015,7 @@ function load() {
   delete d.settings.cook; delete d.settings.days;
   if (!d.grid || !V.CELLS.every(k => d.grid[k] && /^[pfox]$/.test(d.grid[k].t))) d.grid = V.defaultGrid();
   if (!Array.isArray(d.sess) || !d.sess.length) d.sess = V.DEFAULT_SESS.map(s => Object.assign({}, s));
-  if (!d.shopAt || typeof d.shopAt !== 'object') d.shopAt = { day: -1, time: '10:00' };
+  if (!d.shopAt || typeof d.shopAt !== 'object') d.shopAt = { day: -1, time: '' };
   d.mt = Object.assign({ m: {}, ratings: {}, storeOv: {}, checked: {} }, d.mt || {});
   ['m', 'ratings', 'storeOv', 'checked'].forEach(k => { if (!d.mt[k] || typeof d.mt[k] !== 'object') d.mt[k] = {}; });
   if (!d.sync || typeof d.sync !== 'object') d.sync = { url: '', code: '', fresh: false };
@@ -1995,7 +2025,8 @@ const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', '
 let S = load();
 function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; }
 resetTransient();
-function save() { saveLocal(); schedSync(); }
+let calTimer = null, calBusy = false, calFail = 0;
+function save() { saveLocal(); schedSync(); calSoon(); }
 function touch(sec) { S.mt.m[sec] = Date.now(); }
 function touchKey(sec, id) { S.mt[sec][id] = Date.now(); }
 function saveLocal() { try { const c = Object.assign({}, S); TRANSIENT.forEach(k => delete c[k]); localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) { /* egal */ } }
@@ -2105,7 +2136,7 @@ async function syncNow() {
       if (typing()) { again = true; syncing = false; setTimeout(syncNow, 4000); return; }
       VX.applyDoc(S, result, V.BY_ID);
       syncIds();
-      saveLocal(); render();
+      saveLocal(); render(); calSoon(5000);
     }
     S.sync.fresh = false; saveLocal();
     if (!remote || !VX.same(result, remote)) await jfetch(ep, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(VX.pack(result)) });
@@ -2117,7 +2148,7 @@ async function syncNow() {
   if (again) { again = false; schedSync(); }
 }
 setInterval(() => { try { if (document.visibilityState !== 'hidden') syncNow(); } catch (e) { /* egal */ } }, 20000);
-document.addEventListener('visibilitychange', () => { try { if (document.visibilityState === 'visible') syncNow(); } catch (e) { /* egal */ } });
+document.addEventListener('visibilitychange', () => { try { if (document.visibilityState === 'visible') { syncNow(); calSoon(4000); } } catch (e) { /* egal */ } });
 function baseUrl() { try { return location.href.split('#')[0]; } catch (e) { return ''; } }
 function inviteLink() { return baseUrl() + VX.encodeShare('j', { u: S.sync.url, c: S.sync.code }); }
 function snapLink() { return baseUrl() + VX.encodeShare('s', VX.toDoc(S)); }
@@ -2176,7 +2207,7 @@ const MEAL_NAME = { l: 'Mittag', d: 'Abend' };
 /* ---------- Plan ---------- */
 function cellWarn(k) {
   const x = S.grid[k];
-  if (x.t === 'p' && !x.r) return 'Kein Gericht fertig';
+  if (x.t === 'p' && !x.r) return B.sessions.some(s => !s.fresh && V.sessTime(s) <= V.cellTime(k)) ? 'Kein Gericht fertig' : 'Kein Kochtermin davor';
   if (x.t === 'f' && !x.r) return 'Kein Rezept';
   if (x.t === 'p' && x.r && B.time[x.r] !== undefined && B.time[x.r] > V.cellTime(k)) return 'Noch nicht gekocht';
   return '';
@@ -2203,21 +2234,27 @@ function slotHtml(k) {
 }
 
 const dayOpts = (cur, withBefore) => (withBefore ? [[-1, 'Sa davor']] : []).concat([1, 2, 3, 4, 5, 6, 0].map(d => [d, DAYS[d]])).map(([d, l]) => '<option value="' + d + '"' + (cur === d ? ' selected' : '') + '>' + l + '</option>').join('');
+const tl = t => t || 'tagsüber';
+const dayLbl = d => d < 0 ? 'Sa davor' : DAYS[d];
+const whoLabel = c => c === '0' || c === '1' ? (names()[+c] || '?') : 'zusammen';
 function termsCard() {
-  let h = '<h2 class="sec">Einkaufen und Kochen</h2><div class="grp">';
-  h += '<div class="row trow tt"><span class="grow">Einkauf</span><select class="inl day" data-shopday aria-label="Einkaufen Tag">' + dayOpts(S.shopAt.day, true) + '</select><input class="inl" type="time" data-shoptime value="' + esc(S.shopAt.time) + '" aria-label="Einkaufen Uhrzeit"><span class="tsp"></span></div>';
-  S.sess.forEach((s, i) => {
-    h += '<div class="row trow tt"><span class="grow">Kochen ' + (i + 1) + '</span><select class="inl day" data-sday="' + i + '" aria-label="Kochtermin ' + (i + 1) + ' Tag">' + dayOpts(s.day, false) + '</select><input class="inl" type="time" data-stime="' + i + '" value="' + esc(s.time) + '" aria-label="Kochtermin ' + (i + 1) + ' Uhrzeit">' +
-      (S.sess.length > 1 ? '<button class="mini-x" data-act="sessdel" data-i="' + i + '" aria-label="Kochtermin ' + (i + 1) + ' entfernen">×</button>' : '') + '</div>';
+  const sl = sessList();
+  const chip = (cls, k, title, line) => '<button class="tchip ' + cls + '" data-act="term" data-term="' + k + '"><b>' + esc(title) + '</b><span>' + esc(line) + '</span></button>';
+  let h = '<p class="cap" style="margin-left:2px">Termine</p><div class="terms">';
+  h += chip('shop', 'shop', 'Einkauf ' + dayLbl(S.shopAt.day), tl(S.shopAt.time) + ' · ' + whoLabel(shopCode()));
+  sl.forEach((s, i) => {
+    const bs = B.sessions.find(x => x.key === 's' + i), c = bs ? whoCode(bs) : (s.w || 'b');
+    h += chip('', i, 'Kochen ' + DAYS[s.day], tl(s.time) + ' · ' + whoLabel(c));
   });
-  if (S.sess.length < 4) h += '<button class="row" data-act="sessadd"><span class="grow" style="color:var(--accentfg);font-weight:600">Kochtermin hinzufügen</span></button>';
-  h += '</div><p class="foot">Die vorgekochten Gerichte verteilen sich auf diese Termine. Frisches Kochen läuft mittags um 11:30 und abends um 18:00 Uhr. Wenn du einen Termin verschiebst, ordnen sich die automatischen Felder neu. Wer kocht und einkauft, stellst du direkt im Feld ein.</p>';
+  if (sl.length < 4) h += '<button class="tchip add" data-act="sessadd">+ Kochtermin</button>';
+  h += '</div><p class="foot" style="margin:8px 2px 14px">Tippe auf einen Termin, um Tag, Uhrzeit und Person zu ändern. Frisch gekocht wird mittags um 11:30 und abends um 18:00.</p>';
   return h;
 }
 function viewPlan() {
   const days = weekDays(), st = B.stats;
   let h = '<h1 class="ltitle">Diese Woche</h1><p class="lsub">' + days[0].date + ' bis ' + days[6].date + '</p>';
   if (S.msg) h += '<p class="alert">' + esc(S.msg) + '</p>';
+  if (S.cs && S.cs.auto && S.cs.state === 'err') h += '<p class="alert">Kalender konnte nicht automatisch aktualisiert werden: ' + esc(S.cs.msg) + '</p>';
   if (S.relaxed) h += '<p class="alert">Der Pool ist für deine Regeln zu klein. Die Mindestzahl vegetarischer Gerichte wurde dieses Mal nicht eingehalten.</p>';
   h += '<div class="stats">' +
     '<div class="stat"><small>Kochzeit pro Woche</small><b>' + V.fmtDur(st.mk) + '</b></div>' +
@@ -2226,6 +2263,7 @@ function viewPlan() {
     '<div class="stat"><small>Angebrochene Reste</small><b>' + (st.rests === 0 ? 'keine' : st.rests + ' Posten') + '</b></div></div>';
   h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Passt, zum Einkauf</button></div>';
 
+  h += termsCard();
   h += '<div class="grp"><div class="dh"><span></span><span>Mittag</span><span>Abend</span></div>';
   for (let d = 0; d < 7; d++) {
     h += '<div class="day' + (days[d].today ? ' today' : '') + '"><div class="dn"><b>' + days[d].n + '</b><span>' + days[d].num + '</span></div>' + slotHtml(d + 'l') + slotHtml(d + 'd') + '</div>';
@@ -2235,11 +2273,10 @@ function viewPlan() {
   h += '<p class="cap">Anpassen</p><div class="grp">' +
     '<button class="row" data-act="reroll"><span class="grow"><b>Neu vorschlagen</b></span><span class="val">eigene Felder bleiben</span></button>' +
     '<button class="row" data-act="next"><span class="grow"><b>Woche abschließen</b></span><span class="val">nächste planen</span></button>' +
-    (S.cal ? '<button class="row" data-act="calpub"><span class="grow"><b>Kalender aktualisieren</b></span><span class="val">' + calAgo() + '</span></button>' : '') +
+    (S.cal ? '<button class="row" data-act="calpub"><span class="grow"><b>Kalender aktualisieren</b></span><span class="val">' + (ghTok() ? 'automatisch · ' : 'Token fehlt · ') + calAgo() + '</span></button>' : '') +
     '<label class="row"><span class="grow"><b>Küche der Woche</b><div class="sub">bevorzugt beim Vorschlag</div></span><select class="inl day" data-motto aria-label="Küche der Woche" style="width:auto;max-width:150px"><option value="">Egal</option>' + V.countries().filter(c => c.n >= 2).map(c => '<option value="' + esc(c.name) + '"' + (S.motto === c.name ? ' selected' : '') + '>' + esc(c.name) + ' (' + c.n + ')</option>').join('') + '</select></label>' +
     '<div class="pad"><div class="flex" style="justify-content:space-between"><span class="sub">Reste verwerten</span><span class="sub">Vielfalt</span></div><input type="range" id="div" min="0" max="100" step="5" value="' + Math.round(S.diversity * 100) + '" aria-label="Reste verwerten oder Vielfalt"></div></div>';
 
-  h += termsCard();
   h += '<h2 class="sec">Kochen diese Woche</h2>';
   if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Noch nichts zu kochen. Lege Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
   B.sessions.forEach(s => {
@@ -2480,12 +2517,16 @@ function sheetHtml() {
     const typeSeg = '<div class="seg">' + ['p', 'f', 'o', 'x'].map(t => '<button data-act="celltype" data-t="' + t + '" aria-pressed="' + (x.t === t) + '">' + TYPE_NAME[t] + '</button>').join('') + '</div>';
     let body = typeSeg;
     if ((x.t === 'p' || x.t === 'f') && x.r && V.BY_ID[x.r]) {
-      let ws = '', wl = 'Wer kocht', wsel = '';
-      if (x.t === 'f') wsel = '<select class="inl day who" data-cwho aria-label="Wer kocht">' + whoOpts(x.w, true) + '</select>';
-      else { const cs = cellSess(k); if (cs) { wl = 'Wer kocht · ' + DAYLONG[cs.day].slice(0, 2) + ' ' + cs.time; wsel = '<select class="inl day who" data-pwho="' + (cs.n - 1) + '" aria-label="Wer kocht">' + whoOpts(sessList()[cs.n - 1].w, true) + '</select>'; } }
-      body += '<div class="grp" style="margin-top:12px">' + (wsel ? '<div class="row trow"><span class="grow">' + esc(wl) + '</span>' + wsel + '</div>' : '') +
-        '<div class="row trow"><span class="grow">Wer kauft ein</span><select class="inl day who" data-shopwho aria-label="Wer kauft ein">' + whoOpts(shopCode(), false) + '</select></div></div>' +
-        '<p class="foot" style="margin:6px 4px 0">' + (x.t === 'p' ? 'Gilt für den ganzen Kochtermin. Einkaufen gilt für die ganze Woche.' : 'Einkaufen gilt für die ganze Woche.') + '</p>';
+      const fr = (lab, ctl) => '<label class="frow"><span>' + lab + '</span>' + ctl + '</label>';
+      let rows = '';
+      if (x.t === 'f') rows += fr('Wer kocht', '<select data-cwho aria-label="Wer kocht">' + whoOpts(x.w, true) + '</select>');
+      else {
+        const cs = cellSess(k);
+        if (cs) rows += '<button class="row" data-act="term" data-term="' + (cs.n - 1) + '"><span class="grow">Kochtermin</span><span class="val">' + DAYS[cs.day] + ' · ' + esc(tl(cs.time)) + '</span></button>' +
+          fr('Wer kocht', '<select data-pwho="' + (cs.n - 1) + '" aria-label="Wer kocht">' + whoOpts(sessList()[cs.n - 1].w, true) + '</select>');
+      }
+      body += '<div class="grp" style="margin-top:12px">' + rows + fr('Wer kauft ein', '<select data-shopwho aria-label="Wer kauft ein">' + whoOpts(shopCode(), false) + '</select>') + '</div>' +
+        '<p class="foot" style="margin:6px 4px 0">' + (x.t === 'p' ? 'Person und Termin gelten für den ganzen Kochtermin. Einkaufen gilt für die ganze Woche.' : 'Einkaufen gilt für die ganze Woche.') + '</p>';
     }
     if (x.t === 'p' || x.t === 'f') {
       const week = x.t === 'p' ? B.prepIds : [];
@@ -2501,6 +2542,22 @@ function sheetHtml() {
       if (x.r && V.BY_ID[x.r]) body += '<div class="flex" style="justify-content:space-between;margin-top:14px"><span class="sub">Hat es geschmeckt?</span>' + rateBtns(x.r) + '</div>';
     } else body += '<p class="sub" style="margin-top:14px">' + (x.t === 'o' ? 'Ihr esst auswärts. Dafür wird nichts gekocht oder eingekauft.' : 'Hier ist nichts geplant. Dafür wird nichts gekocht oder eingekauft.') + '</p>';
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Mahlzeit wählen"><div class="shd"><span class="grab"></span><h3>' + dd.n + ' ' + dd.date + ' · ' + MEAL_NAME[k[1]] + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div><div class="shb">' + body + '</div></div>';
+  }
+  if (sh.t === 'term') {
+    const isShop = sh.k === 'shop', o = isShop ? S.shopAt : sessList()[+sh.k];
+    if (!o) return '';
+    const hasT = !!o.time, bs = isShop ? null : B.sessions.find(x => x.key === 's' + sh.k);
+    const fr = (lab, ctl) => '<label class="frow"><span>' + lab + '</span>' + ctl + '</label>';
+    let g = fr('Tag', '<select data-tday aria-label="Tag">' + dayOpts(o.day, isShop) + '</select>') +
+      fr('Wann', '<select data-tmode aria-label="Wann"><option value="day"' + (hasT ? '' : ' selected') + '>Im Lauf des Tages</option><option value="time"' + (hasT ? ' selected' : '') + '>Zur Uhrzeit</option></select>') +
+      (hasT ? fr('Uhrzeit', '<input type="time" data-ttime value="' + esc(o.time) + '" aria-label="Uhrzeit">') : '') +
+      fr('Wer', '<select data-twho aria-label="Wer">' + whoOpts(isShop ? shopCode() : o.w, !isShop) + '</select>');
+    const foot = isShop ? 'Der Einkauf steht im Kalender. Ohne Uhrzeit als Ganztagstermin.' :
+      (hasT ? 'Was hier gekocht wird, gibt es ab dieser Uhrzeit.' : 'Ohne Uhrzeit gibt es das Gekochte ab dem Abend dieses Tages.');
+    return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Termin ändern"><div class="shd"><span class="grab"></span><h3>' + (isShop ? 'Einkaufen' : 'Kochtermin ' + (+sh.k + 1)) + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div>' +
+      '<div class="shb"><div class="grp">' + g + '</div><p class="foot" style="margin:8px 4px 0">' + foot + '</p>' +
+      (bs ? '<p class="foot" style="margin:6px 4px 0"><b>Gerichte:</b> ' + esc(bs.rs.map(r => r.short).join(', ')) + '</p>' : '') +
+      (!isShop && S.sess.length > 1 ? '<div class="actions"><button class="btn danger" data-act="sessdel" data-i="' + sh.k + '">Termin entfernen</button></div>' : '') + '</div></div>';
   }
   if (sh.t === 'join') {
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Gemeinsamer Plan"><div class="shd"><span class="grab"></span><h3>Gemeinsamer Plan</h3><button class="btn sm soft" data-act="close">Abbrechen</button></div>' +
@@ -2604,6 +2661,8 @@ function icsInput(filter) {
       events: s.sched.events.map(e => ({ start: e.start, rs: e.rs, tn: e.tn, t: e.t })) }))
   };
 }
+const stripStamp = t => String(t).replace(/\r?\n/g, '\n').split('\n').filter(l => !/^DTSTAMP:/.test(l)).join('\n');
+function calDecode(b64) { try { return VX.b64dec(String(b64).replace(/\s/g, '')); } catch (e) { return ''; } }
 async function ghPut(tok, repo, path, text) {
   const api = 'https://api.github.com/repos/' + repo + '/contents/' + path;
   const hd = { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
@@ -2611,12 +2670,44 @@ async function ghPut(tok, repo, path, text) {
   const one = async () => {
     let sha, r;
     try { r = await fetch(api, { headers: hd, cache: 'no-store' }); } catch (e) { throw new Error('Keine Verbindung.'); }
-    if (r.status === 200) sha = (await r.json()).sha; else if (r.status !== 404) throw fail(r.status);
+    if (r.status === 200) {
+      const j = await r.json(); sha = j.sha;
+      if (j.content && stripStamp(calDecode(j.content)) === stripStamp(text)) return;
+    } else if (r.status !== 404) throw fail(r.status);
     const body = { message: 'Kalender aktualisiert', content: VX.b64std(text) }; if (sha) body.sha = sha;
     try { r = await fetch(api, { method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, hd), body: JSON.stringify(body) }); } catch (e) { throw new Error('Keine Verbindung.'); }
     if (!r.ok) { const er = fail(r.status); er.status = r.status; throw er; }
   };
   try { await one(); } catch (e) { if (e.status === 409 || e.status === 422) await one(); else throw e; }
+}
+const SIG_KEY = 'vorkoch.calsig';
+function sigGet() { try { return localStorage.getItem(SIG_KEY) || ''; } catch (e) { return ''; } }
+function sigSet(v) { try { localStorage.setItem(SIG_KEY, v); } catch (e) { /* egal */ } }
+function calFiles() { return [['all', 'alle'], ['0', '0'], ['1', '1']].map(f => ({ path: 'kalender/' + S.cal.secret + '-' + f[1] + '.ics', text: VX.buildICS(icsInput(f[0])) })); }
+function calSig(files) { const s = files.map(f => stripStamp(f.text)).join('\u0001') + '|' + S.cal.repo; let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + ':' + s.length; }
+// Automatisch veröffentlichen: nach jeder Änderung, wenn dieses Gerät den Token hat und sich der Inhalt wirklich geändert hat.
+function calSoon(ms) {
+  if (!S.cal || !ghTok()) return;
+  if (calTimer) clearTimeout(calTimer);
+  calTimer = setTimeout(calAuto, ms == null ? 15000 : ms);
+}
+async function calAuto() {
+  calTimer = null;
+  const tok = ghTok();
+  if (!S.cal || !tok || !B || calBusy) return;
+  const files = calFiles(), sig = calSig(files);
+  if (sig === sigGet()) return;
+  calBusy = true;
+  try {
+    for (const f of files) await ghPut(tok, S.cal.repo, f.path, f.text);
+    sigSet(sig); S.calAt = Date.now(); saveLocal(); calFail = 0;
+    S.cs = { state: 'ok', auto: true, msg: 'Automatisch veröffentlicht. GitHub braucht ein bis zwei Minuten, Google danach oft noch Stunden.' };
+  } catch (e) {
+    S.cs = { state: 'err', auto: true, msg: e && e.message ? e.message : 'Fehler' };
+    calFail++; if (calFail <= 3) calSoon(120000);
+  }
+  calBusy = false;
+  if (!S.sheet && !typing()) render();
 }
 async function publishCal() {
   const tok = ghTok();
@@ -2624,8 +2715,9 @@ async function publishCal() {
   if (!tok) { S.cs = { state: 'err', msg: 'Auf diesem Gerät fehlt der GitHub-Token. Trage ihn hier ein, dann kannst du auch von hier aktualisieren.' }; setTab('settings'); return; }
   S.cs = { state: 'busy', msg: 'Veröffentliche …' }; render();
   try {
-    for (const f of [['all', 'alle'], ['0', '0'], ['1', '1']]) await ghPut(tok, S.cal.repo, 'kalender/' + S.cal.secret + '-' + f[1] + '.ics', VX.buildICS(icsInput(f[0])));
-    S.calAt = Date.now(); saveLocal();
+    const files = calFiles();
+    for (const f of files) await ghPut(tok, S.cal.repo, f.path, f.text);
+    sigSet(calSig(files)); S.calAt = Date.now(); saveLocal();
     S.cs = { state: 'ok', msg: 'Veröffentlicht. GitHub braucht ein bis zwei Minuten, Google danach oft noch Stunden.' };
   } catch (e) { S.cs = { state: 'err', msg: e.message || 'Fehler' }; }
   render();
@@ -2647,9 +2739,9 @@ function calBox() {
   const rows = [['alle', 'Für alle'], ['0', names()[0]], ['1', names()[1]]].map(([w, l]) => '<button class="row" data-act="calcopy" data-w="' + w + '"><span class="grow">Adresse kopieren: <b>' + esc(l) + '</b></span></button>').join('');
   return '<div class="grp"><div class="row"><span class="grow"><b>Eingerichtet</b><div class="sub">' + esc(S.cal.repo) + ' · zuletzt veröffentlicht: ' + calAgo() + '</div></span></div>' + rows +
     (tok ? '<button class="row" data-act="calpub"><span class="grow"><b>Jetzt aktualisieren</b></span></button>' :
-      '<div class="pad"><p class="sub" style="margin-bottom:8px">Zum Veröffentlichen braucht dieses Gerät den Token.</p><div class="flex"><input type="password" id="caltok" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Token" aria-label="GitHub-Token"><button class="btn sm" data-act="caltok">Speichern</button></div></div>') +
+      '<div class="pad"><p class="sub" style="margin-bottom:8px">Mit dem Token veröffentlicht dieses Gerät Änderungen automatisch. Ohne Token übernimmt das ein anderes Gerät, das den Token hat.</p><div class="flex"><input type="password" id="caltok" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Token" aria-label="GitHub-Token"><button class="btn sm" data-act="caltok">Speichern</button></div></div>') +
     '<button class="row" data-act="caloff" style="color:var(--danger)"><span class="grow">Kalender trennen</span></button></div>' + msg + '<div id="calurl"></div>' +
-    '<p class="foot">Einmal in Google Kalender am Computer: Weitere Kalender, plus, Per URL, Adresse einfügen. Danach erscheint er auch auf dem Handy. Google holt Änderungen nur alle paar Stunden. Deshalb nach dem Planen hier aktualisieren, spätestens am Vorabend. Hinweis: In GitHub Desktop vor dem nächsten Hochladen erst „Fetch origin“ und „Pull“ drücken, weil die App neue Dateien ins Repo legt.</p>';
+    '<p class="foot">Einmal in Google Kalender am Computer: Weitere Kalender, plus, Per URL, Adresse einfügen. Danach erscheint er auch auf dem Handy. Google holt Änderungen nur alle paar Stunden. Mit Token auf diesem Gerät wird etwa 15 Sekunden nach jeder Änderung automatisch veröffentlicht, solange die App offen ist oder wieder geöffnet wird. Hinweis: In GitHub Desktop vor dem nächsten Hochladen erst „Fetch origin“ und „Pull“ drücken, weil die App neue Dateien ins Repo legt.</p>';
 }
 function copyOut(txt, okMsg, rows, boxId) {
   const box = document.getElementById(boxId || 'copybox');
@@ -2724,6 +2816,7 @@ document.addEventListener('click', e => {
   }
   else if (act === 'uncheck') { Object.keys(S.checked.map).forEach(k => { S.checked.map[k] = false; touchKey('checked', k); }); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
+  else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
   else if (act === 'celltype') {
     const k = S.sheet && S.sheet.k, t = b.dataset.t;
@@ -2740,12 +2833,12 @@ document.addEventListener('click', e => {
   }
   else if (act === 'sessadd') {
     if (S.sess.length >= 4) return;
-    S.sess.push({ day: 2, time: '18:00' }); S.sess = V.sortSess(S.sess);
-    editGrid(() => {}); render();
+    const o = { day: 2, time: '' }; S.sess.push(o); S.sess = V.sortSess(S.sess);
+    editGrid(() => {}); S.sheet = { t: 'term', k: String(S.sess.indexOf(o)) }; render();
   }
   else if (act === 'sessdel') {
     const i = +b.dataset.i; if (S.sess.length <= 1 || !(i >= 0 && i < S.sess.length)) return;
-    S.sess.splice(i, 1); editGrid(() => {}); render();
+    S.sess.splice(i, 1); editGrid(() => {}); S.sheet = null; render();
   }
   else if (act === 'rate') {
     const id = b.dataset.rid, v = +b.dataset.v;
@@ -2774,7 +2867,7 @@ document.addEventListener('click', e => {
     ghSet(t); S.cal = { repo, secret: newCode().slice(0, 16) }; touch('settings'); saveLocal(); schedSync(); publishCal();
   }
   else if (act === 'calpub') publishCal();
-  else if (act === 'caltok') { const t = ((document.getElementById('caltok') || {}).value || '').trim(); if (/^[A-Za-z0-9_]{20,255}$/.test(t)) { ghSet(t); S.cs = null; render(); } else { S.cs = { state: 'err', msg: 'Das sieht nicht nach einem GitHub-Token aus.' }; render(); } }
+  else if (act === 'caltok') { const t = ((document.getElementById('caltok') || {}).value || '').trim(); if (/^[A-Za-z0-9_]{20,255}$/.test(t)) { ghSet(t); S.cs = null; calSoon(1500); render(); } else { S.cs = { state: 'err', msg: 'Das sieht nicht nach einem GitHub-Token aus.' }; render(); } }
   else if (act === 'calcopy') copyOut(calUrl(b.dataset.w), 'Adresse kopiert. In Google Kalender „Per URL“ einfügen.', 3, 'calurl');
   else if (act === 'caloff') { S.cal = null; S.cs = null; ghSet(''); touch('settings'); saveLocal(); schedSync(); render(); }
   else if (act === 'connect') {
@@ -2805,26 +2898,38 @@ document.addEventListener('click', e => {
   }
 });
 
+function termObj() {
+  const sh = S.sheet; if (!sh || sh.t !== 'term') return null;
+  if (sh.k === 'shop') return { shop: true, o: S.shopAt };
+  const o = S.sess[+sh.k]; return o ? { shop: false, o } : null;
+}
+function termAfter(t) {
+  if (t.shop) { touch('plan'); save(); render(); return; }
+  S.sess = V.sortSess(S.sess); S.sheet.k = String(S.sess.indexOf(t.o)); editGrid(() => {}); render();
+}
+
 document.addEventListener('change', e => {
   const t = e.target;
-  if (t.dataset && t.dataset.shopday !== undefined) {
-    const v = +t.value; if (v >= -1 && v <= 6) { S.shopAt.day = v; touch('plan'); save(); }
-  } else if (t.dataset && t.dataset.shoptime !== undefined) {
-    if (/^\d{1,2}:\d{2}$/.test(t.value)) { S.shopAt.time = t.value; touch('plan'); save(); }
+  if (t.dataset && t.dataset.tday !== undefined) {
+    const o = termObj(), v = +t.value; if (o && v >= (o.shop ? -1 : 0) && v <= 6) { o.o.day = v; termAfter(o); }
+  } else if (t.dataset && t.dataset.tmode !== undefined) {
+    const o = termObj(); if (o) { o.o.time = t.value === 'time' ? (o.shop ? '10:00' : '18:00') : ''; termAfter(o); }
+  } else if (t.dataset && t.dataset.ttime !== undefined) {
+    const o = termObj(); if (o && /^\d{1,2}:\d{2}$/.test(t.value)) { o.o.time = t.value; termAfter(o); }
+  } else if (t.dataset && t.dataset.twho !== undefined) {
+    const o = termObj(); if (o && /^[ab01]$/.test(t.value)) {
+      if (o.shop) { if (t.value === 'b' || t.value === 'a') delete o.o.w; else o.o.w = t.value; }
+      else if (t.value === 'a') delete o.o.w; else o.o.w = t.value;
+      termAfter(o);
+    }
   } else if (t.dataset && t.dataset.shopwho !== undefined) {
     if (/^[b01]$/.test(t.value)) { if (t.value === 'b') delete S.shopAt.w; else S.shopAt.w = t.value; touch('plan'); save(); render(); }
-  } else if (t.dataset && t.dataset.swho !== undefined) {
-    const i = +t.dataset.swho; if (S.sess[i] && /^[ab01]$/.test(t.value)) { if (t.value === 'a') delete S.sess[i].w; else S.sess[i].w = t.value; touch('plan'); save(); render(); }
   } else if (t.dataset && t.dataset.pwho !== undefined) {
     const o = sessList()[+t.dataset.pwho]; if (o && /^[ab01]$/.test(t.value)) { if (t.value === 'a') delete o.w; else o.w = t.value; touch('plan'); save(); render(); }
   } else if (t.dataset && t.dataset.cwho !== undefined) {
     const k = S.sheet && S.sheet.k; if (k && /^[ab01]$/.test(t.value)) { editGrid(g => { if (t.value === 'a') delete g[k].w; else g[k].w = t.value; }); render(); }
   } else if (t.dataset && t.dataset.motto !== undefined) {
     S.motto = t.value && V.countries().some(c => c.name === t.value) ? t.value : ''; touch('settings'); save(); render();
-  } else if (t.dataset && t.dataset.sday !== undefined) {
-    const i = +t.dataset.sday, v = +t.value; if (S.sess[i] && v >= 0 && v <= 6) { S.sess[i].day = v; S.sess = V.sortSess(S.sess); editGrid(() => {}); render(); }
-  } else if (t.dataset && t.dataset.stime !== undefined) {
-    const i = +t.dataset.stime; if (S.sess[i] && /^\d{1,2}:\d{2}$/.test(t.value)) { S.sess[i].time = t.value; S.sess = V.sortSess(S.sess); editGrid(() => {}); render(); }
   } else if (t.id === 'syncurl') { /* wird beim Verbinden gelesen */ }
   else if (t.dataset && t.dataset.pool) {
     const id = t.dataset.pool, k = S.disabled.indexOf(id);
