@@ -26,15 +26,57 @@ END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
 UID:einkauf-2026-10-25@vorkoch
-DTSTAMP:20261021T231848Z
+DTSTAMP:20261026T191324Z
 DTSTART;TZID=Europe/Berlin:20261024T120200
 DTEND;TZID=Europe/Berlin:20261024T130200
 SUMMARY:Einkaufen (zusammen)
-DESCRIPTION:Einkauf Vorkoch\n\nZuhause prüfen\n\n
+DESCRIPTION:Einkauf Vorkoch\n\nObst & Gemüse\n- Hokkaido-Kürbis: 1 Stück
+ \n- Karotten: 1 Beutel · je 1 kg\n\nKühlregal\n- Skyr: 1 Becher · je 45
+ 0 g\n\nKonserven\n- Kichererbsen: 1 Dose · je 240 g abgetropft\n- Kokosmi
+ lch light: 1 Dose · je 400 ml\n\nTrockenwaren\n- Rote Linsen: 1 Packung 
+ · je 500 g\n\nBrot\n- Vollkornbrot: 1 Packung · je 10 Scheiben\n\nZuhaus
+ e prüfen\n- Currypulver (mild)\n- Ingwer\n- Knoblauch\n- Olivenöl\n- Zwi
+ ebeln\n
 BEGIN:VALARM
 ACTION:DISPLAY
 DESCRIPTION:Einkaufen (zusammen)
 TRIGGER:-PT60M
 END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:kochen-s0-2026-10-25@vorkoch
+DTSTAMP:20261026T191324Z
+DTSTART;TZID=Europe/Berlin:20261025T160000
+DTEND;TZID=Europe/Berlin:20261025T164800
+SUMMARY:Vorkochen (zusammen): Hokkaido-Linsen-Suppe mit Kichererbsen und Sk
+ yr
+DESCRIPTION:Hokkaido-Linsen-Suppe mit Kichererbsen und Skyr\nIhr kocht zusa
+ mmen\n\n0:00  Hokkaido-Suppe (Suppe): Kürbis entkernen und mit Schale wü
+ rfeln\, Zwiebeln\, Karotten und Ingwer klein schneiden\, mit Currypulver i
+ n Öl anrösten.\n0:15  Hokkaido-Suppe (Suppe): Linsen und 1\,2 l Wasser z
+ ugeben\, köcheln lassen.\n0:40  Hokkaido-Suppe (Suppe): Pürieren\, Kokos
+ milch und Kichererbsen zugeben\, salzen.
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Vorkochen (zusammen): Hokkaido-Linsen-Suppe mit Kichererbsen un
+ d Skyr
+TRIGGER:-PT30M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:essen-0l-2026-10-25@vorkoch
+DTSTAMP:20261026T191324Z
+DTSTART;TZID=Europe/Berlin:20261025T123000
+DTEND;TZID=Europe/Berlin:20261025T130000
+SUMMARY:Mittag: Hokkaido-Suppe
+DESCRIPTION:vorgekocht
+END:VEVENT
+BEGIN:VEVENT
+UID:essen-4d-2026-10-25@vorkoch
+DTSTAMP:20261026T191324Z
+DTSTART;TZID=Europe/Berlin:20261029T193000
+DTEND;TZID=Europe/Berlin:20261029T201500
+SUMMARY:Abend: Hokkaido-Suppe
+DESCRIPTION:vorgekocht
 END:VEVENT
 END:VCALENDAR
