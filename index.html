@@ -2217,7 +2217,7 @@ function applyDoc(S, doc, known) {
     S.settings.vegMin = num(st.vegMin, 0, 5, S.settings.vegMin);
     S.settings.fishMax = num(st.fishMax, 0, 5, S.settings.fishMax);
     S.settings.moCook = st.moCook === 1 ? 1 : 0;
-    S.settings.portions = num(st.portions, 2, 8, S.settings.portions);
+    S.settings.portions = num(st.portions, 1, 8, S.settings.portions);
     S.settings.protMeal = num(st.protMeal, 20, 80, S.settings.protMeal || 40);
   }
   if (doc.settings) {
@@ -2306,7 +2306,7 @@ function load() {
       if (o.settings) {
         Object.assign(d.settings, o.settings);
         if (!Array.isArray(d.settings.persons) || d.settings.persons.length !== 2) d.settings.persons = defaults().settings.persons;
-        if (![2, 3, 4, 5, 6, 8].includes(+d.settings.portions)) d.settings.portions = 2;
+        if (![1, 2, 3, 4, 5, 6, 8].includes(+d.settings.portions)) d.settings.portions = 2;
         if (!(+d.settings.protMeal >= 20 && +d.settings.protMeal <= 80)) d.settings.protMeal = 40;
       }
     }
@@ -2890,7 +2890,7 @@ function viewSettings() {
   h += '<p class="cap">Mittag und Abend</p><div class="grp pad"><div class="flex" style="justify-content:space-between"><span>Anteil am Tagesziel</span><b id="sharev">' + Math.round(st.share * 100) + ' %</b></div>' +
     '<input type="range" id="share" min="50" max="90" step="5" value="' + Math.round(st.share * 100) + '" aria-label="Anteil am Tagesziel"></div>' +
     '<p class="foot">Das Frühstück ist nicht Teil der Planung. Ziel pro Mahlzeit: ' + B.targets.map((t, i) => esc(names()[i]) + ' ' + Math.round(t) + ' g').join(', ') + '.</p>';
-  h += '<p class="cap">Portionen</p><div class="grp"><label class="row"><span class="grow">Portionen pro Mahlzeit</span><select class="inl" data-set="portions">' + [2, 3, 4, 5, 6, 8].map(n => opt(n, st.portions, n)).join('') + '</select></label>' +
+  h += '<p class="cap">Portionen</p><div class="grp"><label class="row"><span class="grow">Portionen pro Mahlzeit</span><select class="inl" data-set="portions">' + [1, 2, 3, 4, 5, 6, 8].map(n => opt(n, st.portions, n)).join('') + '</select></label>' +
     '<label class="row"><span class="grow">Protein-Ziel pro Portion</span><input class="inl" type="number" inputmode="numeric" data-set="protMeal" min="20" max="80" step="5" value="' + (st.protMeal || 40) + '" aria-label="Protein-Ziel pro Portion in Gramm"><span class="val">g</span></label></div>' +
     '<p class="foot">2 = ihr beide. Einkauf und Zutaten passen sich an. Gerichte werden ganz vorgekocht, deshalb wird auf volle Rezeptmengen aufgerundet.</p>' + mealPlanHtml();
   h += '<p class="cap">Wochenregeln</p><div class="grp">' +
