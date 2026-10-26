@@ -1275,11 +1275,13 @@ function fmtSize(n, unit) {
   if (unit === 'ml') return n >= 1000 ? (n / 1000).toString().replace('.', ',') + ' l' : Math.round(n) + ' ml';
   return String(n);
 }
+/* Ganze Zahlen bleiben, Bruchteile (durch Mengenfaktor) werden als ½, ¾ … geschrieben. */
+function qty(a) { return Number.isInteger(a) ? a : fmtQ(a); }
 function fmtAmt(id, a) {
   const g = ING[id];
-  if (g.fm) return g.fm(a);
+  if (g.fm) return g.fm(qty(a));
   if (g.unit === 'g' || g.unit === 'ml') return fmtSize(a, g.unit) + ' ' + g.n + (g.ps ? ' (' + g.ps + ')' : '');
-  return a + ' ' + g.unit + ' ' + g.n;
+  return qty(a) + ' ' + g.unit + ' ' + g.n;
 }
 function fmtDur(m) {
   m = Math.round(m);
@@ -1327,7 +1329,7 @@ function shop(recipes, facs) {
     const rest = (g.cls === 'fresh' || g.cls === 'can') && left > g.pack * 0.04;
     items.push({
       id, n: g.n, spec: !!g.spec, a: g.a, cls: g.cls, need: t[id], packs, left, leftFrac: left / g.pack, forR, txt,
-      needTxt: counts ? fmtSize(t[id], g.unit) : (g.fm ? g.fm(t[id]) : fmtQ(t[id]) + ' ' + g.unit),
+      needTxt: counts ? fmtSize(t[id], g.unit) : (g.fm ? g.fm(qty(t[id])) : fmtQ(t[id]) + ' ' + g.unit),
       leftTxt: rest ? (counts ? fmtSize(left, g.unit) : fmtQ(left) + ' ' + (g.nm || g.unit)) : '', rest
     });
   });
@@ -1734,9 +1736,11 @@ function buildWeek(grid, sessIn, st) {
     if (x.t === 'f' && x.r && BY_ID[x.r]) sessions.push(mkSess('f' + k, +k[0], FRESH_AT[k[1]], [BY_ID[x.r]], { fresh: true, cell: k, w: x.w }));
   });
   sessions.sort((a, b) => sessTime(a) - sessTime(b));
-  const recs = [], facs = [];
-  ids.forEach(id => { recs.push(BY_ID[id]); facs.push(Math.ceil(counts[id] / 2)); });
-  sessions.filter(s => s.fresh).forEach(s => { recs.push(s.rs[0]); facs.push(0.5); });
+  /* Mengenfaktor pro Gericht, bezogen auf die Grundmenge (4 Portionen). Eine Mahlzeit braucht P Portionen (P = Portionen pro Mahlzeit). Vorgekocht wird in ganzen Grundmengen, daher aufrunden. Bei P = 2 bleibt alles wie vorher. */
+  const P = st.portions || 2;
+  const recs = [], facs = [], facOf = {};
+  ids.forEach(id => { recs.push(BY_ID[id]); facs.push(Math.ceil(counts[id] * P / 4)); facOf[id] = facs[facs.length - 1]; });
+  sessions.filter(s => s.fresh).forEach(s => { recs.push(s.rs[0]); facs.push(P / 4); if (facOf[s.rs[0].id] === undefined) facOf[s.rs[0].id] = P / 4; });
   const sh = shop(recs, facs);
   const packs = sh.items.reduce((s, x) => s + x.packs, 0);
   const rests = sh.items.filter(x => x.rest).length;
@@ -1744,7 +1748,7 @@ function buildWeek(grid, sessIn, st) {
   const rsAll = [...new Set(recs)];
   const avgP = rsAll.length ? rsAll.reduce((s, r) => s + r.nu.p, 0) / rsAll.length : 0;
   const targets = st.persons.map(p => p.protein * st.share / 2);
-  return { rs: rsAll, prepIds: lay.groups.flat().map(r => r.id), counts, sessions, shop: sh, stats: { mk, packs, rests, avgP, kinds: sh.items.length }, targets, time: lay.time };
+  return { rs: rsAll, prepIds: lay.groups.flat().map(r => r.id), counts, sessions, shop: sh, stats: { mk, packs, rests, avgP, kinds: sh.items.length }, targets, time: lay.time, facOf };
 }
 
 root.VK = { countries, ING, RECIPES, BY_ID, AISLES, CELLS, MEAL_MIN, FRESH_AT, DEFAULT_SESS, defaultGrid, copyGrid, cellTime, sessTime, sortSess, dishCounts, layout, sessionSizes, plan, pickFresh, fillGrid, remapGrid, buildWeek, placeTokens, assign, sched, shop, nutri, activeMin, devices, offerHits, fmtQ, fmtAmt, fmtDur, fmtClock, fmtSize, wasteScore };
@@ -2213,6 +2217,7 @@ function applyDoc(S, doc, known) {
     S.settings.vegMin = num(st.vegMin, 0, 5, S.settings.vegMin);
     S.settings.fishMax = num(st.fishMax, 0, 5, S.settings.fishMax);
     S.settings.moCook = st.moCook === 1 ? 1 : 0;
+    S.settings.portions = num(st.portions, 2, 8, S.settings.portions);
   }
   if (doc.settings) {
     const mo = doc.settings.motto; S.motto = typeof mo === 'string' && /^[A-Za-zÄÖÜäöüß -]{0,20}$/.test(mo) ? mo : '';
@@ -2282,7 +2287,7 @@ const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 /* ---------- Zustand ---------- */
 function defaults() {
   return {
-    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0 },
+    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0, portions: 2 },
     grid: V.defaultGrid(), sess: V.DEFAULT_SESS.map(s => Object.assign({}, s)), shopAt: { day: -1, time: '' },
     disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} }, weeks: {},
     offers: '', diversity: 0.5, motto: '', cal: null, calAt: 0, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
@@ -2300,6 +2305,7 @@ function load() {
       if (o.settings) {
         Object.assign(d.settings, o.settings);
         if (!Array.isArray(d.settings.persons) || d.settings.persons.length !== 2) d.settings.persons = defaults().settings.persons;
+        if (![2, 3, 4, 5, 6, 8].includes(+d.settings.portions)) d.settings.portions = 2;
       }
     }
   } catch (e) { /* ohne Speicher weiterarbeiten */ }
@@ -2773,8 +2779,9 @@ function recipeBody(r) {
     (r.spec.length ? '<span class="chip spec">Spezialzutat: ' + r.spec.map(id => esc(V.ING[id].n)).join(', ') + '</span>' : '') + '</div>';
   h += '<p class="sub" style="margin-top:12px">Pro Person und Mahlzeit: ' + g.f.map((x, k) => esc(names()[k]) + ' ' + V.fmtQ(x) + ' Portion' + (x === 1 ? '' : 'en')).join(' · ') +
     (g.tight ? ' <em class="warn">Der Topf reicht dafür knapp, Skyr oder Ei dazu.</em>' : '') + '</p>';
-  h += '<h4>Zutaten für 4 Portionen</h4><ul class="ing">';
-  r.i.forEach(([id, a]) => { h += '<li' + (V.ING[id].cls === 'pantry' ? ' class="v"' : '') + '>' + esc(V.fmtAmt(id, a)) + '</li>'; });
+  const k = (B && B.facOf[r.id]) || 1, np = Math.round(k * 4);
+  h += '<h4>Zutaten für ' + np + (np === 1 ? ' Portion' : ' Portionen') + '</h4><ul class="ing">';
+  r.i.forEach(([id, a]) => { h += '<li' + (V.ING[id].cls === 'pantry' ? ' class="v"' : '') + '>' + esc(V.fmtAmt(id, a * k)) + '</li>'; });
   h += '</ul><h4>Ablauf</h4>';
   r.tracks.forEach(t => {
     if (r.tracks.length > 1) h += '<h5>' + esc(t.n) + '</h5>';
@@ -2863,6 +2870,8 @@ function viewSettings() {
   h += '<p class="cap">Mittag und Abend</p><div class="grp pad"><div class="flex" style="justify-content:space-between"><span>Anteil am Tagesziel</span><b id="sharev">' + Math.round(st.share * 100) + ' %</b></div>' +
     '<input type="range" id="share" min="50" max="90" step="5" value="' + Math.round(st.share * 100) + '" aria-label="Anteil am Tagesziel"></div>' +
     '<p class="foot">Das Frühstück ist nicht Teil der Planung. Ziel pro Mahlzeit: ' + B.targets.map((t, i) => esc(names()[i]) + ' ' + Math.round(t) + ' g').join(', ') + '.</p>';
+  h += '<p class="cap">Portionen</p><div class="grp"><label class="row"><span class="grow">Portionen pro Mahlzeit</span><select class="inl" data-set="portions">' + [2, 3, 4, 5, 6, 8].map(n => opt(n, st.portions, n)).join('') + '</select></label></div>' +
+    '<p class="foot">2 = ihr beide. Einkauf und Zutaten passen sich an. Gerichte werden ganz vorgekocht, deshalb wird auf volle Rezeptmengen aufgerundet.</p>';
   h += '<p class="cap">Wochenregeln</p><div class="grp">' +
     '<label class="row"><span class="grow">Mindestens vegetarisch</span><select class="inl" data-set="vegMin">' + [2, 3, 4].map(n => opt(n, st.vegMin, n + ' von 5')).join('') + '</select></label>' +
     '<label class="row"><span class="grow">Höchstens Fisch</span><select class="inl" data-set="fishMax">' + [0, 1, 2].map(n => opt(n, st.fishMax, n + ' von 5')).join('') + '</select></label>' +
