@@ -259,6 +259,13 @@ button.slot:active { background: var(--fill); }
 .cm-par p { font-size: 14px; color: var(--ink2); }
 .cm-par li { font-size: 15px; margin-top: 4px; list-style: none; display: flex; gap: 8px; align-items: center; }
 .cm-par ul { margin: 6px 0 0; padding: 0; }
+.cm-prog { font-size: 14px; color: var(--ink2); padding: 8px max(20px, env(safe-area-inset-left, 0px)) 0; margin: 0; }
+.cm-ing { background: var(--card); border-radius: 16px; padding: 12px 16px; }
+.cm-ing .sub { margin: 0 0 6px; }
+.cm-ing li b { font-weight: 700; }
+.cm-all { background: var(--card); border-radius: 16px; padding: 12px 16px; }
+.cm-all summary { font-size: 15px; font-weight: 600; cursor: pointer; }
+.cm-all ul { margin: 8px 0 0; }
 .cm-foot { display: flex; gap: 10px; padding: 10px max(16px, env(safe-area-inset-left, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)); }
 .timer { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--card); border-radius: 16px; padding: 12px 16px; }
 .timer b { font: 700 30px/1 var(--font); letter-spacing: -.02em; }
@@ -2761,7 +2768,7 @@ function viewCook() {
     h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
     if (s.thaw.length) h += '<p class="thaw">Am Vorabend in den Kühlschrank legen: ' + esc(s.thaw.join(', ')) + '</p>';
     h += gantt(s);
-    h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button></div>';
+    h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button>' + (s.fresh ? '' : '<button class="btn gray" data-act="portion" data-key="' + s.key + '">Portionieren</button>') + '</div>';
     s.rs.forEach(r => {
       h += '<button class="row chev" style="padding-left:0;padding-right:0" data-act="recipe" data-rid="' + r.id + '">' + dot(dishIdx(r.id)) + '<span class="grow">' + esc(r.name) + '</span></button>';
     });
@@ -2982,25 +2989,60 @@ function sheetHtml() {
   }
   if (sh.t === 'cook') {
     const s = B.sessions.find(x => x.key === sh.key), ev = cookEvents();
+    if (s && sh.portion) return portionHtml(s);
     if (!s || !ev.length) return '';
     const i = Math.min(S.ci, ev.length - 1), e = ev[i], di = dishIdx(e.rid), last = i === ev.length - 1;
     const multi = s.sched.rows.filter(x => x.rid === e.rid).length > 1;
     const par = ev.filter(o => o !== e && o.k === 'p' && o.start <= e.start + 1e-9 && o.end > e.start + 1e-9);
+    // Schritte dieses Gerichts: Balken zeigt, wie weit das Gericht ist, und wie viele Schritte noch kommen
+    const dev = ev.filter(o => o.rid === e.rid), di2 = dev.indexOf(e), left = dev.length - di2 - 1;
+    const k = (B.facOf && B.facOf[e.rid]) || 1, np = Math.round(k * 4), r = V.BY_ID[e.rid];
     let h = '<div class="sheet full" role="dialog" aria-modal="true" aria-label="Kochmodus"><div class="shd"><button class="lnk" data-act="close">Beenden</button><b>' + SESS_DAY_NAME(s) + '</b><span class="sub">' + (i + 1) + ' von ' + ev.length + '</span></div>' +
-      '<div class="cm-top" style="padding:0 max(16px, env(safe-area-inset-left, 0px))">' + ev.map((_, k) => '<i class="' + (k <= i ? 'on' : '') + '"></i>').join('') + '</div>' +
+      '<div class="cm-top" style="padding:0 max(16px, env(safe-area-inset-left, 0px))">' + dev.map((_, q) => '<i class="' + (q <= di2 ? 'on' : '') + '"></i>').join('') + '</div>' +
+      '<p class="cm-prog">' + (di2 + 1) + ' von ' + dev.length + ' Schritten für ' + esc(e.rs) + (left ? ' · noch ' + left + ' bis fertig' : ' · letzter Schritt') + '</p>' +
       '<div class="cm-body">' + timersHtml() + '<div class="cm-clock">' + (e.start < 1 ? 'Zu Beginn' : 'Nach ' + V.fmtDur(e.start)) + '</div>' +
       '<div class="cm-dish">' + dot(di) + esc(e.rs) + (multi ? ' · ' + esc(e.tn) : '') + '</div>' +
       '<div class="cm-text">' + esc(e.t) + '</div>' +
+      cmIngHtml(r, k, e.t, np) +
       '<div class="cm-kind ' + e.k + '">' + (e.k === 'a' ? 'Du bist dran · ' + e.m + ' Min' : 'Läuft von allein · ' + e.m + ' Min') + (e.d ? ' · ' + esc(e.d) : '') + '</div>';
     const tid = s.key + ':' + i, tmin = (S.tadj && S.tadj[tid]) || e.m, own = (S.timers || []).find(x => x.id === tid);
     h += own ? '<p class="sub" style="margin:0">Timer für diesen Schritt läuft oben.</p>' :
       '<div class="tset"><button class="btn gray sm" data-act="tadj" data-id="' + esc(tid) + '" data-d="-1" data-m="' + e.m + '" aria-label="Weniger Minuten">−</button><button class="btn soft" data-act="timer" data-id="' + esc(tid) + '" data-min="' + tmin + '" data-label="' + esc(e.rs + (multi ? ' · ' + e.tn : '') + ': ' + e.t.slice(0, 34) + (e.t.length > 34 ? '…' : '')) + '">Timer starten (' + tmin + ' Min)</button><button class="btn gray sm" data-act="tadj" data-id="' + esc(tid) + '" data-d="1" data-m="' + e.m + '" aria-label="Mehr Minuten">+</button></div><p class="sub" style="margin:6px 0 0">Zeit passt nicht? Mit − und + ändern, zum Beispiel nach der Packungsangabe.</p>';
     if (par.length) h += '<div class="cm-par"><p>Gleichzeitig läuft</p><ul>' + par.map(o => '<li>' + dot(dishIdx(o.rid)) + esc(o.rs + (s.sched.rows.filter(x => x.rid === o.rid).length > 1 ? ' · ' + o.tn : '') + ' bis ' + V.fmtClock(o.end)) + '</li>').join('') + '</ul></div>';
     if (i === 0 && s.thaw.length) h += '<p class="thaw">Aufgetaut sein sollte: ' + esc(s.thaw.join(', ')) + '</p>';
-    h += '</div><div class="cm-foot"><button class="btn gray" data-act="cmprev"' + (i === 0 ? ' disabled style="opacity:.4"' : '') + '>Zurück</button><button class="btn" data-act="cmnext">' + (last ? 'Fertig' : 'Weiter') + '</button></div></div>';
+    h += '</div><div class="cm-foot"><button class="btn gray" data-act="cmprev"' + (i === 0 ? ' disabled style="opacity:.4"' : '') + '>Zurück</button><button class="btn" data-act="cmnext">' + (last ? (s.fresh ? 'Fertig' : 'Zum Portionieren') : 'Weiter') + '</button></div></div>';
     return h;
   }
   return '';
+}
+// Zutaten für den aktuellen Schritt: Zutaten, deren Name im Schritttext vorkommt, mit Menge (ganze Charge). Darunter alle Zutaten des Gerichts aufklappbar.
+function cmIngHtml(r, k, text, np) {
+  if (!r) return '';
+  const t = text.toLowerCase();
+  const hit = r.i.filter(([id]) => {
+    const g = V.ING[id];
+    return [g.n].concat(g.al || []).some(nm => new RegExp('(^|[^a-zäöüß])' + nm.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(e|en|n|s|er)?([^a-zäöüß]|$)').test(t));
+  });
+  let h = '';
+  if (hit.length) h += '<div class="cm-ing"><p class="sub">Dafür brauchst du</p><ul class="ing">' + hit.map(([id, a]) => '<li><b>' + esc(V.fmtAmt(id, a * k)) + '</b></li>').join('') + '</ul></div>';
+  h += '<details class="cm-all"><summary>Alle Zutaten für ' + np + (np === 1 ? ' Portion' : ' Portionen') + '</summary><ul class="ing">' + r.i.map(([id, a]) => '<li>' + esc(V.fmtAmt(id, a * k)) + '</li>').join('') + '</ul></details>';
+  return h;
+}
+// Portionieren nach dem Kochen: jede Dose bekommt einen gleichen Anteil. Dose = eine Mahlzeit aus dem Plan (B.counts).
+function portionHtml(s) {
+  const P = S.settings.portions || 2;
+  let h = '<div class="sheet full" role="dialog" aria-modal="true" aria-label="Portionieren"><div class="shd"><button class="lnk" data-act="close">Beenden</button><b>' + SESS_DAY_NAME(s) + '</b><span class="sub">Portionieren</span></div>' +
+    '<div class="cm-body"><div class="cm-text">Portionieren</div>';
+  if (s.fresh) return h + '<p class="sub">Frisch gekochtes wird direkt gegessen und nicht portioniert.</p></div><div class="cm-foot"><button class="btn" data-act="close">Fertig</button></div></div>';
+  h += '<p class="sub">Jede Dose bekommt den gleichen Anteil. Ziel pro Dose: ' + P + (P === 1 ? ' Portion' : ' Portionen') + ' (Plan).</p>';
+  s.rs.forEach(r => {
+    const k = (B.facOf && B.facOf[r.id]) || 1, N = (B.counts && B.counts[r.id]) || 1, np = 4 * k, per = np / N;
+    const prot = r.nu.p * per, plan = r.nu.p * P, dev = prot / plan - 1;
+    const note = Math.abs(dev) <= 0.1 ? 'passt zum Plan' : (dev > 0 ? 'etwas mehr als geplant' : 'etwas weniger als geplant');
+    h += '<div class="grp pad"><b>' + esc(r.name) + '</b><p class="sub">' + N + (N === 1 ? ' Dose' : ' Dosen') + ' · je Dose ' + V.fmtQ(per) + (per === 1 ? ' Portion' : ' Portionen') + ' · ' + Math.round(prot) + ' g Protein (Plan ' + Math.round(plan) + ' g, ' + note + ').</p>' +
+      '<ul class="ing">' + r.i.map(([id, a]) => { const x = V.ING[id].unit === 'g' || V.ING[id].unit === 'ml' ? Math.round(a * k / N) : a * k / N; return '<li>' + esc(V.fmtAmt(id, x)) + '</li>'; }).join('') + '</ul></div>';
+  });
+  return h + '<p class="foot">Die Mengen gelten je Dose. Gramm sind gerundet, deshalb kann eine Dose minimal abweichen.</p></div><div class="cm-foot"><button class="btn gray" data-act="cmback">Zurück zum Kochen</button><button class="btn" data-act="close">Fertig</button></div></div>';
 }
 function timersHtml() {
   const t = S.timers || [];
@@ -3213,9 +3255,13 @@ document.addEventListener('click', e => {
   else if (act === 'close') closeSheet();
   else if (act === 'cmnext') {
     if (!S.sheet || S.sheet.t !== 'cook') return;
-    const n = cookEvents().length;
-    if (S.ci >= n - 1) closeSheet(); else { S.ci++; render(); }
+    const n = cookEvents().length, s = B.sessions.find(x => x.key === S.sheet.key);
+    if (S.ci < n - 1) { S.ci++; render(); }
+    else if (s && !s.fresh) { S.sheet.portion = true; render(); }
+    else closeSheet();
   }
+  else if (act === 'portion') { S.sheet = { t: 'cook', key: b.dataset.key, portion: true }; S.ci = 0; render(); }
+  else if (act === 'cmback') { if (S.sheet && S.sheet.t === 'cook') { S.sheet.portion = false; S.ci = Math.max(0, cookEvents().length - 1); render(); } }
   else if (act === 'cmprev') { if (S.sheet && S.sheet.t === 'cook' && S.ci > 0) { S.ci--; render(); } }
   else if (act === 'timer') {
     const id = b.dataset.id || b.dataset.label || 'Timer';
@@ -3398,7 +3444,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) c
 let tx = null;
 document.addEventListener('touchstart', e => { if (S.sheet && S.sheet.t === 'cook' && e.touches && e.touches[0]) tx = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
 document.addEventListener('touchend', e => {
-  if (!tx || !S.sheet || S.sheet.t !== 'cook' || !e.changedTouches || !e.changedTouches[0]) { tx = null; return; }
+  if (!tx || !S.sheet || S.sheet.t !== 'cook' || S.sheet.portion || !e.changedTouches || !e.changedTouches[0]) { tx = null; return; }
   const dx = e.changedTouches[0].clientX - tx[0], dy = e.changedTouches[0].clientY - tx[1];
   tx = null;
   if (Math.abs(dx) < 70 || Math.abs(dy) > 60) return;
