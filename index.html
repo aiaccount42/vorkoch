@@ -2218,6 +2218,7 @@ function applyDoc(S, doc, known) {
     S.settings.fishMax = num(st.fishMax, 0, 5, S.settings.fishMax);
     S.settings.moCook = st.moCook === 1 ? 1 : 0;
     S.settings.portions = num(st.portions, 2, 8, S.settings.portions);
+    S.settings.protMeal = num(st.protMeal, 20, 80, S.settings.protMeal || 40);
   }
   if (doc.settings) {
     const mo = doc.settings.motto; S.motto = typeof mo === 'string' && /^[A-Za-zÄÖÜäöüß -]{0,20}$/.test(mo) ? mo : '';
@@ -2287,7 +2288,7 @@ const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 /* ---------- Zustand ---------- */
 function defaults() {
   return {
-    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0, portions: 2 },
+    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0, portions: 2, protMeal: 40 },
     grid: V.defaultGrid(), sess: V.DEFAULT_SESS.map(s => Object.assign({}, s)), shopAt: { day: -1, time: '' },
     disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} }, weeks: {},
     offers: '', diversity: 0.5, motto: '', cal: null, calAt: 0, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
@@ -2306,6 +2307,7 @@ function load() {
         Object.assign(d.settings, o.settings);
         if (!Array.isArray(d.settings.persons) || d.settings.persons.length !== 2) d.settings.persons = defaults().settings.persons;
         if (![2, 3, 4, 5, 6, 8].includes(+d.settings.portions)) d.settings.portions = 2;
+        if (!(+d.settings.protMeal >= 20 && +d.settings.protMeal <= 80)) d.settings.protMeal = 40;
       }
     }
   } catch (e) { /* ohne Speicher weiterarbeiten */ }
@@ -2858,6 +2860,24 @@ function syncBox() {
     '<button class="row" data-act="disconnect" style="color:var(--danger)"><span class="grow">Trennen</span></button></div><div id="syncout"></div>' +
     '<p class="foot">Wer den Link hat, hat Zugriff auf den Plan. Gleichzeitiges Bearbeiten innerhalb weniger Sekunden kann eine Änderung überschreiben.</p>';
 }
+/* Eine Mahlzeit: pro Person so viele Portionen, bis das Protein-Ziel erreicht ist. Dann Gesamtmenge und Einkauf mit Packungsgrößen. Sortiert nach wenigsten Portionen je Person, dann kleinster Packungsrest, dann Kochzeit. */
+function mealPlan() {
+  const N = S.settings.portions, T = S.settings.protMeal || 40;
+  return pool().map(r => {
+    const per = Math.max(1, Math.ceil(T / r.nu.p - 1e-9)), Q = N * per, base = Math.ceil(Q / 4);
+    const sh = V.shop([r], [base]);
+    const waste = sh.items.reduce((s, x) => s + (x.rest ? x.leftFrac : 0), 0);
+    return { r, per, Q, base, left: base * 4 - Q, prot: r.nu.p * per, waste, mk: V.sched([r]).mk, sh };
+  }).sort((a, b) => a.per - b.per || a.waste - b.waste || a.mk - b.mk).slice(0, 6);
+}
+function mealPlanHtml() {
+  const N = S.settings.portions, T = S.settings.protMeal || 40, L = mealPlan();
+  let h = '<p class="cap">Eine Mahlzeit für ' + N + (N === 1 ? ' Portion' : ' Portionen') + '</p>';
+  if (!L.length) return h + '<div class="grp pad"><p class="sub">Im Pool ist kein Rezept.</p></div>';
+  h += '<div class="grp">' + L.map(c => '<div class="pad"><b>' + esc(c.r.name) + '</b><p class="sub">' + c.per + (c.per === 1 ? ' Portion' : ' Portionen') + ' je Person, ' + Math.round(c.prot) + ' g Protein je Person (Ziel ' + T + ' g). Gekocht: ' + c.base * 4 + ' Portionen, übrig: ' + c.left + '. Kochzeit ' + V.fmtDur(c.mk) + '.</p>' +
+    '<ul class="ing">' + c.sh.items.map(x => '<li>' + esc(x.n + ': ' + x.txt + (x.rest ? ' · Rest ' + x.leftTxt : '')) + '</li>').join('') + '</ul></div>').join('') + '</div>';
+  return h;
+}
 function viewSettings() {
   const st = S.settings, p = st.persons;
   const opt = (v, cur, lab) => '<option value="' + v + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + lab + '</option>';
@@ -2870,8 +2890,9 @@ function viewSettings() {
   h += '<p class="cap">Mittag und Abend</p><div class="grp pad"><div class="flex" style="justify-content:space-between"><span>Anteil am Tagesziel</span><b id="sharev">' + Math.round(st.share * 100) + ' %</b></div>' +
     '<input type="range" id="share" min="50" max="90" step="5" value="' + Math.round(st.share * 100) + '" aria-label="Anteil am Tagesziel"></div>' +
     '<p class="foot">Das Frühstück ist nicht Teil der Planung. Ziel pro Mahlzeit: ' + B.targets.map((t, i) => esc(names()[i]) + ' ' + Math.round(t) + ' g').join(', ') + '.</p>';
-  h += '<p class="cap">Portionen</p><div class="grp"><label class="row"><span class="grow">Portionen pro Mahlzeit</span><select class="inl" data-set="portions">' + [2, 3, 4, 5, 6, 8].map(n => opt(n, st.portions, n)).join('') + '</select></label></div>' +
-    '<p class="foot">2 = ihr beide. Einkauf und Zutaten passen sich an. Gerichte werden ganz vorgekocht, deshalb wird auf volle Rezeptmengen aufgerundet.</p>';
+  h += '<p class="cap">Portionen</p><div class="grp"><label class="row"><span class="grow">Portionen pro Mahlzeit</span><select class="inl" data-set="portions">' + [2, 3, 4, 5, 6, 8].map(n => opt(n, st.portions, n)).join('') + '</select></label>' +
+    '<label class="row"><span class="grow">Protein-Ziel pro Portion</span><input class="inl" type="number" inputmode="numeric" data-set="protMeal" min="20" max="80" step="5" value="' + (st.protMeal || 40) + '" aria-label="Protein-Ziel pro Portion in Gramm"><span class="val">g</span></label></div>' +
+    '<p class="foot">2 = ihr beide. Einkauf und Zutaten passen sich an. Gerichte werden ganz vorgekocht, deshalb wird auf volle Rezeptmengen aufgerundet.</p>' + mealPlanHtml();
   h += '<p class="cap">Wochenregeln</p><div class="grp">' +
     '<label class="row"><span class="grow">Mindestens vegetarisch</span><select class="inl" data-set="vegMin">' + [2, 3, 4].map(n => opt(n, st.vegMin, n + ' von 5')).join('') + '</select></label>' +
     '<label class="row"><span class="grow">Höchstens Fisch</span><select class="inl" data-set="fishMax">' + [0, 1, 2].map(n => opt(n, st.fishMax, n + ' von 5')).join('') + '</select></label>' +
@@ -3363,6 +3384,7 @@ document.addEventListener('change', e => {
     const k = t.dataset.set;
     if (k === 'name') S.settings.persons[+t.dataset.i].name = t.value.trim() || (t.dataset.i === '0' ? 'Roman' : 'Partnerin');
     else if (k === 'protein') S.settings.persons[+t.dataset.i].protein = Math.min(220, Math.max(40, +t.value || 90));
+    else if (k === 'protMeal') S.settings.protMeal = Math.min(80, Math.max(20, +t.value || 40));
     else S.settings[k] = +t.value;
     touch('settings'); save(); render();
   }
