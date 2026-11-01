@@ -259,13 +259,6 @@ button.slot:active { background: var(--fill); }
 .cm-par p { font-size: 14px; color: var(--ink2); }
 .cm-par li { font-size: 15px; margin-top: 4px; list-style: none; display: flex; gap: 8px; align-items: center; }
 .cm-par ul { margin: 6px 0 0; padding: 0; }
-.cm-prog { font-size: 14px; color: var(--ink2); padding: 8px max(20px, env(safe-area-inset-left, 0px)) 0; margin: 0; }
-.cm-ing { background: var(--card); border-radius: 16px; padding: 12px 16px; }
-.cm-ing .sub { margin: 0 0 6px; }
-.cm-ing li b { font-weight: 700; }
-.cm-all { background: var(--card); border-radius: 16px; padding: 12px 16px; }
-.cm-all summary { font-size: 15px; font-weight: 600; cursor: pointer; }
-.cm-all ul { margin: 8px 0 0; }
 .cm-foot { display: flex; gap: 10px; padding: 10px max(16px, env(safe-area-inset-left, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)); }
 .timer { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--card); border-radius: 16px; padding: 12px 16px; }
 .timer b { font: 700 30px/1 var(--font); letter-spacing: -.02em; }
@@ -364,6 +357,15 @@ input[type=password], input[type=url], input[type=email] { width: 100%; min-heig
 .thumb { flex: none; width: 56px; height: 56px; border-radius: 12px; overflow: hidden; background: var(--fill); }
 .thumb svg { display: block; width: 100%; height: 100%; }
 .rrow.offrec .thumb { opacity: .5; }
+
+/* Kochtermin-Kennzeichnung */
+.sb { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 6px; background: var(--ink); color: var(--card); font-size: 11.5px; font-weight: 700; line-height: 1; flex: none; margin-right: 7px; }
+.slot .m .sb { margin-right: 0; }
+.tchip.sess { grid-column: 1 / -1; }
+.tchip.sess b { display: flex; align-items: center; }
+.tchip.sess .dl { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; white-space: normal; margin-left: 25px; }
+.tchip.sess .dl .dot { margin-right: 5px; width: 9px; height: 9px; }
+.sess h3 { display: flex; align-items: center; }
 </style>
 <div id="app"></div>
 <nav id="tabs" aria-label="Bereiche"><div class="in"><button type="button" data-act="tab" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button type="button" data-act="tab" data-tab="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Einkauf</button><button type="button" data-act="tab" data-tab="cook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h2M20 10h2M9 3c0 1.6 1 1.6 1 3.5M14 3c0 1.6 1 1.6 1 3.5"/></svg>Kochen</button><button type="button" data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Rezepte</button><button type="button" data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Mehr</button></div></nav>
@@ -1282,13 +1284,11 @@ function fmtSize(n, unit) {
   if (unit === 'ml') return n >= 1000 ? (n / 1000).toString().replace('.', ',') + ' l' : Math.round(n) + ' ml';
   return String(n);
 }
-/* Ganze Zahlen bleiben, Bruchteile (durch Mengenfaktor) werden als ½, ¾ … geschrieben. */
-function qty(a) { return Number.isInteger(a) ? a : fmtQ(a); }
 function fmtAmt(id, a) {
   const g = ING[id];
-  if (g.fm) return g.fm(qty(a));
+  if (g.fm) return g.fm(a);
   if (g.unit === 'g' || g.unit === 'ml') return fmtSize(a, g.unit) + ' ' + g.n + (g.ps ? ' (' + g.ps + ')' : '');
-  return qty(a) + ' ' + g.unit + ' ' + g.n;
+  return a + ' ' + g.unit + ' ' + g.n;
 }
 function fmtDur(m) {
   m = Math.round(m);
@@ -1336,7 +1336,7 @@ function shop(recipes, facs) {
     const rest = (g.cls === 'fresh' || g.cls === 'can') && left > g.pack * 0.04;
     items.push({
       id, n: g.n, spec: !!g.spec, a: g.a, cls: g.cls, need: t[id], packs, left, leftFrac: left / g.pack, forR, txt,
-      needTxt: counts ? fmtSize(t[id], g.unit) : (g.fm ? g.fm(qty(t[id])) : fmtQ(t[id]) + ' ' + g.unit),
+      needTxt: counts ? fmtSize(t[id], g.unit) : (g.fm ? g.fm(t[id]) : fmtQ(t[id]) + ' ' + g.unit),
       leftTxt: rest ? (counts ? fmtSize(left, g.unit) : fmtQ(left) + ' ' + (g.nm || g.unit)) : '', rest
     });
   });
@@ -1536,7 +1536,7 @@ function plan(o) {
   const noise = o.noise == null ? 0.3 : o.noise;
   const avoid = new Set(o.avoid || []);
   const M = Math.max(1, o.sessions || 3);
-  const sizes = sessionSizes(U, M);
+  const sizes = (o.sizes || sessionSizes(U, M)).filter(z => z > 0);
   const targetMeal = Math.max(...st.persons.map(p => p.protein)) * st.share / 2;
   const vegMin = Math.min(U, Math.round(st.vegMin * U / 5));
   const fishMax = st.fishMax === 0 ? 0 : Math.max(1, Math.round(st.fishMax * U / 5));
@@ -1651,22 +1651,48 @@ function dishCounts(g) {
 }
 const spareOf = k => 2 * Math.ceil(k / 2) - k;
 
+/* Gerichte pro Kochtermin aus dem Wochenraster. Ein Gericht ergibt 2 Mahlzeiten. Jede Vorkoch-Mahlzeit muss von einem Termin vor ihr
+   gedeckt werden: Zellen zwischen Termin i und i+1 brauchen Gerichte aus den Terminen bis i. Beispiel Mo und Do: Mahlzeiten Mo bis Do
+   Mittag = 2 Gerichte am Montag, Rest = 1 Gericht am Donnerstag. D = Zahl der Gerichte insgesamt. Rückgabe: Größen je sortiertem Termin (auch 0). */
+function demandSizes(g, sessIn, D) {
+  const sess = sortSess(sessIn), M = sess.length, win = new Array(M).fill(0);
+  if (!M || D <= 0) return new Array(M).fill(0);
+  CELLS.forEach(k => {
+    if (!g[k] || g[k].t !== 'p') return;
+    const T = cellTime(k); let w = -1;
+    for (let i = 0; i < M; i++) if (sessTime(sess[i]) <= T) w = i;
+    if (w >= 0) win[w]++;
+  });
+  const sizes = []; let cum = 0, prev = 0;
+  for (let i = 0; i < M; i++) { cum += win[i]; const N = Math.ceil(cum / 2); sizes.push(N - prev); prev = N; }
+  let tot = sizes.reduce((a, b) => a + b, 0);
+  if (tot < D) sizes[M - 1] += D - tot;          // Gerichte über den Bedarf hinaus: in den letzten Termin
+  for (let i = M - 1; tot > D && i >= 0; i--) {  // weniger verschiedene Gerichte als Bedarf (ein Gericht mehrfach): hinten kürzen
+    const cut = Math.min(sizes[i], tot - D); sizes[i] -= cut; tot -= cut;
+  }
+  if (sizes.reduce((a, b) => a + b, 0) !== D) { sizes.fill(0); sizes[M - 1] = D; }
+  return sizes;
+}
+
 function needMap(g, onlyUser) {
   const m = {};
   CELLS.forEach(k => { const x = g[k]; if (x.t === 'p' && x.r && (!onlyUser || x.u)) { const t = cellTime(k); if (m[x.r] === undefined || t < m[x.r]) m[x.r] = t; } });
   return m;
 }
 // Wann ist welches Gericht fertig? Ergebnis: { id: Startzeit des Kochtermins in Minuten }, dazu die Gruppen.
-function layout(ids, sessIn, need) {
-  const sess = sortSess(sessIn);
+function layout(ids, sessAll, need, grid) {
+  const sortedAll = sortSess(sessAll);
   const rs = ids.map(id => BY_ID[id]).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
-  if (!rs.length || !sess.length) return { groups: [], sess: [], time: {} };
-  const sizes = sessionSizes(rs.length, sess.length);
+  if (!rs.length || !sortedAll.length) return { groups: [], sess: [], idx: [], time: {} };
+  const all = grid ? demandSizes(grid, sortedAll, rs.length) : sessionSizes(rs.length, sortedAll.length);
+  // Termine ohne Gericht fallen weg
+  const sess = [], sizes = [], idx = [];
+  all.forEach((z, i) => { if (z > 0) { sess.push(sortedAll[i]); sizes.push(z); idx.push(i); } });
   let groups = assign(rs, sizes, { need, times: sess.map(sessTime) });
   if (!groups) { groups = []; let p = 0; sizes.forEach(z => { groups.push(rs.slice(p, p + z)); p += z; }); }
   const time = {};
   groups.forEach((g, i) => g.forEach(r => { time[r.id] = sessTime(sess[i]); }));
-  return { groups, sess: sess.slice(0, groups.length), time };
+  return { groups, sess, idx, time };
 }
 
 // Legt Mahlzeit-Vorräte (tokens: {id: Anzahl}) auf leere p-Zellen. Früh verfügbar, frisches Hack und heikle Gerichte zuerst.
@@ -1675,7 +1701,7 @@ function placeTokens(g0, sessIn, tokens0) {
   let assumed = dishes(), g = null;
   for (let it = 0; it < 4; it++) {
     g = copyGrid(g0);
-    const ids = [...assumed], lay = layout(ids, sessIn, needMap(g0, true));
+    const ids = [...assumed], lay = layout(ids, sessIn, needMap(g0, true), g0);
     const tok = {}; Object.keys(tokens0).forEach(id => { if (assumed.has(id)) tok[id] = tokens0[id]; });
     const empty = CELLS.filter(k => g[k].t === 'p' && !g[k].r).sort((a, b) => cellTime(a) - cellTime(b));
     empty.forEach(k => {
@@ -1704,7 +1730,7 @@ function fillGrid(grid, o) {
   const empty = CELLS.filter(k => g[k].t === 'p' && !g[k].r);
   const spare = fixedIds.reduce((s, id) => s + spareOf(cnt[id]), 0);
   const nNew = Math.max(0, Math.ceil((empty.length - spare) / 2));
-  const pl = plan({ motto: o.motto, pool: o.pool, settings: st, diversity: o.diversity, history: o.history, offers: o.offers, avoid: o.avoid, ratings: o.ratings, rand: o.rand, noise: o.noise, fixed: fixedRs, n: nNew, sessions: sess.length });
+  const pl = plan({ motto: o.motto, pool: o.pool, settings: st, diversity: o.diversity, history: o.history, offers: o.offers, avoid: o.avoid, ratings: o.ratings, rand: o.rand, noise: o.noise, fixed: fixedRs, n: nNew, sessions: sess.length, sizes: demandSizes(g, sess, nNew + fixedRs.length) });
   if (!pl) return null;
   const tokens = {};
   fixedIds.forEach(id => { if (spareOf(cnt[id]) > 0) tokens[id] = spareOf(cnt[id]); });
@@ -1731,23 +1757,21 @@ function remapGrid(grid, sess) {
 function buildWeek(grid, sessIn, st) {
   const counts = dishCounts(grid);
   const ids = Object.keys(counts);
-  const lay = layout(ids, sessIn, needMap(grid, false));
+  const lay = layout(ids, sessIn, needMap(grid, false), grid);
   const mkSess = (key, day, time, list, extra) => {
     const sc = sched(list), thaw = [];
     list.forEach(r => r.i.forEach(([id]) => { if (ING[id].thaw && !thaw.includes(ING[id].n)) thaw.push(ING[id].n); }));
     return Object.assign({ key, day, time, rs: list, sched: sc, thaw, dev: [...new Set(list.flatMap(devices))], fresh: false }, extra || {});
   };
-  const sessions = lay.groups.map((list, i) => mkSess('s' + i, lay.sess[i].day, lay.sess[i].time, list, { n: i + 1, w: lay.sess[i].w }));
+  const sessions = lay.groups.map((list, i) => mkSess('s' + lay.idx[i], lay.sess[i].day, lay.sess[i].time, list, { n: lay.idx[i] + 1, w: lay.sess[i].w }));
   CELLS.forEach(k => {
     const x = grid[k];
     if (x.t === 'f' && x.r && BY_ID[x.r]) sessions.push(mkSess('f' + k, +k[0], FRESH_AT[k[1]], [BY_ID[x.r]], { fresh: true, cell: k, w: x.w }));
   });
   sessions.sort((a, b) => sessTime(a) - sessTime(b));
-  /* Mengenfaktor pro Gericht, bezogen auf die Grundmenge (4 Portionen). Eine Mahlzeit braucht P Portionen (P = Portionen pro Mahlzeit). Vorgekocht wird in ganzen Grundmengen, daher aufrunden. Bei P = 2 bleibt alles wie vorher. */
-  const P = st.portions || 2;
-  const recs = [], facs = [], facOf = {};
-  ids.forEach(id => { recs.push(BY_ID[id]); facs.push(Math.ceil(counts[id] * P / 4)); facOf[id] = facs[facs.length - 1]; });
-  sessions.filter(s => s.fresh).forEach(s => { recs.push(s.rs[0]); facs.push(P / 4); if (facOf[s.rs[0].id] === undefined) facOf[s.rs[0].id] = P / 4; });
+  const recs = [], facs = [];
+  ids.forEach(id => { recs.push(BY_ID[id]); facs.push(Math.ceil(counts[id] / 2)); });
+  sessions.filter(s => s.fresh).forEach(s => { recs.push(s.rs[0]); facs.push(0.5); });
   const sh = shop(recs, facs);
   const packs = sh.items.reduce((s, x) => s + x.packs, 0);
   const rests = sh.items.filter(x => x.rest).length;
@@ -1755,10 +1779,10 @@ function buildWeek(grid, sessIn, st) {
   const rsAll = [...new Set(recs)];
   const avgP = rsAll.length ? rsAll.reduce((s, r) => s + r.nu.p, 0) / rsAll.length : 0;
   const targets = st.persons.map(p => p.protein * st.share / 2);
-  return { rs: rsAll, prepIds: lay.groups.flat().map(r => r.id), counts, sessions, shop: sh, stats: { mk, packs, rests, avgP, kinds: sh.items.length }, targets, time: lay.time, facOf };
+  return { rs: rsAll, prepIds: lay.groups.flat().map(r => r.id), counts, sessions, shop: sh, stats: { mk, packs, rests, avgP, kinds: sh.items.length }, targets, time: lay.time };
 }
 
-root.VK = { countries, ING, RECIPES, BY_ID, AISLES, CELLS, MEAL_MIN, FRESH_AT, DEFAULT_SESS, defaultGrid, copyGrid, cellTime, sessTime, sortSess, dishCounts, layout, sessionSizes, plan, pickFresh, fillGrid, remapGrid, buildWeek, placeTokens, assign, sched, shop, nutri, activeMin, devices, offerHits, fmtQ, fmtAmt, fmtDur, fmtClock, fmtSize, wasteScore };
+root.VK = { countries, ING, RECIPES, BY_ID, AISLES, CELLS, MEAL_MIN, FRESH_AT, DEFAULT_SESS, defaultGrid, copyGrid, cellTime, sessTime, sortSess, dishCounts, layout, sessionSizes, demandSizes, plan, pickFresh, fillGrid, remapGrid, buildWeek, placeTokens, assign, sched, shop, nutri, activeMin, devices, offerHits, fmtQ, fmtAmt, fmtDur, fmtClock, fmtSize, wasteScore };
 if (typeof module !== 'undefined') module.exports = root.VK;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -2224,8 +2248,6 @@ function applyDoc(S, doc, known) {
     S.settings.vegMin = num(st.vegMin, 0, 5, S.settings.vegMin);
     S.settings.fishMax = num(st.fishMax, 0, 5, S.settings.fishMax);
     S.settings.moCook = st.moCook === 1 ? 1 : 0;
-    S.settings.portions = num(st.portions, 1, 8, S.settings.portions);
-    S.settings.protMeal = num(st.protMeal, 20, 80, S.settings.protMeal || 40);
   }
   if (doc.settings) {
     const mo = doc.settings.motto; S.motto = typeof mo === 'string' && /^[A-Za-zÄÖÜäöüß -]{0,20}$/.test(mo) ? mo : '';
@@ -2295,11 +2317,11 @@ const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 /* ---------- Zustand ---------- */
 function defaults() {
   return {
-    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0, portions: 2, protMeal: 40 },
+    settings: { persons: [{ name: 'Roman', protein: 120 }, { name: 'Partnerin', protein: 90 }], share: 0.7, vegMin: 3, fishMax: 1, moCook: 0 },
     grid: V.defaultGrid(), sess: V.DEFAULT_SESS.map(s => Object.assign({}, s)), shopAt: { day: -1, time: '' },
     disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} }, weeks: {},
     offers: '', diversity: 0.5, motto: '', cal: null, calAt: 0, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
-    ratings: {}, storeOv: {}, shopView: 'gang', sync: { url: '', code: '', fresh: false },
+    ratings: {}, storeOv: {}, shopView: 'gang', extra: [], sync: { url: '', code: '', fresh: false },
     mt: { m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} }
   };
 }
@@ -2313,8 +2335,6 @@ function load() {
       if (o.settings) {
         Object.assign(d.settings, o.settings);
         if (!Array.isArray(d.settings.persons) || d.settings.persons.length !== 2) d.settings.persons = defaults().settings.persons;
-        if (![1, 2, 3, 4, 5, 6, 8].includes(+d.settings.portions)) d.settings.portions = 2;
-        if (!(+d.settings.protMeal >= 20 && +d.settings.protMeal <= 80)) d.settings.protMeal = 40;
       }
     }
   } catch (e) { /* ohne Speicher weiterarbeiten */ }
@@ -2578,6 +2598,7 @@ function cookWho(s) {
 const shopCode = () => S.shopAt.w === '0' || S.shopAt.w === '1' ? S.shopAt.w : 'b';
 const whoOpts = (cur, auto) => (auto ? [['a', 'Automatisch']] : []).concat([['b', 'Zusammen'], ['0', names()[0]], ['1', names()[1]]]).map(([v, l]) => '<option value="' + v + '"' + ((cur || (auto ? 'a' : 'b')) === v ? ' selected' : '') + '>' + esc(l) + '</option>').join('');
 function dishIdx(rid) { const i = B ? B.prepIds.indexOf(rid) : -1; return i < 0 ? -1 : i % 5; }
+const sb = n => n ? '<span class="sb" aria-label="Kochtermin ' + n + '">' + n + '</span>' : '';
 const dot = i => i < 0 ? '<span class="dot"></span>' : '<span class="dot" style="--c:var(--c' + (i + 1) + ')"></span>';
 const DAYLONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 const ICON = {
@@ -2618,7 +2639,7 @@ function slotHtml(k) {
     const r = V.BY_ID[x.r];
     let m;
     if (x.t === 'f') m = dot(-1) + 'frisch gekocht' + whoTag(cellWho(k));
-    else { const age = Math.max(0, +k[0] - Math.floor((B.time[x.r] || 0) / 1440)); m = dot(dishIdx(x.r)) + (age < 3 ? AGE[age] : age + ' Tage alt') + whoTag(cellWho(k)); }
+    else { const age = Math.max(0, +k[0] - Math.floor((B.time[x.r] || 0) / 1440)), cs = cellSess(k); m = sb(cs && cs.n) + dot(dishIdx(x.r)) + (age < 3 ? AGE[age] : age + ' Tage alt') + whoTag(cellWho(k)); }
     return '<button class="slot" data-act="cell" data-k="' + k + '"><span class="m">' + m + '</span><b>' + esc(r.short) + '</b>' + wh + '</button>';
   }
   if (x.t === 'p' || x.t === 'f') return '<button class="slot warnslot" data-act="cell" data-k="' + k + '"><span class="m">' + TYPE_NAME[x.t] + '</span><b>–</b>' + wh + '</button>';
@@ -2636,10 +2657,10 @@ function termsCard() {
   h += chip('shop', 'shop', 'Einkauf ' + dayLbl(S.shopAt.day), tl(S.shopAt.time) + ' · ' + whoLabel(shopCode()));
   sl.forEach((s, i) => {
     const bs = B.sessions.find(x => x.key === 's' + i), c = bs ? whoCode(bs) : (s.w || 'b');
-    h += chip('', i, 'Kochen ' + DAYS[s.day], tl(s.time) + ' · ' + whoLabel(c));
+    h += '<button class="tchip sess" data-act="term" data-term="' + i + '"><b>' + sb(i + 1) + 'Kochen ' + DAYS[s.day] + ' · ' + esc(tl(s.time)) + ' · ' + esc(whoLabel(c)) + '</b><span class="dl">' + (bs ? bs.rs.map(r => dot(dishIdx(r.id)) + esc(r.short)).join('') : 'Kein Gericht an diesem Termin') + '</span></button>';
   });
   if (sl.length < 4) h += '<button class="tchip add" data-act="sessadd">+ Kochtermin</button>';
-  h += '</div><p class="foot" style="margin:8px 2px 14px">Tippe auf einen Termin, um Tag, Uhrzeit und Person zu ändern. Frisch gekocht wird mittags um 11:30 und abends um 18:00.</p>';
+  h += '</div><div style="height:14px"></div>';
   return h;
 }
 function viewPlan() {
@@ -2675,7 +2696,7 @@ function viewPlan() {
   if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Noch nichts zu kochen. Lege Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
   B.sessions.forEach(s => {
     const dd = days[s.day];
-    h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + '</p>';
+    h += '<section class="sess"><h3>' + sb(s.fresh ? 0 : s.n) + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + '</p>';
     s.rs.forEach(r => {
       const i = dishIdx(r.id), g = portion(r);
       const fq = g.f.map((x, k) => esc(names()[k]) + ' ' + V.fmtQ(x)).join(' · ');
@@ -2733,7 +2754,13 @@ function viewShop() {
     const k = 'v_' + x.id;
     h += '<label class="item small' + (map[tk(k)] ? ' done' : '') + '"><input type="checkbox" data-key="' + k + '" data-v="1"' + (map[tk(k)] ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + (x.spec ? '<span class="chip spec" style="margin-left:6px">Spezial</span>' : '') + '</b></span><span></span></label>';
   });
-  h += '</div><p class="foot">Fehlendes kommt auf die Liste. Tiefkühlware am Vorabend in den Kühlschrank legen. Hackfleisch kommt nur in die ersten beiden Kochtermine, damit es frisch bleibt.</p>';
+  h += '</div>';
+  h += '<p class="cap">Eigene Artikel</p><div class="grp"><div class="pad"><form data-form="xadd" style="display:flex;gap:8px"><input type="text" id="xin" maxlength="60" placeholder="Zum Beispiel Zahnpasta" aria-label="Eigener Artikel" style="flex:1;min-width:0"><button type="submit" class="btn sm">Hinzufügen</button></form></div>';
+  (S.extra || []).forEach(x => {
+    h += '<div class="item small' + (x.d ? ' done' : '') + '" style="display:flex;align-items:center"><label style="display:flex;align-items:center;flex:1;min-width:0;gap:12px"><input type="checkbox" data-xkey="' + x.id + '"' + (x.d ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + '</b></span></label><button type="button" class="btn sm soft" data-act="xdel" data-id="' + x.id + '" aria-label="' + esc(x.n) + ' löschen">✕</button></div>';
+  });
+  h += '</div><p class="foot">Diese Liste gibt es nur auf diesem Gerät. Sie wird nicht mit Ayşe abgeglichen.</p>';
+  h += '<p class="foot">Fehlendes kommt auf die Liste. Tiefkühlware am Vorabend in den Kühlschrank legen. Hackfleisch kommt nur in die ersten beiden Kochtermine, damit es frisch bleibt.</p>';
   h += '<div class="actions"><button class="btn gray" data-act="copy">Liste kopieren</button><button class="btn gray" data-act="uncheck">Haken löschen</button></div><div id="copybox"></div>';
   h += '<a class="btn gray" style="display:block;text-align:center;text-decoration:none;margin:18px 0 6px" href="https://aiaccount42.github.io/haushalt/" target="_blank" rel="noopener">Weiter zu Haushalt</a>';
   return h;
@@ -2765,10 +2792,10 @@ function viewCook() {
   if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Diese Woche ist nichts zu kochen. Lege auf der Woche-Seite Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
   B.sessions.forEach(s => {
     const dd = days[s.day];
-    h += '<section class="sess"><h3>' + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
+    h += '<section class="sess"><h3>' + sb(s.fresh ? 0 : s.n) + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
     if (s.thaw.length) h += '<p class="thaw">Am Vorabend in den Kühlschrank legen: ' + esc(s.thaw.join(', ')) + '</p>';
     h += gantt(s);
-    h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button>' + (s.fresh ? '' : '<button class="btn gray" data-act="portion" data-key="' + s.key + '">Portionieren</button>') + '</div>';
+    h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button></div>';
     s.rs.forEach(r => {
       h += '<button class="row chev" style="padding-left:0;padding-right:0" data-act="recipe" data-rid="' + r.id + '">' + dot(dishIdx(r.id)) + '<span class="grow">' + esc(r.name) + '</span></button>';
     });
@@ -2788,9 +2815,8 @@ function recipeBody(r) {
     (r.spec.length ? '<span class="chip spec">Spezialzutat: ' + r.spec.map(id => esc(V.ING[id].n)).join(', ') + '</span>' : '') + '</div>';
   h += '<p class="sub" style="margin-top:12px">Pro Person und Mahlzeit: ' + g.f.map((x, k) => esc(names()[k]) + ' ' + V.fmtQ(x) + ' Portion' + (x === 1 ? '' : 'en')).join(' · ') +
     (g.tight ? ' <em class="warn">Der Topf reicht dafür knapp, Skyr oder Ei dazu.</em>' : '') + '</p>';
-  const k = (B && B.facOf[r.id]) || 1, np = Math.round(k * 4);
-  h += '<h4>Zutaten für ' + np + (np === 1 ? ' Portion' : ' Portionen') + '</h4><ul class="ing">';
-  r.i.forEach(([id, a]) => { h += '<li' + (V.ING[id].cls === 'pantry' ? ' class="v"' : '') + '>' + esc(V.fmtAmt(id, a * k)) + '</li>'; });
+  h += '<h4>Zutaten für 4 Portionen</h4><ul class="ing">';
+  r.i.forEach(([id, a]) => { h += '<li' + (V.ING[id].cls === 'pantry' ? ' class="v"' : '') + '>' + esc(V.fmtAmt(id, a)) + '</li>'; });
   h += '</ul><h4>Ablauf</h4>';
   r.tracks.forEach(t => {
     if (r.tracks.length > 1) h += '<h5>' + esc(t.n) + '</h5>';
@@ -2867,24 +2893,6 @@ function syncBox() {
     '<button class="row" data-act="disconnect" style="color:var(--danger)"><span class="grow">Trennen</span></button></div><div id="syncout"></div>' +
     '<p class="foot">Wer den Link hat, hat Zugriff auf den Plan. Gleichzeitiges Bearbeiten innerhalb weniger Sekunden kann eine Änderung überschreiben.</p>';
 }
-/* Eine Mahlzeit: pro Person so viele Portionen, bis das Protein-Ziel erreicht ist. Dann Gesamtmenge und Einkauf mit Packungsgrößen. Sortiert nach wenigsten Portionen je Person, dann kleinster Packungsrest, dann Kochzeit. */
-function mealPlan() {
-  const N = S.settings.portions, T = S.settings.protMeal || 40;
-  return pool().map(r => {
-    const per = Math.max(1, Math.ceil(T / r.nu.p - 1e-9)), Q = N * per, base = Math.ceil(Q / 4);
-    const sh = V.shop([r], [base]);
-    const waste = sh.items.reduce((s, x) => s + (x.rest ? x.leftFrac : 0), 0);
-    return { r, per, Q, base, left: base * 4 - Q, prot: r.nu.p * per, waste, mk: V.sched([r]).mk, sh };
-  }).sort((a, b) => a.per - b.per || a.waste - b.waste || a.mk - b.mk).slice(0, 6);
-}
-function mealPlanHtml() {
-  const N = S.settings.portions, T = S.settings.protMeal || 40, L = mealPlan();
-  let h = '<p class="cap">Eine Mahlzeit für ' + N + (N === 1 ? ' Portion' : ' Portionen') + '</p>';
-  if (!L.length) return h + '<div class="grp pad"><p class="sub">Im Pool ist kein Rezept.</p></div>';
-  h += '<div class="grp">' + L.map(c => '<div class="pad"><b>' + esc(c.r.name) + '</b><p class="sub">' + c.per + (c.per === 1 ? ' Portion' : ' Portionen') + ' je Person, ' + Math.round(c.prot) + ' g Protein je Person (Ziel ' + T + ' g). Gekocht: ' + c.base * 4 + ' Portionen, übrig: ' + c.left + '. Kochzeit ' + V.fmtDur(c.mk) + '.</p>' +
-    '<ul class="ing">' + c.sh.items.map(x => '<li>' + esc(x.n + ': ' + x.txt + (x.rest ? ' · Rest ' + x.leftTxt : '')) + '</li>').join('') + '</ul></div>').join('') + '</div>';
-  return h;
-}
 function viewSettings() {
   const st = S.settings, p = st.persons;
   const opt = (v, cur, lab) => '<option value="' + v + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + lab + '</option>';
@@ -2897,9 +2905,6 @@ function viewSettings() {
   h += '<p class="cap">Mittag und Abend</p><div class="grp pad"><div class="flex" style="justify-content:space-between"><span>Anteil am Tagesziel</span><b id="sharev">' + Math.round(st.share * 100) + ' %</b></div>' +
     '<input type="range" id="share" min="50" max="90" step="5" value="' + Math.round(st.share * 100) + '" aria-label="Anteil am Tagesziel"></div>' +
     '<p class="foot">Das Frühstück ist nicht Teil der Planung. Ziel pro Mahlzeit: ' + B.targets.map((t, i) => esc(names()[i]) + ' ' + Math.round(t) + ' g').join(', ') + '.</p>';
-  h += '<p class="cap">Portionen</p><div class="grp"><label class="row"><span class="grow">Portionen pro Mahlzeit</span><select class="inl" data-set="portions">' + [1, 2, 3, 4, 5, 6, 8].map(n => opt(n, st.portions, n)).join('') + '</select></label>' +
-    '<label class="row"><span class="grow">Protein-Ziel pro Portion</span><input class="inl" type="number" inputmode="numeric" data-set="protMeal" min="20" max="80" step="5" value="' + (st.protMeal || 40) + '" aria-label="Protein-Ziel pro Portion in Gramm"><span class="val">g</span></label></div>' +
-    '<p class="foot">2 = ihr beide. Einkauf und Zutaten passen sich an. Gerichte werden ganz vorgekocht, deshalb wird auf volle Rezeptmengen aufgerundet.</p>' + mealPlanHtml();
   h += '<p class="cap">Wochenregeln</p><div class="grp">' +
     '<label class="row"><span class="grow">Mindestens vegetarisch</span><select class="inl" data-set="vegMin">' + [2, 3, 4].map(n => opt(n, st.vegMin, n + ' von 5')).join('') + '</select></label>' +
     '<label class="row"><span class="grow">Höchstens Fisch</span><select class="inl" data-set="fishMax">' + [0, 1, 2].map(n => opt(n, st.fishMax, n + ' von 5')).join('') + '</select></label>' +
@@ -2977,6 +2982,7 @@ function sheetHtml() {
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Termin ändern"><div class="shd"><span class="grab"></span><h3>' + (isShop ? 'Einkaufen' : 'Kochtermin ' + (+sh.k + 1)) + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div>' +
       '<div class="shb"><div class="grp">' + g + '</div><p class="foot" style="margin:8px 4px 0">' + foot + '</p>' +
       (bs ? '<p class="foot" style="margin:6px 4px 0"><b>Gerichte:</b> ' + esc(bs.rs.map(r => r.short).join(', ')) + '</p>' : '') +
+      (!bs && !isShop ? '<p class="foot" style="margin:6px 4px 0"><b>Gerichte:</b> keine. Dem Termin sind keine Vorkoch-Mahlzeiten zugeordnet, weil vor dem nächsten Termin nichts gegessen wird, das von hier kommen könnte.</p>' : '') +
       (!isShop && S.sess.length > 1 ? '<div class="actions"><button class="btn danger" data-act="sessdel" data-i="' + sh.k + '">Termin entfernen</button></div>' : '') + '</div></div>';
   }
   if (sh.t === 'join') {
@@ -2989,60 +2995,25 @@ function sheetHtml() {
   }
   if (sh.t === 'cook') {
     const s = B.sessions.find(x => x.key === sh.key), ev = cookEvents();
-    if (s && sh.portion) return portionHtml(s);
     if (!s || !ev.length) return '';
     const i = Math.min(S.ci, ev.length - 1), e = ev[i], di = dishIdx(e.rid), last = i === ev.length - 1;
     const multi = s.sched.rows.filter(x => x.rid === e.rid).length > 1;
     const par = ev.filter(o => o !== e && o.k === 'p' && o.start <= e.start + 1e-9 && o.end > e.start + 1e-9);
-    // Schritte dieses Gerichts: Balken zeigt, wie weit das Gericht ist, und wie viele Schritte noch kommen
-    const dev = ev.filter(o => o.rid === e.rid), di2 = dev.indexOf(e), left = dev.length - di2 - 1;
-    const k = (B.facOf && B.facOf[e.rid]) || 1, np = Math.round(k * 4), r = V.BY_ID[e.rid];
     let h = '<div class="sheet full" role="dialog" aria-modal="true" aria-label="Kochmodus"><div class="shd"><button class="lnk" data-act="close">Beenden</button><b>' + SESS_DAY_NAME(s) + '</b><span class="sub">' + (i + 1) + ' von ' + ev.length + '</span></div>' +
-      '<div class="cm-top" style="padding:0 max(16px, env(safe-area-inset-left, 0px))">' + dev.map((_, q) => '<i class="' + (q <= di2 ? 'on' : '') + '"></i>').join('') + '</div>' +
-      '<p class="cm-prog">' + (di2 + 1) + ' von ' + dev.length + ' Schritten für ' + esc(e.rs) + (left ? ' · noch ' + left + ' bis fertig' : ' · letzter Schritt') + '</p>' +
+      '<div class="cm-top" style="padding:0 max(16px, env(safe-area-inset-left, 0px))">' + ev.map((_, k) => '<i class="' + (k <= i ? 'on' : '') + '"></i>').join('') + '</div>' +
       '<div class="cm-body">' + timersHtml() + '<div class="cm-clock">' + (e.start < 1 ? 'Zu Beginn' : 'Nach ' + V.fmtDur(e.start)) + '</div>' +
       '<div class="cm-dish">' + dot(di) + esc(e.rs) + (multi ? ' · ' + esc(e.tn) : '') + '</div>' +
       '<div class="cm-text">' + esc(e.t) + '</div>' +
-      cmIngHtml(r, k, e.t, np) +
       '<div class="cm-kind ' + e.k + '">' + (e.k === 'a' ? 'Du bist dran · ' + e.m + ' Min' : 'Läuft von allein · ' + e.m + ' Min') + (e.d ? ' · ' + esc(e.d) : '') + '</div>';
     const tid = s.key + ':' + i, tmin = (S.tadj && S.tadj[tid]) || e.m, own = (S.timers || []).find(x => x.id === tid);
     h += own ? '<p class="sub" style="margin:0">Timer für diesen Schritt läuft oben.</p>' :
       '<div class="tset"><button class="btn gray sm" data-act="tadj" data-id="' + esc(tid) + '" data-d="-1" data-m="' + e.m + '" aria-label="Weniger Minuten">−</button><button class="btn soft" data-act="timer" data-id="' + esc(tid) + '" data-min="' + tmin + '" data-label="' + esc(e.rs + (multi ? ' · ' + e.tn : '') + ': ' + e.t.slice(0, 34) + (e.t.length > 34 ? '…' : '')) + '">Timer starten (' + tmin + ' Min)</button><button class="btn gray sm" data-act="tadj" data-id="' + esc(tid) + '" data-d="1" data-m="' + e.m + '" aria-label="Mehr Minuten">+</button></div><p class="sub" style="margin:6px 0 0">Zeit passt nicht? Mit − und + ändern, zum Beispiel nach der Packungsangabe.</p>';
     if (par.length) h += '<div class="cm-par"><p>Gleichzeitig läuft</p><ul>' + par.map(o => '<li>' + dot(dishIdx(o.rid)) + esc(o.rs + (s.sched.rows.filter(x => x.rid === o.rid).length > 1 ? ' · ' + o.tn : '') + ' bis ' + V.fmtClock(o.end)) + '</li>').join('') + '</ul></div>';
     if (i === 0 && s.thaw.length) h += '<p class="thaw">Aufgetaut sein sollte: ' + esc(s.thaw.join(', ')) + '</p>';
-    h += '</div><div class="cm-foot"><button class="btn gray" data-act="cmprev"' + (i === 0 ? ' disabled style="opacity:.4"' : '') + '>Zurück</button><button class="btn" data-act="cmnext">' + (last ? (s.fresh ? 'Fertig' : 'Zum Portionieren') : 'Weiter') + '</button></div></div>';
+    h += '</div><div class="cm-foot"><button class="btn gray" data-act="cmprev"' + (i === 0 ? ' disabled style="opacity:.4"' : '') + '>Zurück</button><button class="btn" data-act="cmnext">' + (last ? 'Fertig' : 'Weiter') + '</button></div></div>';
     return h;
   }
   return '';
-}
-// Zutaten für den aktuellen Schritt: Zutaten, deren Name im Schritttext vorkommt, mit Menge (ganze Charge). Darunter alle Zutaten des Gerichts aufklappbar.
-function cmIngHtml(r, k, text, np) {
-  if (!r) return '';
-  const t = text.toLowerCase();
-  const hit = r.i.filter(([id]) => {
-    const g = V.ING[id];
-    return [g.n].concat(g.al || []).some(nm => new RegExp('(^|[^a-zäöüß])' + nm.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(e|en|n|s|er)?([^a-zäöüß]|$)').test(t));
-  });
-  let h = '';
-  if (hit.length) h += '<div class="cm-ing"><p class="sub">Dafür brauchst du</p><ul class="ing">' + hit.map(([id, a]) => '<li><b>' + esc(V.fmtAmt(id, a * k)) + '</b></li>').join('') + '</ul></div>';
-  h += '<details class="cm-all"><summary>Alle Zutaten für ' + np + (np === 1 ? ' Portion' : ' Portionen') + '</summary><ul class="ing">' + r.i.map(([id, a]) => '<li>' + esc(V.fmtAmt(id, a * k)) + '</li>').join('') + '</ul></details>';
-  return h;
-}
-// Portionieren nach dem Kochen: jede Dose bekommt einen gleichen Anteil. Dose = eine Mahlzeit aus dem Plan (B.counts).
-function portionHtml(s) {
-  const P = S.settings.portions || 2;
-  let h = '<div class="sheet full" role="dialog" aria-modal="true" aria-label="Portionieren"><div class="shd"><button class="lnk" data-act="close">Beenden</button><b>' + SESS_DAY_NAME(s) + '</b><span class="sub">Portionieren</span></div>' +
-    '<div class="cm-body"><div class="cm-text">Portionieren</div>';
-  if (s.fresh) return h + '<p class="sub">Frisch gekochtes wird direkt gegessen und nicht portioniert.</p></div><div class="cm-foot"><button class="btn" data-act="close">Fertig</button></div></div>';
-  h += '<p class="sub">Jede Dose bekommt den gleichen Anteil. Ziel pro Dose: ' + P + (P === 1 ? ' Portion' : ' Portionen') + ' (Plan).</p>';
-  s.rs.forEach(r => {
-    const k = (B.facOf && B.facOf[r.id]) || 1, N = (B.counts && B.counts[r.id]) || 1, np = 4 * k, per = np / N;
-    const prot = r.nu.p * per, plan = r.nu.p * P, dev = prot / plan - 1;
-    const note = Math.abs(dev) <= 0.1 ? 'passt zum Plan' : (dev > 0 ? 'etwas mehr als geplant' : 'etwas weniger als geplant');
-    h += '<div class="grp pad"><b>' + esc(r.name) + '</b><p class="sub">' + N + (N === 1 ? ' Dose' : ' Dosen') + ' · je Dose ' + V.fmtQ(per) + (per === 1 ? ' Portion' : ' Portionen') + ' · ' + Math.round(prot) + ' g Protein (Plan ' + Math.round(plan) + ' g, ' + note + ').</p>' +
-      '<ul class="ing">' + r.i.map(([id, a]) => { const x = V.ING[id].unit === 'g' || V.ING[id].unit === 'ml' ? Math.round(a * k / N) : a * k / N; return '<li>' + esc(V.fmtAmt(id, x)) + '</li>'; }).join('') + '</ul></div>';
-  });
-  return h + '<p class="foot">Die Mengen gelten je Dose. Gramm sind gerundet, deshalb kann eine Dose minimal abweichen.</p></div><div class="cm-foot"><button class="btn gray" data-act="cmback">Zurück zum Kochen</button><button class="btn" data-act="close">Fertig</button></div></div>';
 }
 function timersHtml() {
   const t = S.timers || [];
@@ -3090,6 +3061,7 @@ function listText() {
   if (S.shopView === 'laden') ['d', 'm'].forEach(s => { const l = B.shop.items.filter(x => storeOf(x) === s); if (l.length) t += '\n=== ' + STORES[s] + ' ===' + block(l); });
   else t += block(B.shop.items).replace(/^/, '');
   t += '\nZuhause prüfen\n' + B.shop.vorrat.map(x => '- ' + x.n).join('\n') + '\n';
+  const ex = (S.extra || []).filter(x => !x.d); if (ex.length) t += '\nEigene Artikel\n' + ex.map(x => '- ' + x.n).join('\n') + '\n';
   return t;
 }
 /* ---------- Kalender abonnieren: Dateien über die GitHub-API ins eigene Repo legen ---------- */
@@ -3255,13 +3227,9 @@ document.addEventListener('click', e => {
   else if (act === 'close') closeSheet();
   else if (act === 'cmnext') {
     if (!S.sheet || S.sheet.t !== 'cook') return;
-    const n = cookEvents().length, s = B.sessions.find(x => x.key === S.sheet.key);
-    if (S.ci < n - 1) { S.ci++; render(); }
-    else if (s && !s.fresh) { S.sheet.portion = true; render(); }
-    else closeSheet();
+    const n = cookEvents().length;
+    if (S.ci >= n - 1) closeSheet(); else { S.ci++; render(); }
   }
-  else if (act === 'portion') { S.sheet = { t: 'cook', key: b.dataset.key, portion: true }; S.ci = 0; render(); }
-  else if (act === 'cmback') { if (S.sheet && S.sheet.t === 'cook') { S.sheet.portion = false; S.ci = Math.max(0, cookEvents().length - 1); render(); } }
   else if (act === 'cmprev') { if (S.sheet && S.sheet.t === 'cook' && S.ci > 0) { S.ci--; render(); } }
   else if (act === 'timer') {
     const id = b.dataset.id || b.dataset.label || 'Timer';
@@ -3290,7 +3258,8 @@ document.addEventListener('click', e => {
     if (k >= 0) S.disabled.splice(k, 1); else S.disabled.push(id);
     touch('pool'); save(); render();
   }
-  else if (act === 'uncheck') { clearTicks(S.weekStart); save(); render(); }
+  else if (act === 'uncheck') { clearTicks(S.weekStart); (S.extra || []).forEach(x => { x.d = false; }); save(); render(); }
+  else if (act === 'xdel') { S.extra = (S.extra || []).filter(x => x.id !== b.dataset.id); saveLocal(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
   else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
@@ -3416,6 +3385,10 @@ document.addEventListener('change', e => {
     const w = t.closest('.rrow'); if (w) w.classList.toggle('offrec', !t.checked);
     const c = document.getElementById('poolcnt'); if (c) c.textContent = pool().length + ' von ' + V.RECIPES.length;
     save();
+  } else if (t.matches('input[type=checkbox][data-xkey]')) {
+    const x = (S.extra || []).find(e => e.id === t.dataset.xkey); if (x) x.d = t.checked;
+    const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
+    saveLocal();
   } else if (t.matches('input[type=checkbox][data-key]')) {
     S.checked.map[tk(t.dataset.key)] = t.checked; touchKey('checked', tk(t.dataset.key));
     const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
@@ -3430,7 +3403,6 @@ document.addEventListener('change', e => {
     const k = t.dataset.set;
     if (k === 'name') S.settings.persons[+t.dataset.i].name = t.value.trim() || (t.dataset.i === '0' ? 'Roman' : 'Partnerin');
     else if (k === 'protein') S.settings.persons[+t.dataset.i].protein = Math.min(220, Math.max(40, +t.value || 90));
-    else if (k === 'protMeal') S.settings.protMeal = Math.min(80, Math.max(20, +t.value || 40));
     else S.settings[k] = +t.value;
     touch('settings'); save(); render();
   }
@@ -3441,10 +3413,22 @@ document.addEventListener('input', e => {
   else if (t.id === 'q') { S.q = t.value; const l = document.getElementById('rlist'); if (l) l.innerHTML = recipeList(); }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) closeSheet(); });
+document.addEventListener('submit', e => {
+  const f = e.target;
+  if (f && f.dataset && f.dataset.form === 'xadd') {
+    e.preventDefault();
+    const i = document.getElementById('xin'), n = i ? i.value.trim().replace(/\s+/g, ' ').slice(0, 60) : '';
+    if (!n) return;
+    if (!Array.isArray(S.extra)) S.extra = [];
+    S.extra.push({ id: 'x' + Date.now().toString(36) + Math.floor(Math.random() * 1000), n, d: false });
+    saveLocal(); render();
+    const nx = document.getElementById('xin'); if (nx) { try { nx.focus(); } catch (x) { /* egal */ } }
+  }
+});
 let tx = null;
 document.addEventListener('touchstart', e => { if (S.sheet && S.sheet.t === 'cook' && e.touches && e.touches[0]) tx = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
 document.addEventListener('touchend', e => {
-  if (!tx || !S.sheet || S.sheet.t !== 'cook' || S.sheet.portion || !e.changedTouches || !e.changedTouches[0]) { tx = null; return; }
+  if (!tx || !S.sheet || S.sheet.t !== 'cook' || !e.changedTouches || !e.changedTouches[0]) { tx = null; return; }
   const dx = e.changedTouches[0].clientX - tx[0], dy = e.changedTouches[0].clientY - tx[1];
   tx = null;
   if (Math.abs(dx) < 70 || Math.abs(dy) > 60) return;
