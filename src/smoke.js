@@ -233,7 +233,7 @@ click({ act: 'resetall' }); click({ act: 'resetall' }); bad('Reset');
   console.log('Runde fällig angezeigt:', /Küchenrolle, Spülmittel/.test(appEl.innerHTML) && /fällig/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
   chg({ dataset: { bkey: bst[0].id }, checked: true, closest: () => null, matches: s => s.includes('checkbox') && s.includes('bkey') });
   const bst2 = JSON.parse(store['vorkoch.v1']).bundles;
-  console.log('Abhaken setzt Frist:', bst2[0].last && /in 28 Tagen/.test(appEl.innerHTML) ? 'ok' : 'FALSCH ' + bst2[0].last);
+  console.log('Abhaken setzt Frist:', bst2[0].last && /gekauft/.test(appEl.innerHTML) ? 'ok' : 'FALSCH ' + bst2[0].last);
   click({ act: 'bdel', id: bst[0].id });
   console.log('Runde gelöscht:', JSON.parse(store['vorkoch.v1']).bundles.length === 0 ? 'ok' : 'FALSCH');
   // Einladung annehmen

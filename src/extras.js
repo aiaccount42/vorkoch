@@ -122,7 +122,7 @@ function toDoc(S) {
     pool: { disabled: S.disabled },
     settings: { settings: S.settings, diversity: S.diversity, motto: S.motto || '', cal: S.cal || null },
     offers: S.offers || '',
-    bundles: S.bundles || [],
+    bundles: { day: Number.isInteger(S.routineDay) ? S.routineDay : 6, list: S.bundles || [] },
     ratings: mapTo(S.ratings, mt.ratings), storeOv: mapTo(S.storeOv, mt.storeOv),
     checked: { key: '', map: mapTo(S.checked.map, mt.checked) }
   };
@@ -220,7 +220,9 @@ function applyDoc(S, doc, known) {
   }
   if (doc.settings && doc.settings.diversity != null) S.diversity = num(doc.settings.diversity, 0, 1, S.diversity);
   if (typeof doc.offers === 'string') S.offers = doc.offers.slice(0, 600);
-  if (Array.isArray(doc.bundles)) S.bundles = doc.bundles.filter(validBundle).slice(0, 50).map(b => ({ id: b.id, n: b.n.slice(0, 30), items: b.items.slice(0, 200), every: b.every, last: b.last }));
+  const bl = doc.bundles && (Array.isArray(doc.bundles) ? doc.bundles : doc.bundles.list);
+  if (Array.isArray(bl)) S.bundles = bl.filter(validBundle).slice(0, 50).map(b => ({ id: b.id, n: b.n.slice(0, 30), items: b.items.slice(0, 200), every: b.every, last: b.last }));
+  if (doc.bundles && Number.isInteger(doc.bundles.day) && doc.bundles.day >= 0 && doc.bundles.day <= 6) S.routineDay = doc.bundles.day;
   S.ratings = {}; S.mt.ratings = {};
   Object.keys(doc.ratings || {}).forEach(k => { const x = doc.ratings[k]; if (isId(k) && Array.isArray(x) && (x[0] === 1 || x[0] === -1 || x[0] === 0)) { S.ratings[k] = x[0]; S.mt.ratings[k] = x[1] || 0; } });
   S.storeOv = {}; S.mt.storeOv = {};

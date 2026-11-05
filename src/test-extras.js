@@ -72,8 +72,9 @@ assert.ok(X.same(X.toDoc(R), X.toDoc(R2)));
   const B2 = base(); B2.bundles = [{ id: 'b2', n: 'Bad', items: 'Klopapier', every: 2, last: '' }]; B2.mt.m.bundles = 50;
   const T = X.applyDoc, got = base(); T(got, X.unpack(X.pack(X.toDoc(B1))), known);
   assert.deepStrictEqual(got.bundles, B1.bundles);
-  const mg = X.merge(X.toDoc(B1), X.toDoc(B2)); assert.deepStrictEqual(mg.bundles, B1.bundles);
+  const mg = X.merge(X.toDoc(B1), X.toDoc(B2)); assert.deepStrictEqual(mg.bundles.list, B1.bundles);
   const mg2 = X.merge(X.toDoc(B2), X.toDoc(B1)); assert.ok(X.same(mg, mg2));
+  const RD = base(); RD.routineDay = 3; const RD2 = base(); T(RD2, X.unpack(X.pack(X.toDoc(RD))), known); assert.strictEqual(RD2.routineDay, 3);
   const bad = X.toDoc(B1); bad.bundles = [B1.bundles[0], { id: '<x>', n: 'x', items: 'x', every: 4, last: '' }, { id: 'b3', n: 'y', items: 'y', every: 99, last: '' }, { id: 'b4', n: 'z', items: 'z', every: 4, last: 'kaputt' }];
   const got2 = base(); T(got2, X.unpack(X.pack(bad)), known); assert.deepStrictEqual(got2.bundles, B1.bundles);
 }
