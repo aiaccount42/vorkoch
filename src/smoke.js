@@ -94,6 +94,13 @@ click({ act: 'tab', tab: 'plan' });
   click({ act: 'undo' }); console.log('Vorschlag zurückgenommen:', cells() === before && !/data-act="undo"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
   console.log('Rückgängig wird nicht gespeichert:', store['vorkoch.v1'].includes('"undo"') ? 'FALSCH' : 'ok');
 }
+// ---- Einkauf: Details erst auf Tippen
+click({ act: 'tab', tab: 'shop' });
+{
+  const id = /data-act="info" data-id="([a-z_0-9]+)"/.exec(appEl.innerHTML)[1];
+  console.log('Einkauf einzeilig:', !/gebraucht/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
+  click({ act: 'info', id }); console.log('Details auf Tippen:', /gebraucht/.test(appEl.innerHTML) ? 'ok' : 'FALSCH'); click({ act: 'info', id });
+}
 // ---- Wochenraster
 (function () {
   click({ act: 'tab', tab: 'plan' });

@@ -71,9 +71,9 @@ function load() {
   }
   return d;
 }
-const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs', 'undo'];
+const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs', 'undo', 'info'];
 let S = load();
-function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; S.undo = null; }
+function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; S.undo = null; S.info = ''; }
 resetTransient();
 let calTimer = null, calBusy = false, calFail = 0;
 function save() { saveLocal(); schedSync(); calSoon(); }
@@ -443,10 +443,11 @@ function viewPlan() {
 
 /* ---------- Einkauf ---------- */
 function itemHtml(x, map, mv) {
-  const st = storeOf(x);
+  const st = storeOf(x), open = S.info === x.id;
   return '<label class="item' + (map[tk(x.id)] ? ' done' : '') + '"><input type="checkbox" data-key="' + x.id + '"' + (map[tk(x.id)] ? ' checked' : '') + '><span class="box"></span>' +
-    '<span class="itx"><b>' + esc(x.n) + (!mv && st === 'm' ? '<span class="chip spec" style="margin-left:6px">Marktkauf</span>' : '') + '</b><small>' + esc(x.needTxt) + ' gebraucht · ' + esc(x.forR.join(', ')) + '</small>' +
-    (x.rest ? '<small class="rest">Rest: ' + esc(x.leftTxt) + '</small>' : '') + '</span><span class="ipk">' + esc(x.txt) + '</span>' +
+    '<span class="itx"><b>' + esc(x.n) + (!mv && st === 'm' ? '<span class="chip spec" style="margin-left:6px">Marktkauf</span>' : '') + '</b>' + (open ? '<small>' + esc(x.txt) + '</small><small>' + esc(x.needTxt) + ' gebraucht · ' + esc(x.forR.join(', ')) + '</small>' : '') +
+    (x.rest && open ? '<small class="rest">Rest: ' + esc(x.leftTxt) + '</small>' : '') + '</span><span class="ipk">' + esc(x.txt.split(' · ')[0]) + '</span>' +
+    '<button type="button" class="inf" data-act="info" data-id="' + x.id + '" aria-expanded="' + open + '" aria-label="Details zu ' + esc(x.n) + '">i</button>' +
     (mv ? '<button type="button" class="mv" data-act="store" data-id="' + x.id + '" aria-label="' + esc(x.n) + ' zu ' + (st === 'm' ? 'Aldi oder Lidl' : 'Marktkauf') + ' verschieben">' + (st === 'm' ? 'zu Aldi/Lidl' : 'zu Marktkauf') + '</button>' : '') + '</label>';
 }
 function viewShop() {
@@ -1031,6 +1032,7 @@ document.addEventListener('click', e => {
     const id = b.dataset.rid, v = +b.dataset.v;
     S.ratings[id] = S.ratings[id] === v ? 0 : v; touchKey('ratings', id); save(); render();
   }
+  else if (act === 'info') { S.info = S.info === b.dataset.id ? '' : b.dataset.id; render(); }
   else if (act === 'shopview') { S.shopView = b.dataset.v === 'laden' ? 'laden' : 'gang'; save(); render(); }
   else if (act === 'store') {
     const id = b.dataset.id, x = B.shop.items.find(o => o.id === id);
