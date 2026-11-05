@@ -401,20 +401,15 @@ function viewPlan() {
   if (S.msg) h += '<p class="alert">' + esc(S.msg) + '</p>';
   if (S.cs && S.cs.auto && S.cs.state === 'err') h += '<p class="alert">Kalender konnte nicht automatisch aktualisiert werden: ' + esc(S.cs.msg) + '</p>';
   if (S.relaxed) h += '<p class="alert">Der Pool ist für deine Regeln zu klein. Die Mindestzahl vegetarischer Gerichte wurde dieses Mal nicht eingehalten.</p>';
-  h += '<div class="stats">' +
-    '<div class="stat"><small>Kochzeit pro Woche</small><b>' + V.fmtDur(st.mk) + '</b></div>' +
-    '<div class="stat"><small>Packungen im Einkauf</small><b>' + st.packs + '</b></div>' +
-    '<div class="stat"><small>Protein pro Portion</small><b>' + (st.avgP ? 'Ø ' + Math.round(st.avgP) + ' g' : '–') + '</b></div>' +
-    '<div class="stat"><small>Angebrochene Reste</small><b>' + (st.rests === 0 ? 'keine' : st.rests + ' Posten') + '</b></div></div>';
-  h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Passt, zum Einkauf</button></div>';
-
-  h += termsCard();
   h += '<p class="cap" style="margin-left:2px">Essensplan</p>';
   h += '<div class="grp"><div class="dh"><span></span><span>Mittag</span><span>Abend</span></div>';
   for (let d = 0; d < 7; d++) {
     h += '<div class="day' + (days[d].today ? ' today' : '') + '"><div class="dn"><b>' + days[d].n + '</b><span>' + days[d].num + '</span></div>' + slotHtml(d + 'l') + slotHtml(d + 'd') + '</div>';
   }
   h += '</div>';
+  h += '<p class="wsum">' + V.fmtDur(st.mk) + ' kochen · ' + B.shop.items.length + ' Artikel' + (st.avgP ? ' · Ø ' + Math.round(st.avgP) + ' g Protein' : '') + (st.rests ? ' · ' + st.rests + ' mit Rest' : '') + '</p>';
+  h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Passt, zum Einkauf</button></div>';
+  h += termsCard();
 
   h += '<p class="cap">Anpassen</p><div class="grp">' +
     '<button class="row" data-act="reroll"><span class="grow"><b>Neu vorschlagen</b></span><span class="val">eigene Felder bleiben</span></button>' +
