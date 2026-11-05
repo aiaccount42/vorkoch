@@ -101,6 +101,16 @@ click({ act: 'tab', tab: 'shop' });
   console.log('Einkauf einzeilig:', !/gebraucht/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
   click({ act: 'info', id }); console.log('Details auf Tippen:', /gebraucht/.test(appEl.innerHTML) ? 'ok' : 'FALSCH'); click({ act: 'info', id });
 }
+// ---- Zuhause prüfen: „fehlt“ landet wirklich auf der Liste
+click({ act: 'tab', tab: 'shop' });
+{
+  const cnt = () => +/(\d+) von (\d+)/.exec(appEl.innerHTML)[2];
+  const n0 = cnt(); click({ act: 'hometoggle' }); const id = /data-act="miss" data-id="([a-z_0-9]+)"/.exec(appEl.innerHTML)[1];
+  click({ act: 'miss', id }); console.log('Fehlt auf der Liste:', /Fehlt zuhause/.test(appEl.innerHTML) && cnt() === n0 + 1 ? 'ok' : 'FALSCH');
+  console.log('Fehlt in der Exportliste:', new RegExp('data-key="v_' + id + '"').test(appEl.innerHTML) ? 'ok' : 'FALSCH');
+  click({ act: 'uncheck' }); console.log('Haken löschen lässt Fehlt stehen:', /Fehlt zuhause/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
+  click({ act: 'miss', id }); console.log('Fehlt zurückgenommen:', !/Fehlt zuhause/.test(appEl.innerHTML) && cnt() === n0 ? 'ok' : 'FALSCH'); click({ act: 'hometoggle' });
+}
 // ---- Wochenraster
 (function () {
   click({ act: 'tab', tab: 'plan' });

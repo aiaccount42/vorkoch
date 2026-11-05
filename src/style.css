@@ -365,3 +365,5 @@ input[type=password], input[type=url], input[type=email] { width: 100%; min-heig
 .inf[aria-expanded=true] { color: var(--accentfg); }
 .item .ipk { color: var(--ink); font-weight: 500; }
 .item.done .ipk { font-weight: 400; }
+.fehlt { flex: none; padding: 5px 10px; border-radius: 999px; background: var(--fill); color: var(--ink2); font-size: 13px; font-weight: 600; }
+.fehlt.on { background: var(--accent); color: var(--accentink); }
