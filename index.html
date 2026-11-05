@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-3A5EX5PMQtqrvCN4k40FAZdvQafeazvJKdhvEdleRqc=' 'sha256-uMUkCsD/MXZKHJWpCIUc1pYrvGeVsCtD5hQ30dOgQVU='; style-src 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; connect-src 'self' https://api.github.com https://*.firebaseio.com https://*.firebasedatabase.app; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EfdgMkbjKbhmbRrJkHJizESuzP1iaGrbVIBndxhN7Zk=' 'sha256-uMUkCsD/MXZKHJWpCIUc1pYrvGeVsCtD5hQ30dOgQVU='; style-src 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; connect-src 'self' https://api.github.com https://*.firebaseio.com https://*.firebasedatabase.app; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2392,7 +2392,7 @@ if (typeof module !== 'undefined') module.exports = root.VX;
 const V = window.VK;
 const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const KEY = 'vorkoch.v1';
-const APP_V = '32'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
+const APP_V = '33'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
 const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 
 /* ---------- Zustand ---------- */
@@ -2797,33 +2797,18 @@ function viewPlan() {
   h += '</div>';
   h += '<p class="wsum">' + V.fmtDur(st.mk) + ' kochen · ' + B.shop.items.length + ' Artikel' + (st.avgP ? ' · Ø ' + Math.round(st.avgP) + ' g Protein' : '') + (st.rests ? ' · ' + st.rests + ' mit Rest' : '') + '</p>';
   h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Einkaufsliste öffnen</button></div>';
-  h += termsCard();
+  h += '<div class="grp" style="margin-top:12px"><button class="row chev" data-act="planedit"><span class="grow"><b>Woche ändern</b><div class="sub">Einkauf ' + dayLbl(S.shopAt.day) + ' · Kochen ' + sessList().map(s => DAYS[s.day]).join(', ') + '</div></span></button></div>';
+  return h;
+}
 
+function planSheet() {
+  let h = termsCard();
   h += '<p class="cap">Anpassen</p><div class="grp">' +
     '<button class="row" data-act="reroll"><span class="grow"><b>Neu vorschlagen</b></span><span class="val">deine Änderungen bleiben</span></button>' +
     (S.cal ? '<button class="row" data-act="calpub"><span class="grow"><b>Kalender aktualisieren</b></span><span class="val">' + (ghTok() ? 'automatisch · ' : 'Token fehlt · ') + calAgo() + '</span></button>' : '') +
     '<label class="row"><span class="grow"><b>Küche der Woche</b><div class="sub">bevorzugt beim Vorschlag</div></span><select class="inl day" data-motto aria-label="Küche der Woche" style="width:auto;max-width:150px"><option value="">Egal</option>' + V.countries().filter(c => c.n >= 2).map(c => '<option value="' + esc(c.name) + '"' + (S.motto === c.name ? ' selected' : '') + '>' + esc(c.name) + ' (' + c.n + ')</option>').join('') + '</select></label>' +
     '<div class="pad"><div class="flex" style="justify-content:space-between"><span class="sub">Weniger Reste</span><span class="sub">Mehr Abwechslung</span></div><input type="range" id="div" min="0" max="100" step="5" value="' + Math.round(S.diversity * 100) + '" aria-label="Weniger Reste oder mehr Abwechslung"></div></div>';
 
-  h += '<h2 class="sec">Kochen diese Woche</h2>';
-  if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Noch nichts zu kochen. Lege Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
-  B.sessions.forEach(s => {
-    const dd = days[s.day];
-    h += '<section class="sess"><h3>' + sb(s.fresh ? 0 : s.n) + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + '</p>';
-    s.rs.forEach(r => {
-      const i = dishIdx(r.id), g = portion(r);
-      const fq = g.f.map((x, k) => esc(names()[k]) + ' ' + V.fmtQ(x)).join(' · ');
-      h += '<div class="dish">' + dot(i) + '<div><button class="lnk" style="padding:0;min-height:0;text-align:left;color:var(--ink);font-size:16px" data-act="recipe" data-rid="' + r.id + '">' + esc(r.name) + '</button>' +
-        '<div class="sub">' + Math.round(r.nu.p) + ' g Protein · ' + Math.round(r.nu.f) + ' g Ballaststoffe · ' + Math.round(r.nu.k) + ' kcal</div>' +
-        '<div class="sub">Portionen: ' + fq + (g.tight ? ' <em class="warn">knapp, Skyr oder Ei dazu</em>' : '') + '</div>';
-      const hits = V.offerHits(r, S.offers);
-      if (hits.length) h += '<div class="chips" style="margin-top:6px"><span class="chip hit">Angebot: ' + esc(hits.join(', ')) + '</span></div>';
-      h += '</div>' + rateBtns(r.id) + '</div>';
-    });
-    h += '<div class="cfoot"><span>' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv</span><button class="btn sm soft" data-act="cookstart" data-key="' + s.key + '">Kochen</button></div></section>';
-  });
-
-  h += '<p class="foot">Daumen nach dem Essen: Gutes kommt häufiger auf den Plan, Schlechtes seltener.</p>';
   h += '<p class="cap">Angebote diese Woche</p><div class="grp pad"><p class="sub" style="margin-bottom:10px">Was ist im Prospekt günstig? Begriffe mit Komma trennen, zum Beispiel „Lachs, Feta, Paprika“. Passende Gerichte werden bevorzugt.</p>' +
     '<div class="flex"><input type="text" id="offers" value="' + esc(S.offers) + '" placeholder="Lachs, Feta, Paprika" aria-label="Angebote"><button class="btn sm" data-act="offerplan">Planen</button></div></div>';
   return h;
@@ -2907,7 +2892,7 @@ function viewCook() {
     h += gantt(s);
     h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button></div>';
     s.rs.forEach(r => {
-      h += '<button class="row chev" style="padding-left:0;padding-right:0" data-act="recipe" data-rid="' + r.id + '">' + dot(dishIdx(r.id)) + '<span class="grow">' + esc(r.name) + '</span></button>';
+      h += '<button class="row chev" style="padding-left:0;padding-right:0" data-act="recipe" data-rid="' + r.id + '">' + dot(dishIdx(r.id)) + '<span class="grow">' + esc(r.name) + (V.offerHits(r, S.offers).length ? '<div class="sub">Angebot: ' + esc(V.offerHits(r, S.offers).join(', ')) + '</div>' : '') + '</span></button>';
     });
     h += '</section>';
   });
@@ -3046,6 +3031,7 @@ function sheetHtml() {
       '<div class="flex" style="justify-content:space-between;margin-top:14px"><span class="sub">Hat es geschmeckt?</span>' + rateBtns(r.id) + '</div>' +
       '<div class="actions"><button class="btn ' + (off ? '' : 'gray') + '" data-act="pool" data-rid="' + r.id + '">' + (off ? 'Wieder vorschlagen' : 'Nicht mehr vorschlagen') + '</button></div></div></div>';
   }
+  if (sh.t === 'plan') return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Woche ändern"><div class="shd"><span class="grab"></span><h3>Woche ändern</h3><button class="btn sm soft" data-act="close">Fertig</button></div><div class="shb">' + planSheet() + '</div></div>';
   if (sh.t === 'cell') {
     const k = sh.k, x = S.grid[k];
     if (!x) return '';
@@ -3054,7 +3040,7 @@ function sheetHtml() {
     let body = typeSeg;
     if ((x.t === 'p' || x.t === 'f') && x.r && V.BY_ID[x.r]) {
       const fr = (lab, ctl) => '<label class="frow"><span>' + lab + '</span>' + ctl + '</label>';
-      let rows = '';
+      let rows = '<button class="row chev" data-act="recipe" data-rid="' + x.r + '"><span class="grow"><b>' + esc(V.BY_ID[x.r].short) + '</b><div class="sub">Rezept ansehen</div></span></button>';
       if (x.t === 'f') rows += fr('Wer kocht', '<select data-cwho aria-label="Wer kocht">' + whoOpts(x.w, true) + '</select>');
       else {
         const cs = cellSess(k);
@@ -3324,7 +3310,7 @@ function copyOut(txt, okMsg, rows, boxId) {
   try { navigator.clipboard.writeText(txt).then(() => { box.innerHTML = '<p class="ok" style="margin:0 2px">' + okMsg + '</p>'; }, fallback); } catch (err) { fallback(); }
 }
 function setTab(t) { S.tab = t; S.sheet = null; S.fresh = true; save(); render(); window.scrollTo(0, 0); }
-function closeSheet() { if (S.sheet && S.sheet.t === 'cook') lockScreen(false); S.sheet = null; render(); }
+function closeSheet() { if (S.sheet && S.sheet.t === 'cook') lockScreen(false); S.sheet = S.sheet && S.sheet.back ? { t: 'plan' } : null; render(); }
 let tick = null;
 function beep() {
   try { const C = window.AudioContext || window.webkitAudioContext, c = new C(), o = c.createOscillator(); o.connect(c.destination); o.frequency.value = 880; o.start(); setTimeout(() => { o.stop(); c.close(); }, 500); } catch (e) { /* egal */ }
@@ -3349,11 +3335,11 @@ document.addEventListener('click', e => {
   if (!b) return;
   const act = b.dataset.act;
   if (act === 'tab') setTab(b.dataset.tab);
-  else if (act === 'reroll') { const u = undoSnap(); generate(false); if (!S.msg) undoOffer(u, 'Neuer Vorschlag.'); render(); }
+  else if (act === 'reroll') { const u = undoSnap(); generate(false); if (!S.msg) undoOffer(u, 'Neuer Vorschlag.'); S.sheet = null; render(); }
   else if (act === 'undo') { undoRun(); render(); }
   else if (act === 'wk') { const t = addDaysIso(S.weekStart, 7 * (+b.dataset.d < 0 ? -1 : 1)); if (canGo(t)) { openWeek(t); render(); window.scrollTo(0, 0); } }
   else if (act === 'wkgo') { openWeek(defaultWeek()); render(); window.scrollTo(0, 0); }
-  else if (act === 'offerplan') { const i = document.getElementById('offers'); S.offers = i ? i.value : S.offers; touch('offers'); const u = undoSnap(); generate(false); if (!S.msg) undoOffer(u, 'Neuer Vorschlag.'); render(); }
+  else if (act === 'offerplan') { const i = document.getElementById('offers'); S.offers = i ? i.value : S.offers; touch('offers'); const u = undoSnap(); generate(false); if (!S.msg) undoOffer(u, 'Neuer Vorschlag.'); S.sheet = null; render(); }
   else if (act === 'recipe') { S.sheet = { t: 'recipe', id: b.dataset.rid }; render(); }
   else if (act === 'cookstart') { S.sheet = { t: 'cook', key: b.dataset.key }; S.ci = 0; lockScreen(true); render(); }
   else if (act === 'close') closeSheet();
@@ -3392,7 +3378,8 @@ document.addEventListener('click', e => {
   }
   else if (act === 'uncheck') { const u = undoSnap(); clearTicks(S.weekStart); undoOffer(u, 'Haken gelöscht.'); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
-  else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
+  else if (act === 'planedit') { S.sheet = { t: 'plan' }; render(); }
+  else if (act === 'term') { const back = !!S.sheet && S.sheet.t === 'plan'; S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term, back }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
   else if (act === 'celltype') {
     const k = S.sheet && S.sheet.k, t = b.dataset.t;
@@ -3410,7 +3397,7 @@ document.addEventListener('click', e => {
   else if (act === 'sessadd') {
     if (S.sess.length >= 4) return;
     const o = { day: 2, time: '' }; S.sess.push(o); S.sess = V.sortSess(S.sess);
-    editGrid(() => {}); S.sheet = { t: 'term', k: String(S.sess.indexOf(o)) }; render();
+    editGrid(() => {}); S.sheet = { t: 'term', k: String(S.sess.indexOf(o)), back: !!S.sheet && S.sheet.t === 'plan' }; render();
   }
   else if (act === 'sessdel') {
     const i = +b.dataset.i; if (S.sess.length <= 1 || !(i >= 0 && i < S.sess.length)) return;
