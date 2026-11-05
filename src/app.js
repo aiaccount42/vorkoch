@@ -3,6 +3,7 @@
 const V = window.VK;
 const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const KEY = 'vorkoch.v1';
+const APP_V = '__CACHE_V__'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
 const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 
 /* ---------- Zustand ---------- */
@@ -626,6 +627,7 @@ function viewSettings() {
   h += '<p class="cap">Gemeinsamer Plan</p><div id="syncbox">' + syncBox() + '</div>';
   h += '<p class="cap">Daten</p><div class="grp"><div class="pad"><p class="sub">Ohne gemeinsamen Plan liegt alles nur in diesem Browser auf diesem Gerät. Der Installationsmodus auf dem Home-Bildschirm und Safari speichern getrennt.</p></div>' +
     '<button class="row" data-act="resetall" style="color:var(--danger)"><span class="grow"><b>' + (S.confirm ? 'Wirklich alles zurücksetzen?' : 'Alles zurücksetzen') + '</b></span>' + (S.confirm ? '<span class="val">Tippe noch einmal</span>' : '') + '</button></div>';
+  h += '<p class="foot">Version ' + APP_V + '</p>';
   return h;
 }
 

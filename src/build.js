@@ -1,9 +1,9 @@
 const fs = require('fs');
-const CACHE_V = 22; /* bei jeder neuen Version erhöhen, sonst zeigt die App den alten Stand */
+const CACHE_V = 23; /* bei jeder neuen Version erhöhen, sonst zeigt die App den alten Stand */
 const d = __dirname + '/';
 const css = fs.readFileSync(d + 'style.css', 'utf8');
 const eng = fs.readFileSync(d + 'engine.js', 'utf8');
-const app = fs.readFileSync(d + 'app.js', 'utf8');
+const app = fs.readFileSync(d + 'app.js', 'utf8').replace('__CACHE_V__', String(CACHE_V));
 const art = fs.readFileSync(d + 'art.js', 'utf8');
 const ext = fs.readFileSync(d + 'extras.js', 'utf8');
 const icons = {
