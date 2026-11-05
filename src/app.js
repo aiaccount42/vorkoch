@@ -694,7 +694,7 @@ function sheetHtml() {
       '<div class="cm-top" style="padding:0 max(16px, env(safe-area-inset-left, 0px))">' + ev.map((_, k) => '<i class="' + (k <= i ? 'on' : '') + '"></i>').join('') + '</div>' +
       '<div class="cm-body">' + timersHtml() + '<div class="cm-clock">' + (e.start < 1 ? 'Zu Beginn' : 'Nach ' + V.fmtDur(e.start)) + '</div>' +
       '<div class="cm-dish">' + dot(di) + esc(e.rs) + (multi ? ' · ' + esc(e.tn) : '') + '</div>' +
-      '<div class="cm-text">' + esc(e.t) + '</div>' + amountsHtml(s, ev, i) +
+      '<div class="cm-text">' + esc(e.t) + '</div>' + amountsHtml(s, ev, i) + seasonHtml(e) +
       '<div class="cm-kind ' + e.k + '">' + (e.k === 'a' ? 'Du bist dran · ' + e.m + ' Min' : 'Läuft von allein · ' + e.m + ' Min') + (e.d ? ' · ' + esc(e.d) : '') + '</div>';
     const tid = s.key + ':' + i, tmin = (S.tadj && S.tadj[tid]) || e.m, own = (S.timers || []).find(x => x.id === tid);
     h += own ? '<p class="sub" style="margin:0">Timer für diesen Schritt läuft oben.</p>' :
@@ -724,6 +724,15 @@ function amountsHtml(s, ev, i) {
   if (a.again && a.again.length) h += '<p>Weiter mit</p><ul>' + a.again.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
   if (a.extra.length) h += '<p>Dazu, nicht vergessen</p><ul>' + a.extra.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
   return h + '</div>';
+}
+/* Würzen: Salz und Pfeffer ohne feste Menge (nicht in den Zutaten), darum „nach Geschmack“ */
+function seasonHtml(e) {
+  const t = e.t || '', items = [];
+  if (/\bsalz(?!wasser)/i.test(t)) items.push('Salz nach Geschmack');
+  if (/\bpfeffer/i.test(t)) items.push('Pfeffer nach Geschmack');
+  if (!items.length && /\bwürz|abschmeck/i.test(t)) items.push('Nach Geschmack abschmecken');
+  if (!items.length) return '';
+  return '<div class="cm-amt cm-season"><p>Würzen</p><ul>' + items.map(x => '<li>' + x + '</li>').join('') + '</ul><p class="sub" style="margin:6px 0 0">Erst probieren, dann nachwürzen.</p></div>';
 }
 function SESS_DAY_NAME(s) { return DAYLONG[s.day] + (s.fresh ? ', frisch' : ''); }
 
