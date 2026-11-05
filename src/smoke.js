@@ -1,6 +1,7 @@
 // Mini-Test ohne Browser: Stub für document/window, dann alle Ansichten rendern und Klicks simulieren.
 const fs = require('fs');
 const vm = require('vm');
+const _log = console.log; console.log = (...a) => { if (/FALSCH|PROBLEM/.test(a.join(' '))) process.exitCode = 1; _log(...a); };
 const html = fs.readFileSync(__dirname + '/vorkoch.html', 'utf8');
 const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
 
@@ -124,7 +125,7 @@ click({ act: 'resetall' }); click({ act: 'resetall' }); bad('Reset');
   console.log('Woche zurück unverändert:', slots(appEl.innerHTML) === s0 && (/<h1 class="ltitle">([^<]*)<\/h1>/.exec(appEl.innerHTML) || [])[1] === label0 ? 'ok' : 'FALSCH');
   const wk = JSON.parse(store['vorkoch.v1']).weeks; console.log('Wochen gespeichert:', Object.keys(wk).length === 2 ? 'ok' : 'FALSCH ' + Object.keys(wk).length);
   // Haken gelten pro Woche
-  click({ act: 'tab', tab: 'shop' }); const key0 = /data-key="([a-z_0-9]+)"/.exec(appEl.innerHTML)[1]; chg({ dataset: { key: key0 }, checked: true, closest: () => null, matches: s => s.includes('checkbox') });
+  click({ act: 'tab', tab: 'shop' }); const key0 = /data-key="([a-z_0-9]+)"/.exec(appEl.innerHTML)[1]; chg({ dataset: { key: key0 }, checked: true, closest: () => null, matches: s => s.includes('checkbox') && !s.includes('xkey') });
   click({ act: 'tab', tab: 'plan' }); click({ act: 'wk', d: '1' }); click({ act: 'tab', tab: 'shop' });
   console.log('Haken pro Woche:', !/class="item done"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH (Haken in anderer Woche sichtbar)');
   click({ act: 'tab', tab: 'plan' }); click({ act: 'wk', d: '-1' }); click({ act: 'tab', tab: 'shop' });
