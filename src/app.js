@@ -230,6 +230,17 @@ function schedSync() {
   clearTimeout(syncTimer);
   syncTimer = setTimeout(syncNow, 1500);
 }
+/* Die Wochenliste liegt neben dem Plan, damit die Haushalts-App sie lesen kann, ohne den Plan zu berühren. Vergangene Wochen bleiben stehen. */
+let pubLast = '';
+function pubShop() {
+  if (!syncOn() || !B || !B.shop || !DATE_OK(S.weekStart) || S.weekStart < thisSunday()) return;
+  const body = JSON.stringify(VX.shopDoc(B.shop.items, addDaysIso(S.weekStart, S.shopAt.day), x => !!S.checked.map[tk(x.id)], storeOf));
+  if (body === pubLast) return;
+  pubLast = body;
+  const ep = S.sync.url + '/vorkoch/' + S.sync.code + '-einkauf/';
+  jfetch(ep + S.weekStart + '.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body }).catch(() => { pubLast = ''; });
+  jfetch(ep + addDaysIso(S.weekStart, -56) + '.json', { method: 'DELETE' }).catch(() => {});
+}
 async function syncNow() {
   if (!syncOn()) return;
   if (syncing) { again = true; return; }
@@ -255,6 +266,7 @@ async function syncNow() {
     S.sync.fresh = false; saveLocal();
     if (!remote || !VX.same(result, remote)) await jfetch(ep, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(VX.pack(result)) });
     ssSet('ok', 'Abgeglichen um ' + new Date().toTimeString().slice(0, 5));
+    pubShop();
   } catch (err) {
     ssSet('err', err && err.message ? err.message : 'Abgleich fehlgeschlagen.');
   }

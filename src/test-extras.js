@@ -203,4 +203,5 @@ const pageCsp = /http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(pa
 const pageHashes = [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => "'sha256-" + require('crypto').createHash('sha256').update(m[1], 'utf8').digest('base64') + "'");
 assert.strictEqual(pageHashes.length, 2); pageHashes.forEach(h => assert.ok(pageCsp.includes(h), 'Hash fehlt in CSP'));
 assert.ok(!/fonts\.g|<link rel="stylesheet"/.test(page) && !/script-src[^;]*unsafe/.test(pageCsp));
+assert.deepStrictEqual(X.shopDoc([{ id: 'a', n: 'Milch', txt: '1 Packung', a: 'Kühlregal', extra: 1 }, { id: 'b', n: 'Brot', txt: '', a: 'Brot' }], '2026-11-07', x => x.id === 'b', () => 'd'), { shop: '2026-11-07', items: [{ id: 'a', n: 'Milch', q: '1 Packung', s: 'd', a: 'Kühlregal' }] });
 console.log('test-extras ok');

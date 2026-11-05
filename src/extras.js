@@ -275,6 +275,10 @@ function unpack(w) {
   return d;
 }
 
-root.VX = { b64dec, b64std: s => { const by = Array.from(new TextEncoder().encode(s)); let bin = ''; by.forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); }, buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack, REPO_RE };
+/* Wochenliste für die Haushalts-App: nur was noch nicht abgehakt ist. s: d = Aldi/Lidl, m = Marktkauf. */
+function shopDoc(items, shop, isDone, storeOf) {
+  return { shop, items: items.filter(x => !isDone(x)).map(x => ({ id: x.id, n: x.n, q: x.txt, s: storeOf(x), a: x.a })) };
+}
+root.VX = { shopDoc, b64dec, b64std: s => { const by = Array.from(new TextEncoder().encode(s)); let bin = ''; by.forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); }, buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack, REPO_RE };
 if (typeof module !== 'undefined') module.exports = root.VX;
 })(typeof window !== 'undefined' ? window : globalThis);

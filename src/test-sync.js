@@ -34,7 +34,9 @@ async function run() {
   const D1 = device(share);
   ok(/Gemeinsamer Plan/.test(D1.appEl.innerHTML) && /joinok/.test(D1.appEl.innerHTML), 'Einladung zeigt Bestätigung');
   D1.click({ act: 'joinok' }); await D1.flush();
-  ok(Object.keys(DB).length === 1, 'Gerät 1 legt Dokument an');
+  const shopK = Object.keys(DB).filter(k => /-einkauf\//.test(k)), shopD = shopK.length ? DB[shopK[0]] : null;
+  ok(Object.keys(DB).length - shopK.length === 1, 'Gerät 1 legt Dokument an');
+  ok(shopK.length === 1 && /^\d{4}-\d{2}-\d{2}$/.test(shopD.shop) && shopD.items.length > 0 && shopD.items.every(x => x.id && x.n && x.q && 'ds'.length && x.a), 'Wochenliste liegt neben dem Plan');
   const ids1 = JSON.stringify(D1.st().grid);
   const D2 = device(share);
   D2.click({ act: 'joinok' }); await D2.flush();
