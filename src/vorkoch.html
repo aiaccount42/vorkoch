@@ -79,11 +79,6 @@ button.row:active { background: var(--fill); }
 .chev::after { content: ""; flex: none; width: 8px; height: 8px; margin-left: 4px; border: solid var(--ink3); border-width: 2px 2px 0 0; transform: rotate(45deg); }
 
 /* Kennzahlen */
-.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.stat { background: var(--card); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); min-width: 0; }
-.stat small { display: block; font-size: 13px; color: var(--ink2); }
-.stat b { display: block; font: 700 24px/1.2 var(--font); letter-spacing: -.02em; margin-top: 2px; }
-@media (min-width: 560px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 /* Buttons */
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
@@ -124,13 +119,6 @@ input[type=range] { width: 100%; accent-color: var(--accent); min-height: 36px; 
 .flex { display: flex; gap: 8px; }
 
 /* Schalter */
-.sw { position: relative; flex: none; width: 51px; height: 31px; }
-.sw input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
-.sw i { position: absolute; inset: 0; border-radius: 999px; background: var(--ink3); transition: background .2s; }
-.sw i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, .25); transition: transform .2s; }
-.sw input:checked + i { background: var(--accent); }
-.sw input:checked + i::after { transform: translateX(20px); }
-.sw input:focus-visible + i { outline: 3px solid var(--accentfg); outline-offset: 2px; }
 
 /* Punkt */
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--ink3)); flex: none; }
@@ -2394,7 +2382,7 @@ if (typeof module !== 'undefined') module.exports = root.VX;
 const V = window.VK;
 const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const KEY = 'vorkoch.v1';
-const APP_V = '36'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
+const APP_V = '37'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
 const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 
 /* ---------- Zustand ---------- */
@@ -2613,7 +2601,10 @@ function typing() {
 }
 function ssSet(state, msg) {
   S.ss = { state, msg, at: Date.now() };
-  if (S.tab === 'settings' && !S.sheet && !typing()) { const el = document.getElementById('syncbox'); if (el) el.innerHTML = syncBox(); }
+  if (typing()) return;
+  const el = document.getElementById('syncbox'), st = document.getElementById('syncst');
+  if (el) el.innerHTML = syncBox();
+  if (st) st.textContent = msg;
 }
 function jfetch(url, opt) {
   const c = typeof AbortController === 'function' ? new AbortController() : null;
@@ -3036,39 +3027,44 @@ function syncBox() {
       '<ol class="mini"><li>console.firebase.google.com öffnen, Projekt anlegen (Analytics aus).</li><li>Build, Realtime Database, Datenbank erstellen, Testmodus.</li><li>Reiter „Regeln“: <code>{ "rules": { "vorkoch": { "$code": { ".read": true, ".write": true } } } }</code> einfügen und veröffentlichen.</li><li>Die Datenbank-URL (endet auf firebasedatabase.app oder firebaseio.com) hier einfügen.</li></ol>' +
       '<div class="flex" style="margin-top:12px"><input type="text" id="syncurl" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://…firebasedatabase.app" aria-label="Datenbank-URL"><button class="btn sm" data-act="connect">Verbinden</button></div>' +
       (ss && ss.state === 'err' ? '<p class="warn" style="margin-top:8px">' + esc(ss.msg) + '</p>' : '') + '</div>' +
-      '<button class="row" data-act="snaplink"><span class="grow"><b>Plan als Link teilen</b></span><span class="val">ohne Server</span></button></div><div id="syncout"></div>';
+      '</div>';
   }
   const st = !ss ? 'Verbunden' : ss.state === 'err' ? ss.msg : ss.msg;
   return '<div class="grp"><div class="row"><span class="grow"><b>' + (ss && ss.state === 'err' ? 'Problem' : 'Verbunden') + '</b><div class="sub">' + esc(st) + '</div></span></div>' +
     '<button class="row" data-act="syncnow"><span class="grow">Jetzt abgleichen</span></button>' +
     '<button class="row" data-act="invite"><span class="grow">Einladungslink für das andere Gerät</span></button>' +
-    '<button class="row" data-act="snaplink"><span class="grow">Plan als Link teilen</span></button>' +
     '<button class="row" data-act="disconnect" style="color:var(--danger)"><span class="grow">Trennen</span></button></div><div id="syncout"></div>' +
     '<p class="foot">Wer den Link hat, hat Zugriff auf den Plan. Gleichzeitiges Bearbeiten innerhalb weniger Sekunden kann eine Änderung überschreiben.</p>';
 }
-function viewSettings() {
+function setBody(k) {
   const st = S.settings, p = st.persons;
   const opt = (v, cur, lab) => '<option value="' + v + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + lab + '</option>';
-  let h = '<h1 class="ltitle">Mehr</h1><p class="lsub">Personen, Regeln und Darstellung.</p>';
-  p.forEach((x, i) => {
-    h += '<p class="cap">Person ' + (i + 1) + '</p><div class="grp">' +
-      '<label class="row"><span class="grow">Name</span><input class="inl" type="text" data-set="name" data-i="' + i + '" value="' + esc(x.name) + '" aria-label="Name"></label>' +
-      '<label class="row"><span class="grow">Protein pro Tag</span><input class="inl" type="number" inputmode="numeric" data-set="protein" data-i="' + i + '" min="40" max="220" step="5" value="' + x.protein + '" aria-label="Protein pro Tag in Gramm"><span class="val">g</span></label></div>';
-  });
-  h += '<p class="cap">Mittag und Abend</p><div class="grp pad"><div class="flex" style="justify-content:space-between"><span>Anteil am Tagesziel</span><b id="sharev">' + Math.round(st.share * 100) + ' %</b></div>' +
-    '<input type="range" id="share" min="50" max="90" step="5" value="' + Math.round(st.share * 100) + '" aria-label="Anteil am Tagesziel"></div>' +
-    '<p class="foot">Das Frühstück ist nicht Teil der Planung. Ziel pro Mahlzeit: ' + B.targets.map((t, i) => esc(names()[i]) + ' ' + Math.round(t) + ' g').join(', ') + '.</p>';
-  h += '<p class="cap">Wochenregeln</p><div class="grp">' +
+  if (k === 'people') return p.map((x, i) => '<p class="cap">Person ' + (i + 1) + '</p><div class="grp">' +
+    '<label class="row"><span class="grow">Name</span><input class="inl" type="text" data-set="name" data-i="' + i + '" value="' + esc(x.name) + '" aria-label="Name"></label>' +
+    '<label class="row"><span class="grow">Protein pro Tag</span><input class="inl" type="number" inputmode="numeric" data-set="protein" data-i="' + i + '" min="40" max="220" step="5" value="' + x.protein + '" aria-label="Protein pro Tag in Gramm"><span class="val">g</span></label></div>').join('');
+  if (k === 'rules') return '<p class="cap">Wochenregeln</p><div class="grp">' +
     '<label class="row"><span class="grow">Mindestens vegetarisch</span><select class="inl" data-set="vegMin">' + [2, 3, 4].map(n => opt(n, st.vegMin, n + ' von 5')).join('') + '</select></label>' +
     '<label class="row"><span class="grow">Höchstens Fisch</span><select class="inl" data-set="fishMax">' + [0, 1, 2].map(n => opt(n, st.fishMax, n + ' von 5')).join('') + '</select></label>' +
     '<label class="row"><span class="grow">Kocht zuerst allein</span><select class="inl" data-set="moCook">' + opt(0, st.moCook, esc(p[0].name)) + opt(1, st.moCook, esc(p[1].name)) + '</select></label></div>' +
-    '<p class="foot">Regeln gelten ab dem nächsten Vorschlag. Sie werden auf die Zahl der vorgekochten Gerichte umgerechnet. Ist nur ein Gericht an einem Termin, kocht ihr zusammen.</p>';
+    '<p class="foot">Regeln gelten ab dem nächsten Vorschlag. Ist nur ein Gericht an einem Termin, kocht ihr zusammen.</p>' +
+    '<p class="cap">Protein aus Mittag und Abend</p><div class="grp pad"><div class="flex" style="justify-content:space-between"><span>Anteil am Tagesziel</span><b id="sharev">' + Math.round(st.share * 100) + ' %</b></div>' +
+    '<input type="range" id="share" min="50" max="90" step="5" value="' + Math.round(st.share * 100) + '" aria-label="Anteil am Tagesziel"></div>' +
+    '<p class="foot">Der Rest kommt vom Frühstück, das nicht geplant wird. Ziel pro Mahlzeit: ' + B.targets.map((t, i) => esc(names()[i]) + ' ' + Math.round(t) + ' g').join(', ') + '.</p>';
+  if (k === 'sync') return '<div id="syncbox">' + syncBox() + '</div>';
+  return '<div id="calsub">' + calBox() + '</div><p class="cap">Einmalig übernehmen</p><div class="grp"><div class="pad"><p class="sub" style="margin-bottom:10px">Eine Kalenderdatei, ohne Abo.</p><div class="flex"><button class="btn sm" data-act="ics">Datei laden</button><button class="btn sm gray" data-act="icscopy">Als Text kopieren</button></div></div></div><div id="calbox"></div>';
+}
+function viewSettings() {
+  const st = S.settings, ss = S.ss, err = ss && ss.state === 'err';
+  const lk = (k, lab, sub, val, id) => '<button class="row chev" data-act="setsheet" data-k="' + k + '"><span class="grow"><b>' + lab + '</b>' + (sub ? '<div class="sub"' + (id ? ' id="' + id + '"' : '') + '>' + sub + '</div>' : '') + '</span><span class="val">' + val + '</span></button>';
+  let h = '<h1 class="ltitle">Mehr</h1>';
+  h += '<div class="grp" style="margin-top:14px">' + lk('people', 'Wir zwei', esc(names().join(', ')), '') + lk('rules', 'Essensregeln', st.vegMin + ' × vegetarisch, höchstens ' + st.fishMax + ' × Fisch', '') + '</div>';
   h += '<p class="cap">Darstellung</p><div class="pad" style="padding:0"><div class="seg">' + [['auto', 'Automatisch'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => '<button data-act="theme" data-t="' + k + '" aria-pressed="' + (S.theme === k) + '">' + l + '</button>').join('') + '</div></div>';
-  h += '<p class="cap">Kalender abonnieren</p><div id="calsub">' + calBox() + '</div>';
-  h += '<p class="cap">Kalenderdatei</p><div class="grp"><div class="pad"><p class="sub" style="margin-bottom:10px">Einmalig in einen Kalender übernehmen, ohne Abo.</p><div class="flex"><button class="btn sm" data-act="ics">Datei laden</button><button class="btn sm gray" data-act="icscopy">Als Text kopieren</button></div></div></div><div id="calbox"></div>';
-  h += '<p class="cap">Gemeinsamer Plan</p><div id="syncbox">' + syncBox() + '</div>';
-  h += '<p class="cap">Daten</p><div class="grp"><div class="pad"><p class="sub">Ohne gemeinsamen Plan liegt alles nur in diesem Browser auf diesem Gerät. Der Installationsmodus auf dem Home-Bildschirm und Safari speichern getrennt.</p></div>' +
-    '<button class="row" data-act="resetall" style="color:var(--danger)"><span class="grow"><b>' + (S.confirm ? 'Wirklich alles zurücksetzen?' : 'Alles zurücksetzen') + '</b></span>' + (S.confirm ? '<span class="val">Tippe noch einmal</span>' : '') + '</button></div>';
+  h += '<p class="cap">Verbindungen</p><div class="grp">' +
+    lk('sync', 'Gemeinsamer Plan', syncOn() ? esc(ss ? ss.msg : 'Gleicht zwischen euren Geräten ab') : 'Noch nicht eingerichtet', !syncOn() ? 'einrichten' : err ? 'Problem' : '✓', 'syncst') +
+    lk('cal', 'Kalender', S.cal ? 'Zuletzt veröffentlicht: ' + calAgo() : 'Noch nicht eingerichtet', S.cal ? '✓' : 'einrichten') + '</div>';
+  h += '<p class="cap">Teilen und Daten</p><div class="grp"><button class="row" data-act="snaplink"><span class="grow"><b>Plan als Link teilen</b></span></button>' +
+    '<button class="row" data-act="resetall" style="color:var(--danger)"><span class="grow"><b>' + (S.confirm ? 'Wirklich alles zurücksetzen?' : 'Alles zurücksetzen') + '</b></span>' + (S.confirm ? '<span class="val">Tippe noch einmal</span>' : '') + '</button></div><div id="snapout"></div>';
+  if (!syncOn()) h += '<p class="foot">Ohne gemeinsamen Plan liegt alles nur in diesem Browser auf diesem Gerät.</p>';
   h += '<p class="foot">Version ' + APP_V + '</p>';
   return h;
 }
@@ -3088,6 +3084,10 @@ function sheetHtml() {
       '<div class="shb rb">' + dishImg(r) + '<p class="sub" style="margin-bottom:12px">' + esc(r.cuisine) + ' · ' + KIND[r.kind] + (r.src ? ' · nach einer Idee aus „' + esc(r.src) + '“, in eigener Fassung' : '') + '</p>' + recipeBody(r) +
       '<div class="flex" style="justify-content:space-between;margin-top:14px"><span class="sub">Hat es geschmeckt?</span>' + rateBtns(r.id) + '</div>' +
       '<div class="actions"><button class="btn ' + (off ? '' : 'gray') + '" data-act="pool" data-rid="' + r.id + '">' + (off ? 'Wieder vorschlagen' : 'Nicht mehr vorschlagen') + '</button></div></div></div>';
+  }
+  if (sh.t === 'set') {
+    const title = { people: 'Wir zwei', rules: 'Essensregeln', sync: 'Gemeinsamer Plan', cal: 'Kalender' }[sh.k] || '';
+    return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="' + title + '"><div class="shd"><span class="grab"></span><h3>' + title + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div><div class="shb">' + setBody(sh.k) + '</div></div>';
   }
   if (sh.t === 'plan') return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Woche ändern"><div class="shd"><span class="grab"></span><h3>Woche ändern</h3><button class="btn sm soft" data-act="close">Fertig</button></div><div class="shb">' + planSheet() + '</div></div>';
   if (sh.t === 'cell') {
@@ -3331,7 +3331,7 @@ async function calAuto() {
 async function publishCal() {
   const tok = ghTok();
   if (!S.cal || !B) return;
-  if (!tok) { S.cs = { state: 'err', msg: 'Auf diesem Gerät fehlt der GitHub-Token. Trage ihn hier ein, dann kannst du auch von hier aktualisieren.' }; setTab('settings'); return; }
+  if (!tok) { S.cs = { state: 'err', msg: 'Auf diesem Gerät fehlt der GitHub-Token. Trage ihn hier ein, dann kannst du auch von hier aktualisieren.' }; S.tab = 'settings'; S.sheet = { t: 'set', k: 'cal' }; render(); return; }
   S.cs = { state: 'busy', msg: 'Veröffentliche …' }; render();
   try {
     const files = calFiles();
@@ -3439,6 +3439,7 @@ document.addEventListener('click', e => {
   }
   else if (act === 'uncheck') { const u = undoSnap(); clearTicks(S.weekStart); undoOffer(u, 'Haken gelöscht.'); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
+  else if (act === 'setsheet') { S.sheet = { t: 'set', k: b.dataset.k }; render(); }
   else if (act === 'planedit') { S.sheet = { t: 'plan' }; render(); }
   else if (act === 'term') { const back = !!S.sheet && S.sheet.t === 'plan'; S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term, back }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
@@ -3511,7 +3512,7 @@ document.addEventListener('click', e => {
   }
   else if (act === 'syncnow') syncNow();
   else if (act === 'invite') copyOut(inviteLink(), 'Link kopiert. Auf dem anderen Gerät öffnen.', 4, 'syncout');
-  else if (act === 'snaplink') copyOut(snapLink(), 'Link kopiert. Auf dem anderen Gerät öffnen, um den Plan zu übernehmen.', 4, 'syncout');
+  else if (act === 'snaplink') copyOut(snapLink(), 'Link kopiert. Auf dem anderen Gerät öffnen, um den Plan zu übernehmen.', 4, 'snapout');
   else if (act === 'disconnect') { S.sync = { url: '', code: '', fresh: false }; S.ss = null; saveLocal(); render(); }
   else if (act === 'joinok') {
     const sh = S.sheet; if (!sh || sh.t !== 'join') return;

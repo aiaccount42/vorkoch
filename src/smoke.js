@@ -225,7 +225,7 @@ console.log('Als Nächstes sichtbar:', /class="next"/.test(appEl.innerHTML) ? 'o
   click({ act: 'tab', tab: 'recipes' }); click({ act: 'country', c: 'Thailand' }); bad('Land');
   console.log(/Kokossuppe|Thai-Hack|Thai/.test(appEl.innerHTML) && !/Cacciatore/.test(appEl.innerHTML) ? 'Länderfilter ok' : 'FEHLT Länderfilter');
   click({ act: 'country', c: '' }); click({ act: 'carb', c: 'Kartoffel' }); bad('Beilage'); console.log(/Kartoffelpfanne/.test(appEl.innerHTML) && !/Linsen-Dal/.test(appEl.innerHTML) ? 'Beilagenfilter ok' : 'FEHLT Beilagenfilter'); click({ act: 'carb', c: '' }); click({ act: 'filter', f: 'rewe' }); console.log(/Rindergulasch mit Pilzen/.test(appEl.innerHTML) && !/Linsen-Dal/.test(appEl.innerHTML) ? 'REWE-Filter ok' : 'FEHLT REWE-Filter'); click({ act: 'filter', f: 'all' });
-  click({ act: 'tab', tab: 'settings' }); bad('Kalender neu');
+  click({ act: 'tab', tab: 'settings' }); click({ act: 'setsheet', k: 'cal' }); bad('Kalender neu');
   els.calrepo = { value: 'https://github.com/roman/vorkoch.git' }; els.caltok = { value: 'github_pat_BAD' };
   click({ act: 'calsetup' }); console.log(/Token aus|nicht nach einem GitHub-Token/.test(appEl.innerHTML) ? 'falscher Token abgelehnt ok' : 'FEHLT Tokenprüfung');
   els.caltok = { value: 'github_pat_TESTTOKEN1234567890' };
