@@ -4,7 +4,7 @@
 'use strict';
 
 /* ---------- Kalender (.ics) ---------- */
-function icsEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+function icsEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r\n|\r|\n/g, '\\n'); }
 function u8(ch) { const c = ch.codePointAt(0); return c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4; }
 function fold(line) {
   const out = []; let cur = '', n = 0, lim = 75;
@@ -132,7 +132,7 @@ function mergeMap(a, b) {
   [a || {}, b || {}].forEach(m => Object.keys(m).forEach(k => {
     const x = m[k];
     if (!Array.isArray(x)) return;
-    if (!o[k] || (x[1] || 0) > (o[k][1] || 0)) o[k] = x;
+    if (!o[k] || ts(x[1]) > ts(o[k][1])) o[k] = x;
   }));
   return o;
 }
@@ -141,7 +141,7 @@ function merge(a, b) {
   if (!a) return b;
   const out = { v: 2, m: {} };
   SECTIONS.forEach(sec => {
-    const ta = (a.m && a.m[sec]) || 0, tb = (b.m && b.m[sec]) || 0;
+    const ta = ts(a.m && a.m[sec]), tb = ts(b.m && b.m[sec]);
     const w = ta >= tb ? a : b;
     out.m[sec] = Math.max(ta, tb);
     out[sec] = w[sec];
@@ -163,36 +163,41 @@ function same(a, b) { return canon(a) === canon(b); }
 
 /* Fremde Daten prüfen und in den Zustand schreiben. known = Menge gültiger Rezept-IDs. Gibt true zurück, wenn etwas übernommen wurde. */
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const REPO_RE = /^[A-Za-z0-9_-]{1,39}\/(?!\.{1,2}$)[A-Za-z0-9_.-]{1,100}$/;
+// Regex wandeln Nicht-Texte stillschweigend um, deshalb erst den Typ prüfen.
+const rx = (re, s) => typeof s === 'string' && re.test(s);
+const ts = x => (typeof x === 'number' && isFinite(x) ? x : 0);
+function cleanTimes(m) { const o = {}; SECTIONS.forEach(k => { const t = ts(m && m[k]); if (t) o[k] = t; }); return o; }
 function cleanWeek(rec, isId) {
   if (!rec || typeof rec !== 'object' || !rec.grid || typeof rec.grid !== 'object') return null;
   const g = {};
   for (const d of ['0', '1', '2', '3', '4', '5', '6']) for (const m of ['l', 'd']) {
     const c = rec.grid[d + m];
-    if (!c || typeof c !== 'object' || !/^[pfox]$/.test(c.t)) return null;
+    if (!c || typeof c !== 'object' || !rx(/^[pfox]$/, c.t)) return null;
     const o = { t: c.t };
     if ((c.t === 'p' || c.t === 'f') && isId(c.r)) { o.r = c.r; if (c.u) o.u = 1; }
-    if (c.t === 'f' && /^[b01]$/.test(c.w || '')) o.w = c.w;
+    if (c.t === 'f' && rx(/^[b01]$/, c.w)) o.w = c.w;
     g[d + m] = o;
   }
   const tm = t => /^(\d{1,2}:\d{2})?$/.test(typeof t === 'string' ? t : '');
   if (!Array.isArray(rec.sess) || rec.sess.length < 1 || rec.sess.length > 4 || !rec.sess.every(s => s && Number.isInteger(s.day) && s.day >= 0 && s.day <= 6 && tm(s.time))) return null;
   const sa = rec.shopAt;
   if (!sa || !Number.isInteger(sa.day) || sa.day < -1 || sa.day > 6 || !tm(sa.time)) return null;
-  const sess = rec.sess.map(s => { const o = { day: s.day, time: typeof s.time === 'string' ? s.time : '' }; if (/^[b01]$/.test(s.w || '')) o.w = s.w; return o; });
-  const shopAt = { day: sa.day, time: typeof sa.time === 'string' ? sa.time : '' }; if (/^[01]$/.test(sa.w || '')) shopAt.w = sa.w;
+  const sess = rec.sess.map(s => { const o = { day: s.day, time: typeof s.time === 'string' ? s.time : '' }; if (rx(/^[b01]$/, s.w)) o.w = s.w; return o; });
+  const shopAt = { day: sa.day, time: typeof sa.time === 'string' ? sa.time : '' }; if (rx(/^[01]$/, sa.w)) shopAt.w = sa.w;
   return { grid: g, sess, shopAt, key: String(rec.key || '').slice(0, 400), relaxed: !!rec.relaxed };
 }
 // Haushalt-Runden: nur gültige Einträge übernehmen.
-const validBundle = b => !!b && typeof b === 'object' && /^[a-z0-9]{1,30}$/i.test(b.id) && typeof b.n === 'string' && b.n.length > 0 && typeof b.items === 'string' && Number.isInteger(b.every) && b.every >= 1 && b.every <= 52 && (b.last === '' || DATE_RE.test(b.last));
+const validBundle = b => !!b && typeof b === 'object' && rx(/^[a-z0-9]{1,30}$/i, b.id) && typeof b.n === 'string' && b.n.length > 0 && typeof b.items === 'string' && Number.isInteger(b.every) && b.every >= 1 && b.every <= 52 && (b.last === '' || rx(DATE_RE, b.last));
 function applyDoc(S, doc, known) {
   if (!doc || doc.v !== 2) return false;
-  const isId = id => typeof id === 'string' && known[id];
+  const isId = id => typeof id === 'string' && Object.prototype.hasOwnProperty.call(known, id);
   const num = (x, lo, hi, d) => (typeof x === 'number' && isFinite(x)) ? Math.min(hi, Math.max(lo, x)) : d;
   if (!S.mt) S.mt = { m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} };
-  S.mt.m = Object.assign({}, doc.m || {});
+  S.mt.m = cleanTimes(doc.m);
   const p = doc.plan;
   if (p) {
-    S.recent = Array.isArray(p.recent) ? p.recent.filter(x => typeof x === 'string').slice(0, 6) : (S.recent || []);
+    S.recent = Array.isArray(p.recent) ? p.recent.filter(x => typeof x === 'string' && x.length <= 400).slice(0, 6) : (S.recent || []);
     S.history = Array.isArray(p.history) ? p.history.filter(h => Array.isArray(h) && h.every(isId)).slice(0, 3) : (S.history || []);
   }
   if (doc.weeks && typeof doc.weeks === 'object') {
@@ -201,7 +206,7 @@ function applyDoc(S, doc, known) {
       const e = doc.weeks[ws];
       if (!DATE_RE.test(ws) || !Array.isArray(e)) return;
       const r = cleanWeek(e[0], isId);
-      if (r) { S.weeks[ws] = r; S.mt.weeks[ws] = e[1] || 0; }
+      if (r) { S.weeks[ws] = r; S.mt.weeks[ws] = ts(e[1]); }
     });
   }
   if (doc.pool && Array.isArray(doc.pool.disabled)) S.disabled = doc.pool.disabled.filter(isId);
@@ -216,7 +221,7 @@ function applyDoc(S, doc, known) {
   if (doc.settings) {
     const mo = doc.settings.motto; S.motto = typeof mo === 'string' && /^[A-Za-zÄÖÜäöüß -]{0,20}$/.test(mo) ? mo : '';
     const cl = doc.settings.cal;
-    S.cal = cl && /^[A-Za-z0-9_.-]{1,39}\/[A-Za-z0-9_.-]{1,100}$/.test(cl.repo || '') && /^[a-z0-9]{10,24}$/.test(cl.secret || '') ? { repo: cl.repo, secret: cl.secret } : (S.cal || null);
+    S.cal = cl && rx(REPO_RE, cl.repo) && rx(/^[a-z0-9]{10,24}$/, cl.secret) ? { repo: cl.repo, secret: cl.secret } : (S.cal || null);
   }
   if (doc.settings && doc.settings.diversity != null) S.diversity = num(doc.settings.diversity, 0, 1, S.diversity);
   if (typeof doc.offers === 'string') S.offers = doc.offers.slice(0, 600);
@@ -224,13 +229,13 @@ function applyDoc(S, doc, known) {
   if (Array.isArray(bl)) S.bundles = bl.filter(validBundle).slice(0, 50).map(b => ({ id: b.id, n: b.n.slice(0, 30), items: b.items.slice(0, 200), every: b.every, last: b.last }));
   if (doc.bundles && Number.isInteger(doc.bundles.day) && doc.bundles.day >= 0 && doc.bundles.day <= 6) S.routineDay = doc.bundles.day;
   S.ratings = {}; S.mt.ratings = {};
-  Object.keys(doc.ratings || {}).forEach(k => { const x = doc.ratings[k]; if (isId(k) && Array.isArray(x) && (x[0] === 1 || x[0] === -1 || x[0] === 0)) { S.ratings[k] = x[0]; S.mt.ratings[k] = x[1] || 0; } });
+  Object.keys(doc.ratings || {}).forEach(k => { const x = doc.ratings[k]; if (isId(k) && Array.isArray(x) && (x[0] === 1 || x[0] === -1 || x[0] === 0)) { S.ratings[k] = x[0]; S.mt.ratings[k] = ts(x[1]); } });
   S.storeOv = {}; S.mt.storeOv = {};
-  Object.keys(doc.storeOv || {}).forEach(k => { const x = doc.storeOv[k]; if (/^[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x) && (x[0] === 'd' || x[0] === 'm')) { S.storeOv[k] = x[0]; S.mt.storeOv[k] = x[1] || 0; } });
+  Object.keys(doc.storeOv || {}).forEach(k => { const x = doc.storeOv[k]; if (/^[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x) && (x[0] === 'd' || x[0] === 'm')) { S.storeOv[k] = x[0]; S.mt.storeOv[k] = ts(x[1]); } });
   const c = doc.checked;
   S.checked = { key: '', map: {} }; S.mt.checked = {};
   if (c) {
-    Object.keys(c.map || {}).forEach(k => { const x = c.map[k]; if (/^\d{4}-\d{2}-\d{2}\|(v_)?[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x)) { S.checked.map[k] = !!x[0]; S.mt.checked[k] = x[1] || 0; } });
+    Object.keys(c.map || {}).forEach(k => { const x = c.map[k]; if (/^\d{4}-\d{2}-\d{2}\|(v_)?[a-z_0-9]{1,30}$/.test(k) && Array.isArray(x)) { S.checked.map[k] = !!x[0]; S.mt.checked[k] = ts(x[1]); } });
   }
   return true;
 }
@@ -270,6 +275,6 @@ function unpack(w) {
   return d;
 }
 
-root.VX = { b64dec, b64std: s => { const by = Array.from(new TextEncoder().encode(s)); let bin = ''; by.forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); }, buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack };
+root.VX = { b64dec, b64std: s => { const by = Array.from(new TextEncoder().encode(s)); let bin = ''; by.forEach(b => { bin += String.fromCharCode(b); }); return btoa(bin); }, buildICS, encodeShare, decodeShare, toDoc, merge, same, applyDoc, canon, pack, unpack, REPO_RE };
 if (typeof module !== 'undefined') module.exports = root.VX;
 })(typeof window !== 'undefined' ? window : globalThis);

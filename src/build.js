@@ -1,5 +1,6 @@
 const fs = require('fs');
-const CACHE_V = 24; /* bei jeder neuen Version erhöhen, sonst zeigt die App den alten Stand */
+const crypto = require('crypto');
+const CACHE_V = 25; /* bei jeder neuen Version erhöhen, sonst zeigt die App den alten Stand */
 const d = __dirname + '/';
 const css = fs.readFileSync(d + 'style.css', 'utf8');
 const eng = fs.readFileSync(d + 'engine.js', 'utf8');
@@ -19,7 +20,6 @@ const nav = '<nav id="tabs" aria-label="Bereiche"><div class="in">' +
 const html =
   '<title>Vorkoch</title>\n' +
   '<meta name="claude:viewport-fit-sides" content="cover">\n' +
-  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">\n' +
   '<meta name="theme-color" content="#F2F2F7">\n' +
   '<style>\n' + css + '</style>\n' +
   '<div id="app"></div>\n' + nav + '\n' +
@@ -33,17 +33,27 @@ console.log('geschrieben', html.length, 'Bytes');
 const path = require('path');
 const dist = (process.env.OUT ? path.resolve(process.env.OUT) : path.basename(path.resolve(d)) === 'src' ? path.resolve(d, '..') : path.resolve(d, 'dist')) + '/';
 if (!fs.existsSync(dist)) fs.mkdirSync(dist);
-const head = '<!doctype html>\n<html lang="de"><head><meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n' +
+const reg = '<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>\n';
+/* Sicherheitsregeln fürs Hosting: nur die eigenen Skripte per Hash, Netz nur zu GitHub und Firebase. Inline-Styles braucht die Oberfläche. */
+const page = html.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', '') + reg;
+const hashes = [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => "'sha256-" + crypto.createHash('sha256').update(m[1], 'utf8').digest('base64') + "'");
+const csp = ["default-src 'none'", 'script-src ' + hashes.join(' '), "style-src 'unsafe-inline'", "img-src 'self' data:", "manifest-src 'self'", "worker-src 'self'",
+  "connect-src 'self' https://api.github.com https://*.firebaseio.com https://*.firebasedatabase.app", "base-uri 'none'", "form-action 'none'"].join('; ');
+const head = '<!doctype html>\n<html lang="de"><head><meta charset="utf-8">\n<meta http-equiv="Content-Security-Policy" content="' + csp + '">\n<meta name="referrer" content="no-referrer">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n' +
   '<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="Vorkoch">\n' +
   '<meta name="apple-mobile-web-app-status-bar-style" content="default">\n<link rel="manifest" href="manifest.webmanifest">\n<link rel="apple-touch-icon" href="icon-180.png">\n<link rel="icon" href="icon-192.png">\n';
-const reg = '<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>\n';
-fs.writeFileSync(dist + 'index.html', head + html.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', '') + reg + '</head><body></body></html>'.replace('</head><body></body></html>', ''));
+fs.writeFileSync(dist + 'index.html', head + page);
 fs.writeFileSync(dist + 'manifest.webmanifest', JSON.stringify({
   name: 'Vorkoch', short_name: 'Vorkoch', description: 'Wochenplan, Einkauf und Meal Prep', lang: 'de',
   start_url: './', scope: './', display: 'standalone', background_color: '#F2F2F7', theme_color: '#F2F2F7',
   icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }, { src: 'icon-512.png', sizes: '512x512', type: 'image/png' }, { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }]
 }, null, 2));
+/* Service Worker: erst Netz, nach 3 Sekunden oder offline der Cache (schlechter Empfang im Laden). Nur saubere Antworten kommen in den Cache. */
 fs.writeFileSync(dist + 'sw.js', "var C='vorkoch-v" + CACHE_V + "';var F=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','icon-180.png'];\n" +
-  "self.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(F);}).then(function(){return self.skipWaiting();}));});\n" +
+  "self.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(F.map(function(u){return new Request(u,{cache:'reload'});}));}).then(function(){return self.skipWaiting();}));});\n" +
   "self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!==C;}).map(function(x){return caches.delete(x);}));}).then(function(){return self.clients.claim();}));});\n" +
-  "self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;var u=new URL(e.request.url);if(u.origin!==self.location.origin||u.pathname.indexOf('/kalender/')>=0)return;e.respondWith(fetch(e.request).then(function(r){var c=r.clone();caches.open(C).then(function(x){x.put(e.request,c);});return r;}).catch(function(){return caches.match(e.request).then(function(m){return m||caches.match('index.html');});}));});\n");
+  "self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;var u=new URL(e.request.url);if(u.origin!==self.location.origin||u.pathname.indexOf('/kalender/')>=0)return;\n" +
+  "var net=fetch(e.request);\n" +
+  "e.waitUntil(net.then(function(r){if(!r.ok||r.type!=='basic')return;var c=r.clone();return caches.open(C).then(function(x){return x.put(e.request,c);});}).catch(function(){}));\n" +
+  "var slow=new Promise(function(ok){setTimeout(ok,3000);}).then(function(){return caches.match(e.request);}).then(function(m){return m||net;});\n" +
+  "e.respondWith(Promise.race([net,slow]).catch(function(){return caches.match(e.request).then(function(m){return m||(e.request.mode==='navigate'?caches.match('index.html'):Response.error());});}));});\n");

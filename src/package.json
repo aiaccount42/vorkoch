@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node build.js && node test.js && node test-extras.js && node test-sync.js && node smoke.js && node test-sessions.js && node test-amounts.js"
   },
   "keywords": [],
   "author": "",

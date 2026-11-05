@@ -34,6 +34,7 @@ const fakeFetch = (url, opt) => {
 const ctx = { window: win, document: doc, localStorage: win.localStorage, navigator: { clipboard: { writeText: () => Promise.resolve() } }, console, Math, JSON, Date, Set, Object, Array, String, Number, Promise,
   fetch: fakeFetch, btoa, atob, TextEncoder, TextDecoder, Uint8Array, URL, Blob, setInterval: () => 0, setTimeout: (f) => { timers.push(f); return timers.length; }, clearTimeout: () => {}, location: { hash: '', href: 'https://x.github.io/vorkoch/', pathname: '/vorkoch/', search: '' }, history: { replaceState() {} } };
 win.window = win; win.document = doc;
+ctx.crypto = globalThis.crypto;
 vm.createContext(ctx);
 vm.runInContext(script, ctx);
 

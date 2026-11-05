@@ -181,4 +181,26 @@ assert.deepStrictEqual(RT2.weeks[WS].sess.map(s => s.time), ['', '17:30']); asse
 const two = { weekStart: '2026-10-25', shop: { day: -1, time: '' }, shopText: 'a', names: ['A', 'B'], meals: [], sessions: [{ key: 's0', day: 0, time: '', fresh: false, w: 'b', who: 'x', mk: 60, thaw: [], dishes: ['A'], events: [] }],
   more: [{ weekStart: '2026-11-01', shop: { day: -1, time: '' }, shopText: 'b', names: ['A', 'B'], meals: [], sessions: [{ key: 's0', day: 0, time: '', fresh: false, w: 'b', who: 'x', mk: 60, thaw: [], dishes: ['B'], events: [] }] }] };
 const twoIcs = X.buildICS(two); assert.strictEqual((twoIcs.match(/BEGIN:VEVENT/g) || []).length, 4); assert.ok(/UID:einkauf-2026-10-25@vorkoch/.test(twoIcs) && /UID:einkauf-2026-11-01@vorkoch/.test(twoIcs) && /DTSTART;VALUE=DATE:20261101/.test(twoIcs));
+// 11) fremde Daten: Prototyp-Namen, falsche Typen, kaputte Zeitstempel, Repo-Namen
+const EV = base(); const evDoc = X.toDoc(EV);
+evDoc.ratings = JSON.parse('{"constructor":[1,5],"__proto__":[1,5],"dal":[1,"x"]}');
+evDoc.m = JSON.parse('{"plan":"spät","pool":7,"__proto__":{"plan":1},"fremd":9}');
+evDoc.pool = { disabled: ['constructor', 'toString', 'dal'] };
+evDoc.plan = { recent: ['a'.repeat(401), 'ok'], history: [['constructor']] };
+evDoc.weeks[WS][0].grid['0l'] = { t: 'p', r: 'constructor' };
+evDoc.bundles = { day: 6, list: [{ id: ['abc'], n: 'x', items: 'y', every: 1, last: '' }, { id: 'ok1', n: 'x', items: 'y', every: 1, last: ['2026-01-01'] }, { id: 'ok2', n: 'x', items: 'y', every: 1, last: '' }] };
+const EV2 = base(); X.applyDoc(EV2, evDoc, known);
+assert.deepStrictEqual(Object.keys(EV2.ratings), ['dal']); assert.strictEqual(EV2.mt.ratings.dal, 0);
+assert.deepStrictEqual(EV2.mt.m, { pool: 7 }); assert.strictEqual(Object.getPrototypeOf(EV2.mt.m), Object.prototype);
+assert.deepStrictEqual(EV2.disabled, ['dal']); assert.deepStrictEqual(EV2.recent, ['ok']); assert.deepStrictEqual(EV2.history, []);
+assert.strictEqual(EV2.weeks[WS].grid['0l'].r, undefined); assert.deepStrictEqual(EV2.bundles.map(b => b.id), ['ok2']);
+assert.ok(X.REPO_RE.test('aiaccount42/vorkoch') && X.REPO_RE.test('a/b.github.io') && !X.REPO_RE.test('evil.com/x') && !X.REPO_RE.test('a/..') && !X.REPO_RE.test('a/.'));
+assert.strictEqual(X.merge({ m: { plan: 'x' } }, { m: { plan: 5 }, plan: 1 }).m.plan, 5);
+assert.ok(!/\r[^\n]/.test(X.buildICS({ weekStart: WS, shop: { day: -1, time: '' }, shopText: 'a\rATTACH:http://x', names: ['A', 'B'], meals: [], sessions: [] })), 'einzelnes CR im Kalender');
+// 12) Hosting-Datei: CSP-Hashes passen zu den Skripten, keine fremden Quellen
+const page = require('fs').readFileSync(__dirname + '/../index.html', 'utf8');
+const pageCsp = /http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(page)[1];
+const pageHashes = [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => "'sha256-" + require('crypto').createHash('sha256').update(m[1], 'utf8').digest('base64') + "'");
+assert.strictEqual(pageHashes.length, 2); pageHashes.forEach(h => assert.ok(pageCsp.includes(h), 'Hash fehlt in CSP'));
+assert.ok(!/fonts\.g|<link rel="stylesheet"/.test(page) && !/script-src[^;]*unsafe/.test(pageCsp));
 console.log('test-extras ok');

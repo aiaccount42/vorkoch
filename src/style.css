@@ -8,7 +8,7 @@
   --bar: rgba(249, 249, 252, .82); --scrim: rgba(0, 0, 0, .38);
   --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 6px 20px rgba(0, 0, 0, .05);
   --c1: #22A06B; --c2: #E8643A; --c3: #3B82F6; --c4: #9B6BEA; --c5: #D4476B;
-  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Text', 'Roboto', 'Segoe UI', system-ui, sans-serif;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Roboto', 'Segoe UI', system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {

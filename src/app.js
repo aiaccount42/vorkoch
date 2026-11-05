@@ -203,8 +203,8 @@ const URL_RE = /^https:\/\/[a-z0-9-]+(-default-rtdb)?(\.[a-z0-9-]+)*\.(firebasei
 const CODE_RE = /^[a-z0-9]{8,32}$/;
 function normUrl(u) { u = String(u || '').trim().replace(/\/+$/, '').toLowerCase(); return URL_RE.test(u) ? u : ''; }
 function newCode() {
-  const cs = 'abcdefghijkmnpqrstuvwxyz23456789'; let o = '';
-  try { const a = new Uint8Array(14); crypto.getRandomValues(a); a.forEach(x => { o += cs[x % cs.length]; }); } catch (e) { for (let i = 0; i < 14; i++) o += cs[Math.floor(Math.random() * cs.length)]; }
+  const cs = 'abcdefghijkmnpqrstuvwxyz23456789', a = new Uint8Array(14); let o = '';
+  crypto.getRandomValues(a); a.forEach(x => { o += cs[x % cs.length]; });
   return o;
 }
 function syncOn() { return !!(S.sync && S.sync.url && S.sync.code); }
@@ -706,7 +706,7 @@ function sheetHtml() {
   }
   if (sh.t === 'join') {
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Gemeinsamer Plan"><div class="shd"><span class="grab"></span><h3>Gemeinsamer Plan</h3><button class="btn sm soft" data-act="close">Abbrechen</button></div>' +
-      '<div class="shb"><p>Dieses Gerät mit dem gemeinsamen Plan verbinden? Der Plan, die Bewertungen und die Einstellungen von hier werden durch die gemeinsamen ersetzt.</p><div class="actions"><button class="btn" data-act="joinok">Verbinden</button></div></div></div>';
+      '<div class="shb"><p>Dieses Gerät mit dem gemeinsamen Plan auf <b>' + esc(sh.u.replace('https://', '')) + '</b> verbinden? Der Plan, die Bewertungen und die Einstellungen von hier werden durch die gemeinsamen ersetzt.</p><div class="actions"><button class="btn" data-act="joinok">Verbinden</button></div></div></div>';
   }
   if (sh.t === 'snap') {
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Plan übernehmen"><div class="shd"><span class="grab"></span><h3>Plan übernehmen</h3><button class="btn sm soft" data-act="close">Abbrechen</button></div>' +
@@ -807,7 +807,7 @@ function listText() {
 const GH_KEY = 'vorkoch.gh';
 function ghTok() { try { return localStorage.getItem(GH_KEY) || ''; } catch (e) { return ''; } }
 function ghSet(t) { try { if (t) localStorage.setItem(GH_KEY, t); else localStorage.removeItem(GH_KEY); } catch (e) { /* egal */ } }
-const REPO_RE = /^[A-Za-z0-9_.-]{1,39}\/[A-Za-z0-9_.-]{1,100}$/;
+const REPO_RE = VX.REPO_RE;
 function calUrl(w) {
   if (!S.cal) return '';
   const p = S.cal.repo.split('/'), o = p[0].toLowerCase(), r = p[1].toLowerCase();
@@ -1071,7 +1071,7 @@ document.addEventListener('click', e => {
     const sh = S.sheet; if (!sh || sh.t !== 'snap') return;
     VX.applyDoc(S, sh.doc, V.BY_ID);
     reloadView();
-    const n = Date.now(); ['plan', 'pool', 'settings', 'offers'].forEach(k => { S.mt.m[k] = n; });
+    const n = Date.now(); ['plan', 'pool', 'settings', 'offers', 'bundles'].forEach(k => { S.mt.m[k] = n; });
     ['ratings', 'storeOv', 'checked'].forEach(k => Object.keys(k === 'checked' ? S.checked.map : S[k]).forEach(id => { S.mt[k][id] = n; }));
     Object.keys(S.weeks).forEach(ws => { S.mt.weeks[ws] = n; });
     S.sheet = null; syncIds();
