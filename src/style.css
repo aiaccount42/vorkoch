@@ -367,3 +367,13 @@ input[type=password], input[type=url], input[type=email] { width: 100%; min-heig
 .item.done .ipk { font-weight: 400; }
 .fehlt { flex: none; padding: 5px 10px; border-radius: 999px; background: var(--fill); color: var(--ink2); font-size: 13px; font-weight: 600; }
 .fehlt.on { background: var(--accent); color: var(--accentink); }
+/* Als Nächstes */
+.next { margin-top: 14px; }
+.nrow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 14px; border: 0; background: none; color: var(--ink); text-align: left; font: inherit; }
+.nrow + .nrow { border-top: 1px solid var(--line); }
+button.nrow { cursor: pointer; }
+.nlab { flex: none; width: 84px; font-size: 12.5px; font-weight: 600; color: var(--accentfg); }
+.ntx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ntx b { font-size: 15px; font-weight: 600; line-height: 1.25; }
+.ntx small { font-size: 13px; color: var(--ink2); }
+.sess.nextup { box-shadow: 0 0 0 2px var(--accent); }

@@ -111,6 +111,13 @@ click({ act: 'tab', tab: 'shop' });
   click({ act: 'uncheck' }); console.log('Haken löschen lässt Fehlt stehen:', /Fehlt zuhause/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
   click({ act: 'miss', id }); console.log('Fehlt zurückgenommen:', !/Fehlt zuhause/.test(appEl.innerHTML) && cnt() === n0 ? 'ok' : 'FALSCH'); click({ act: 'hometoggle' });
 }
+// ---- Als Nächstes
+click({ act: 'tab', tab: 'plan' });
+console.log('Als Nächstes sichtbar:', /class="next"/.test(appEl.innerHTML) ? 'ok' : 'FEHLT Als Nächstes');
+{
+  const m = /data-act="nextgo" data-go="([a-z]+)" data-ws="([\d-]+)" data-key="([a-z0-9]*)" data-rid="([a-z_0-9]*)"/.exec(appEl.innerHTML);
+  if (m) { click({ act: 'nextgo', go: m[1], ws: m[2], key: m[3], rid: m[4] }); bad('Als Nächstes Tipp'); click({ act: 'close' }); click({ act: 'tab', tab: 'plan' }); }
+}
 // ---- Wochenraster
 (function () {
   click({ act: 'tab', tab: 'plan' });

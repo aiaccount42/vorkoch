@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sJI6MHca7BArP0cb0cBSO9tcrMz+ixIErc0PA/2lJsQ=' 'sha256-uMUkCsD/MXZKHJWpCIUc1pYrvGeVsCtD5hQ30dOgQVU='; style-src 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; connect-src 'self' https://api.github.com https://*.firebaseio.com https://*.firebasedatabase.app; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-CmBNDPPZHQo4WnTBvbpoIyfl/NtGibkliiKR8AXWxRE=' 'sha256-uMUkCsD/MXZKHJWpCIUc1pYrvGeVsCtD5hQ30dOgQVU='; style-src 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; connect-src 'self' https://api.github.com https://*.firebaseio.com https://*.firebasedatabase.app; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -382,6 +382,16 @@ input[type=password], input[type=url], input[type=email] { width: 100%; min-heig
 .item.done .ipk { font-weight: 400; }
 .fehlt { flex: none; padding: 5px 10px; border-radius: 999px; background: var(--fill); color: var(--ink2); font-size: 13px; font-weight: 600; }
 .fehlt.on { background: var(--accent); color: var(--accentink); }
+/* Als Nächstes */
+.next { margin-top: 14px; }
+.nrow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 14px; border: 0; background: none; color: var(--ink); text-align: left; font: inherit; }
+.nrow + .nrow { border-top: 1px solid var(--line); }
+button.nrow { cursor: pointer; }
+.nlab { flex: none; width: 84px; font-size: 12.5px; font-weight: 600; color: var(--accentfg); }
+.ntx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ntx b { font-size: 15px; font-weight: 600; line-height: 1.25; }
+.ntx small { font-size: 13px; color: var(--ink2); }
+.sess.nextup { box-shadow: 0 0 0 2px var(--accent); }
 </style>
 <div id="app"></div>
 <nav id="tabs" aria-label="Bereiche"><div class="in"><button type="button" data-act="tab" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button type="button" data-act="tab" data-tab="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Einkauf</button><button type="button" data-act="tab" data-tab="cook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h2M20 10h2M9 3c0 1.6 1 1.6 1 3.5M14 3c0 1.6 1 1.6 1 3.5"/></svg>Kochen</button><button type="button" data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Rezepte</button><button type="button" data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Mehr</button></div></nav>
@@ -2394,7 +2404,7 @@ if (typeof module !== 'undefined') module.exports = root.VX;
 const V = window.VK;
 const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const KEY = 'vorkoch.v1';
-const APP_V = '34'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
+const APP_V = '35'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
 const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 
 /* ---------- Zustand ---------- */
@@ -2783,6 +2793,48 @@ function termsCard() {
   h += '</div><div style="height:14px"></div>';
   return h;
 }
+/* Als Nächstes: was heute und in den nächsten Tagen ansteht, quer über diese und die nächste Woche. */
+function dueList() {
+  const t = iso(new Date()), now = new Date(), out = [];
+  [thisSunday(), addDaysIso(thisSunday(), 7)].forEach(ws => {
+    if (!S.weeks[ws]) return;
+    withWeek(ws, () => {
+      if (!B) return;
+      const shopDay = addDaysIso(ws, S.shopAt.day), open = shopAll().filter(x => !S.checked.map[tk(x.id)]).length;
+      if (open && shopDay >= t) out.push({ d: shopDay, o: 1, t: 'Einkaufen', sub: open + ' Artikel', go: 'shop', ws });
+      B.sessions.forEach(s => {
+        const day = addDaysIso(ws, s.day);
+        if (s.thaw.length && addDaysIso(day, -1) >= t) out.push({ d: addDaysIso(day, -1), o: 3, eve: 1, t: s.thaw.join(', ') + ' in den Kühlschrank legen', ws });
+        if (day >= t) out.push({ d: day, o: 2, t: s.rs.map(r => r.short).join(' und ') + ' kochen', sub: V.fmtDur(s.sched.mk), go: 'cook', key: s.key, ws });
+      });
+      const k = now.getDay() + (now.getHours() < 14 ? 'l' : 'd'), c = S.grid[k];
+      if (t >= ws && t <= addDaysIso(ws, 6) && now.getHours() < 21 && c && (c.t === 'p' || c.t === 'f') && c.r && V.BY_ID[c.r]) out.push({ d: t, o: 0, t: MEAL_NAME[k[1]] + ': ' + V.BY_ID[c.r].short, go: 'recipe', rid: c.r, ws });
+    });
+  });
+  return out.sort((a, b) => a.d.localeCompare(b.d) || a.o - b.o);
+}
+// Gestern gegessen und noch nicht bewertet: einmal kurz fragen.
+function unrated() {
+  const y = new Date(); y.setDate(y.getDate() - 1); y.setHours(12, 0, 0, 0);
+  const sun = new Date(y); sun.setDate(y.getDate() - y.getDay());
+  const r = S.weeks[iso(sun)];
+  if (!r) return null;
+  for (const m of ['d', 'l']) { const c = r.grid[y.getDay() + m]; if (c && c.r && V.BY_ID[c.r] && !S.ratings[c.r]) return V.BY_ID[c.r]; }
+  return null;
+}
+function nextCard() {
+  const t = iso(new Date()), tm = addDaysIso(t, 1), all = dueList();
+  let l = all.filter(x => x.d === t).slice(0, 3);
+  if (l.length < 2) l = l.concat(all.filter(x => x.d !== t).slice(0, 2 - l.length));
+  const lab = x => x.d === t ? (x.eve ? 'Heute Abend' : 'Heute') : x.d === tm ? (x.eve ? 'Morgen Abend' : 'Morgen') : fmtDay(x.d);
+  let h = l.map(x => {
+    const body = '<span class="nlab">' + lab(x) + '</span><span class="ntx"><b>' + esc(x.t) + '</b>' + (x.sub ? '<small>' + esc(x.sub) + '</small>' : '') + '</span>';
+    return x.go ? '<button class="nrow" data-act="nextgo" data-go="' + x.go + '" data-ws="' + x.ws + '" data-key="' + (x.key || '') + '" data-rid="' + (x.rid || '') + '">' + body + '</button>' : '<div class="nrow">' + body + '</div>';
+  }).join('');
+  const u = unrated();
+  if (u) h += '<div class="nrow"><span class="nlab">Gestern</span><span class="ntx"><b>' + esc(u.short) + '</b><small>Hat es geschmeckt?</small></span>' + rateBtns(u.id) + '</div>';
+  return h ? '<div class="next"><p class="cap" style="margin:0 2px 6px">Als Nächstes</p><div class="grp">' + h + '</div></div>' : '';
+}
 function viewPlan() {
   const days = weekDays(), st = B.stats;
   const prevWs = addDaysIso(S.weekStart, -7), nextWs = addDaysIso(S.weekStart, 7), dflt = defaultWeek();
@@ -2791,6 +2843,7 @@ function viewPlan() {
   if (S.msg) h += '<p class="alert">' + esc(S.msg) + '</p>';
   if (S.cs && S.cs.auto && S.cs.state === 'err') h += '<p class="alert">Kalender konnte nicht automatisch aktualisiert werden: ' + esc(S.cs.msg) + '</p>';
   if (S.relaxed) h += '<p class="alert">Für deine Regeln gibt es zu wenige aktive Rezepte. Die Mindestzahl vegetarischer Gerichte wurde dieses Mal nicht eingehalten.</p>';
+  h += nextCard();
   h += '<p class="cap" style="margin-left:2px">Essensplan</p>';
   h += '<div class="grp"><div class="dh"><span></span><span>Mittag</span><span>Abend</span></div>';
   for (let d = 0; d < 7; d++) {
@@ -2896,9 +2949,10 @@ function viewCook() {
   const days = weekDays();
   let h = '<h1 class="ltitle">Kochen</h1><p class="lsub">' + weekRange() + ' · Ofen und Herd laufen parallel, damit die Zeit kurz bleibt.</p>';
   if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Diese Woche ist nichts zu kochen. Lege auf der Woche-Seite Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
+  const upcoming = B.sessions.find(s => addDaysIso(S.weekStart, s.day) >= iso(new Date()));
   B.sessions.forEach(s => {
     const dd = days[s.day];
-    h += '<section class="sess"><h3>' + sb(s.fresh ? 0 : s.n) + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
+    h += '<section class="sess' + (s === upcoming ? ' nextup' : '') + '"><h3>' + sb(s.fresh ? 0 : s.n) + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + (s === upcoming ? '<span class="chip neu" style="margin-left:8px">als Nächstes</span>' : '') + '</h3><p class="who">' + esc(cookWho(s)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
     if (s.thaw.length) h += '<p class="thaw">Am Vorabend in den Kühlschrank legen: ' + esc(s.thaw.join(', ')) + '</p>';
     h += gantt(s);
     h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button></div>';
@@ -3421,6 +3475,13 @@ document.addEventListener('click', e => {
   }
   else if (act === 'hometoggle') { S.homeOpen = !S.homeOpen; render(); }
   else if (act === 'miss') { const k = missKey(b.dataset.id); S.checked.map[k] = !S.checked.map[k]; touchKey('checked', k); save(); render(); }
+  else if (act === 'nextgo') {
+    const d = b.dataset;
+    if (d.ws !== S.weekStart) openWeek(d.ws);
+    if (d.go === 'shop') setTab('shop');
+    else if (d.go === 'cook') { S.sheet = { t: 'cook', key: d.key }; S.ci = 0; lockScreen(true); render(); }
+    else { S.sheet = { t: 'recipe', id: d.rid }; render(); }
+  }
   else if (act === 'info') { S.info = S.info === b.dataset.id ? '' : b.dataset.id; render(); }
   else if (act === 'shopview') { S.shopView = b.dataset.v === 'laden' ? 'laden' : 'gang'; save(); render(); }
   else if (act === 'store') {

@@ -392,6 +392,48 @@ function termsCard() {
   h += '</div><div style="height:14px"></div>';
   return h;
 }
+/* Als Nächstes: was heute und in den nächsten Tagen ansteht, quer über diese und die nächste Woche. */
+function dueList() {
+  const t = iso(new Date()), now = new Date(), out = [];
+  [thisSunday(), addDaysIso(thisSunday(), 7)].forEach(ws => {
+    if (!S.weeks[ws]) return;
+    withWeek(ws, () => {
+      if (!B) return;
+      const shopDay = addDaysIso(ws, S.shopAt.day), open = shopAll().filter(x => !S.checked.map[tk(x.id)]).length;
+      if (open && shopDay >= t) out.push({ d: shopDay, o: 1, t: 'Einkaufen', sub: open + ' Artikel', go: 'shop', ws });
+      B.sessions.forEach(s => {
+        const day = addDaysIso(ws, s.day);
+        if (s.thaw.length && addDaysIso(day, -1) >= t) out.push({ d: addDaysIso(day, -1), o: 3, eve: 1, t: s.thaw.join(', ') + ' in den Kühlschrank legen', ws });
+        if (day >= t) out.push({ d: day, o: 2, t: s.rs.map(r => r.short).join(' und ') + ' kochen', sub: V.fmtDur(s.sched.mk), go: 'cook', key: s.key, ws });
+      });
+      const k = now.getDay() + (now.getHours() < 14 ? 'l' : 'd'), c = S.grid[k];
+      if (t >= ws && t <= addDaysIso(ws, 6) && now.getHours() < 21 && c && (c.t === 'p' || c.t === 'f') && c.r && V.BY_ID[c.r]) out.push({ d: t, o: 0, t: MEAL_NAME[k[1]] + ': ' + V.BY_ID[c.r].short, go: 'recipe', rid: c.r, ws });
+    });
+  });
+  return out.sort((a, b) => a.d.localeCompare(b.d) || a.o - b.o);
+}
+// Gestern gegessen und noch nicht bewertet: einmal kurz fragen.
+function unrated() {
+  const y = new Date(); y.setDate(y.getDate() - 1); y.setHours(12, 0, 0, 0);
+  const sun = new Date(y); sun.setDate(y.getDate() - y.getDay());
+  const r = S.weeks[iso(sun)];
+  if (!r) return null;
+  for (const m of ['d', 'l']) { const c = r.grid[y.getDay() + m]; if (c && c.r && V.BY_ID[c.r] && !S.ratings[c.r]) return V.BY_ID[c.r]; }
+  return null;
+}
+function nextCard() {
+  const t = iso(new Date()), tm = addDaysIso(t, 1), all = dueList();
+  let l = all.filter(x => x.d === t).slice(0, 3);
+  if (l.length < 2) l = l.concat(all.filter(x => x.d !== t).slice(0, 2 - l.length));
+  const lab = x => x.d === t ? (x.eve ? 'Heute Abend' : 'Heute') : x.d === tm ? (x.eve ? 'Morgen Abend' : 'Morgen') : fmtDay(x.d);
+  let h = l.map(x => {
+    const body = '<span class="nlab">' + lab(x) + '</span><span class="ntx"><b>' + esc(x.t) + '</b>' + (x.sub ? '<small>' + esc(x.sub) + '</small>' : '') + '</span>';
+    return x.go ? '<button class="nrow" data-act="nextgo" data-go="' + x.go + '" data-ws="' + x.ws + '" data-key="' + (x.key || '') + '" data-rid="' + (x.rid || '') + '">' + body + '</button>' : '<div class="nrow">' + body + '</div>';
+  }).join('');
+  const u = unrated();
+  if (u) h += '<div class="nrow"><span class="nlab">Gestern</span><span class="ntx"><b>' + esc(u.short) + '</b><small>Hat es geschmeckt?</small></span>' + rateBtns(u.id) + '</div>';
+  return h ? '<div class="next"><p class="cap" style="margin:0 2px 6px">Als Nächstes</p><div class="grp">' + h + '</div></div>' : '';
+}
 function viewPlan() {
   const days = weekDays(), st = B.stats;
   const prevWs = addDaysIso(S.weekStart, -7), nextWs = addDaysIso(S.weekStart, 7), dflt = defaultWeek();
@@ -400,6 +442,7 @@ function viewPlan() {
   if (S.msg) h += '<p class="alert">' + esc(S.msg) + '</p>';
   if (S.cs && S.cs.auto && S.cs.state === 'err') h += '<p class="alert">Kalender konnte nicht automatisch aktualisiert werden: ' + esc(S.cs.msg) + '</p>';
   if (S.relaxed) h += '<p class="alert">Für deine Regeln gibt es zu wenige aktive Rezepte. Die Mindestzahl vegetarischer Gerichte wurde dieses Mal nicht eingehalten.</p>';
+  h += nextCard();
   h += '<p class="cap" style="margin-left:2px">Essensplan</p>';
   h += '<div class="grp"><div class="dh"><span></span><span>Mittag</span><span>Abend</span></div>';
   for (let d = 0; d < 7; d++) {
@@ -505,9 +548,10 @@ function viewCook() {
   const days = weekDays();
   let h = '<h1 class="ltitle">Kochen</h1><p class="lsub">' + weekRange() + ' · Ofen und Herd laufen parallel, damit die Zeit kurz bleibt.</p>';
   if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Diese Woche ist nichts zu kochen. Lege auf der Woche-Seite Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
+  const upcoming = B.sessions.find(s => addDaysIso(S.weekStart, s.day) >= iso(new Date()));
   B.sessions.forEach(s => {
     const dd = days[s.day];
-    h += '<section class="sess"><h3>' + sb(s.fresh ? 0 : s.n) + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + '</h3><p class="who">' + esc(cookWho(s)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
+    h += '<section class="sess' + (s === upcoming ? ' nextup' : '') + '"><h3>' + sb(s.fresh ? 0 : s.n) + dd.n + ' ' + dd.date + (s.fresh ? ' · ' + MEAL_NAME[s.cell[1]] + ' frisch' : '') + (s === upcoming ? '<span class="chip neu" style="margin-left:8px">als Nächstes</span>' : '') + '</h3><p class="who">' + esc(cookWho(s)) + ' · ' + V.fmtDur(s.sched.mk) + ' gesamt, ' + V.fmtDur(s.sched.active) + ' aktiv · ' + esc(s.dev.join(' und ')) + '</p>';
     if (s.thaw.length) h += '<p class="thaw">Am Vorabend in den Kühlschrank legen: ' + esc(s.thaw.join(', ')) + '</p>';
     h += gantt(s);
     h += '<div class="actions"><button class="btn" data-act="cookstart" data-key="' + s.key + '">Kochmodus starten</button></div>';
@@ -1030,6 +1074,13 @@ document.addEventListener('click', e => {
   }
   else if (act === 'hometoggle') { S.homeOpen = !S.homeOpen; render(); }
   else if (act === 'miss') { const k = missKey(b.dataset.id); S.checked.map[k] = !S.checked.map[k]; touchKey('checked', k); save(); render(); }
+  else if (act === 'nextgo') {
+    const d = b.dataset;
+    if (d.ws !== S.weekStart) openWeek(d.ws);
+    if (d.go === 'shop') setTab('shop');
+    else if (d.go === 'cook') { S.sheet = { t: 'cook', key: d.key }; S.ci = 0; lockScreen(true); render(); }
+    else { S.sheet = { t: 'recipe', id: d.rid }; render(); }
+  }
   else if (act === 'info') { S.info = S.info === b.dataset.id ? '' : b.dataset.id; render(); }
   else if (act === 'shopview') { S.shopView = b.dataset.v === 'laden' ? 'laden' : 'gang'; save(); render(); }
   else if (act === 'store') {
