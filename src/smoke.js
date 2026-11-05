@@ -78,8 +78,7 @@ bad('40 Würfe');
 const ids = V_IDS; const _x = ['dal', 'shakshuka', 'tofucurry', 'halloumi', 'ofengemuese', 'frittata', 'linsensuppe', 'lachs_bulgur', 'lachs_curry', 'garnelen_pasta', 'ofenhaehnchen'];
 click({ act: 'tab', tab: 'recipes' }); bad('rezepte');
 click({ act: 'poolnone' }); bad('alle ab'); click({ act: 'copysel' }); click({ act: 'poolall' });
-chg({ dataset: { pool: 'dal' }, checked: false, closest: () => null, matches: () => false });
-chg({ dataset: { pool: 'dal' }, checked: true, closest: () => null, matches: () => false });
+click({ act: 'ftoggle' }); console.log('Filter klappen auf:', /data-act="country"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH'); click({ act: 'filter', f: 'veg' }); console.log('Filter zählt:', /Filter · 1/.test(appEl.innerHTML) ? 'ok' : 'FALSCH'); click({ act: 'freset' }); click({ act: 'ftoggle' }); console.log('Filter zu:', !/data-act="country"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
 ids.forEach(id => click({ act: 'pool', rid: id }));
 click({ act: 'tab', tab: 'plan' }); click({ act: 'reroll' }); bad('Pool klein');
 console.log(appEl.innerHTML.includes('weniger als fünf') ? 'Pool-Meldung sichtbar' : 'KEINE Pool-Meldung');
@@ -225,7 +224,7 @@ console.log('Als Nächstes sichtbar:', /class="next"/.test(appEl.innerHTML) ? 'o
   click({ act: 'reroll' }); bad('reroll Motto');
   click({ act: 'tab', tab: 'recipes' }); click({ act: 'country', c: 'Thailand' }); bad('Land');
   console.log(/Kokossuppe|Thai-Hack|Thai/.test(appEl.innerHTML) && !/Cacciatore/.test(appEl.innerHTML) ? 'Länderfilter ok' : 'FEHLT Länderfilter');
-  click({ act: 'country', c: '' }); click({ act: 'carb', c: 'Kartoffel' }); bad('Beilage'); console.log(/Kartoffelpfanne/.test(appEl.innerHTML) && !/Linsen-Dal/.test(appEl.innerHTML) ? 'Beilagenfilter ok' : 'FEHLT Beilagenfilter'); click({ act: 'carb', c: '' }); click({ act: 'filter', f: 'rewe' }); console.log(/Pilzgulasch/.test(appEl.innerHTML) && !/Linsen-Dal/.test(appEl.innerHTML) ? 'REWE-Filter ok' : 'FEHLT REWE-Filter'); click({ act: 'filter', f: 'all' });
+  click({ act: 'country', c: '' }); click({ act: 'carb', c: 'Kartoffel' }); bad('Beilage'); console.log(/Kartoffelpfanne/.test(appEl.innerHTML) && !/Linsen-Dal/.test(appEl.innerHTML) ? 'Beilagenfilter ok' : 'FEHLT Beilagenfilter'); click({ act: 'carb', c: '' }); click({ act: 'filter', f: 'rewe' }); console.log(/Rindergulasch mit Pilzen/.test(appEl.innerHTML) && !/Linsen-Dal/.test(appEl.innerHTML) ? 'REWE-Filter ok' : 'FEHLT REWE-Filter'); click({ act: 'filter', f: 'all' });
   click({ act: 'tab', tab: 'settings' }); bad('Kalender neu');
   els.calrepo = { value: 'https://github.com/roman/vorkoch.git' }; els.caltok = { value: 'github_pat_BAD' };
   click({ act: 'calsetup' }); console.log(/Token aus|nicht nach einem GitHub-Token/.test(appEl.innerHTML) ? 'falscher Token abgelehnt ok' : 'FEHLT Tokenprüfung');

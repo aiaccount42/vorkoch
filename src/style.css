@@ -377,3 +377,4 @@ button.nrow { cursor: pointer; }
 .ntx b { font-size: 15px; font-weight: 600; line-height: 1.25; }
 .ntx small { font-size: 13px; color: var(--ink2); }
 .sess.nextup { box-shadow: 0 0 0 2px var(--accent); }
+.filters.wrap { flex-wrap: wrap; overflow: visible; margin: 0; padding: 2px 0 6px; }

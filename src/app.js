@@ -71,9 +71,9 @@ function load() {
   }
   return d;
 }
-const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs', 'undo', 'info', 'homeOpen'];
+const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs', 'undo', 'info', 'homeOpen', 'fopen'];
 let S = load();
-function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; S.undo = null; S.info = ''; S.homeOpen = false; }
+function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; S.undo = null; S.info = ''; S.homeOpen = false; S.fopen = false; }
 resetTransient();
 let calTimer = null, calBusy = false, calFail = 0;
 function save() { saveLocal(); schedSync(); calSoon(); }
@@ -614,22 +614,25 @@ function recipeList() {
     l.forEach(r => {
       const off = S.disabled.includes(r.id);
       h += '<div class="rrow' + (off ? ' offrec' : '') + '">' + dishThumb(r) + '<button class="open" data-act="recipe" data-rid="' + r.id + '"><b>' + esc(r.name) + (r.isNew ? '<span class="chip neu">neu</span>' : '') + (r.src ? '<span class="chip neu" style="background:var(--fill);color:var(--ink2)">REWE</span>' : '') + '</b>' +
-        '<small>' + esc(r.country === r.cuisine ? r.country : r.country + ' · ' + r.cuisine) + ' · ' + Math.round(r.nu.p) + ' g Protein · ' + V.fmtDur(V.sched([r]).mk) + (r.spec.length ? ' · Spezialzutat' : '') + '</small></button>' +
-        '<label class="sw"><input type="checkbox" data-pool="' + r.id + '"' + (off ? '' : ' checked') + ' aria-label="' + esc(r.short) + ' vorschlagen"><i></i></label></div>';
+        '<small>' + esc(r.cuisine) + ' · ' + V.fmtDur(V.sched([r]).mk) + ' · ' + Math.round(r.nu.p) + ' g Protein' + (r.spec.length ? ' · Spezialzutat' : '') + (off ? ' · nicht vorgeschlagen' : '') + '</small></button></div>';
     });
     h += '</div>';
   });
   return h;
 }
 function viewRecipes() {
-  const FIL = [['all', 'Alle'], ['new', 'Neu'], ['rewe', 'REWE Rezeptideen'], ['veg', 'Vegetarisch'], ['fisch', 'Fisch'], ['fleisch', 'Fleisch'], ['off', 'Abgewählt']];
-  let h = '<h1 class="ltitle">Rezepte</h1><p class="lsub"><span id="poolcnt">' + pool().length + ' von ' + V.RECIPES.length + '</span> werden vorgeschlagen. Schalter an heißt: darf geplant werden.</p>';
+  const FIL = [['all', 'Alle'], ['new', 'Neu'], ['rewe', 'REWE Rezeptideen'], ['veg', 'Vegetarisch'], ['fisch', 'Fisch'], ['fleisch', 'Fleisch'], ['off', 'Nicht vorgeschlagen']];
+  const active = (S.filter !== 'all' ? 1 : 0) + (S.carb ? 1 : 0) + (S.country ? 1 : 0);
+  let h = '<h1 class="ltitle">Rezepte</h1><p class="lsub">' + pool().length + ' von ' + V.RECIPES.length + ' werden vorgeschlagen.</p>';
   h += '<div class="search"><input type="search" id="q" placeholder="Suchen, zum Beispiel Linsen oder Indisch" value="' + esc(S.q) + '" aria-label="Rezepte suchen"></div>';
-  h += '<div class="filters" role="group" aria-label="Filter" style="margin-top:10px">' + FIL.map(([k, l]) => '<button data-act="filter" data-f="' + k + '" aria-pressed="' + (S.filter === k) + '">' + l + '</button>').join('') + '</div>';
-  h += '<div class="filters" role="group" aria-label="Kohlenhydratquelle" style="margin-top:2px"><button data-act="carb" data-c="" aria-pressed="' + (!S.carb) + '">Alle Beilagen</button>' + CARBS.map(c => '<button data-act="carb" data-c="' + c + '" aria-pressed="' + (S.carb === c) + '">' + c + ' ' + V.RECIPES.filter(r => carbOf(r) === c).length + '</button>').join('') + '</div>';
-  h += '<div class="filters" role="group" aria-label="Land oder Region" style="margin-top:2px"><button data-act="country" data-c="" aria-pressed="' + (!S.country) + '">Alle Länder</button>' + V.countries().map(c => '<button data-act="country" data-c="' + esc(c.name) + '" aria-pressed="' + (S.country === c.name) + '">' + esc(c.name) + ' ' + c.n + '</button>').join('') + '</div>';
+  h += '<div class="flex" style="margin-top:10px;justify-content:space-between"><button class="btn sm gray" data-act="ftoggle" aria-expanded="' + !!S.fopen + '">Filter' + (active ? ' · ' + active : '') + '</button>' + (active ? '<button class="lnk" data-act="freset">Zurücksetzen</button>' : '') + '</div>';
+  if (S.fopen) {
+    h += '<p class="cap">Art</p><div class="filters wrap" role="group" aria-label="Art">' + FIL.map(([k, l]) => '<button data-act="filter" data-f="' + k + '" aria-pressed="' + (S.filter === k) + '">' + l + '</button>').join('') + '</div>';
+    h += '<p class="cap">Beilage</p><div class="filters wrap" role="group" aria-label="Beilage"><button data-act="carb" data-c="" aria-pressed="' + (!S.carb) + '">Alle</button>' + CARBS.map(c => '<button data-act="carb" data-c="' + c + '" aria-pressed="' + (S.carb === c) + '">' + c + ' ' + V.RECIPES.filter(r => carbOf(r) === c).length + '</button>').join('') + '</div>';
+    h += '<p class="cap">Land</p><div class="filters wrap" role="group" aria-label="Land oder Region"><button data-act="country" data-c="" aria-pressed="' + (!S.country) + '">Alle</button>' + V.countries().map(c => '<button data-act="country" data-c="' + esc(c.name) + '" aria-pressed="' + (S.country === c.name) + '">' + esc(c.name) + ' ' + c.n + '</button>').join('') + '</div>';
+    h += '<div class="actions"><button class="btn gray" data-act="poolall">Alle vorschlagen</button><button class="btn gray" data-act="poolnone">Keine vorschlagen</button><button class="btn gray" data-act="copysel">Auswahl kopieren</button></div><div id="copybox"></div>';
+  }
   h += '<div id="rlist">' + recipeList() + '</div>';
-  h += '<div class="actions"><button class="btn gray" data-act="poolall">Alle aufnehmen</button><button class="btn gray" data-act="poolnone">Alle abwählen</button><button class="btn gray" data-act="copysel">Auswahl kopieren</button></div><div id="copybox"></div>';
   h += '<p class="foot">Koriander, Innereien und scharfe Gerichte sind ausgeschlossen.</p>';
   return h;
 }
@@ -1026,6 +1029,8 @@ document.addEventListener('click', e => {
     S.tadj[id] = Math.max(1, Math.min(240, cur + (+b.dataset.d) * (cur >= 20 ? 5 : 1))); render();
   }
   else if (act === 'timerstop') { S.timers = (S.timers || []).filter(x => x.id !== b.dataset.id); render(); }
+  else if (act === 'ftoggle') { S.fopen = !S.fopen; render(); }
+  else if (act === 'freset') { S.filter = 'all'; S.carb = ''; S.country = ''; render(); }
   else if (act === 'filter') { S.filter = b.dataset.f; render(); }
   else if (act === 'carb') { S.carb = b.dataset.c || ''; render(); }
   else if (act === 'country') { S.country = b.dataset.c || ''; render(); }
@@ -1171,14 +1176,7 @@ document.addEventListener('change', e => {
   } else if (t.dataset && t.dataset.motto !== undefined) {
     S.motto = t.value && V.countries().some(c => c.name === t.value) ? t.value : ''; touch('settings'); save(); render();
   } else if (t.id === 'syncurl') { /* wird beim Verbinden gelesen */ }
-  else if (t.dataset && t.dataset.pool) {
-    const id = t.dataset.pool, k = S.disabled.indexOf(id);
-    if (t.checked && k >= 0) S.disabled.splice(k, 1); else if (!t.checked && k < 0) S.disabled.push(id);
-    touch('pool');
-    const w = t.closest('.rrow'); if (w) w.classList.toggle('offrec', !t.checked);
-    const c = document.getElementById('poolcnt'); if (c) c.textContent = pool().length + ' von ' + V.RECIPES.length;
-    save();
-  } else if (t.matches('input[type=checkbox][data-key]')) {
+  else if (t.matches('input[type=checkbox][data-key]')) {
     S.checked.map[tk(t.dataset.key)] = t.checked; touchKey('checked', tk(t.dataset.key));
     const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
     const items = shopAll(), n = items.filter(x => S.checked.map[tk(x.id)]).length, pr = document.getElementById('prog'), pb = document.getElementById('pbar');
