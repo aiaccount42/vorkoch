@@ -53,7 +53,7 @@ function load() {
   // Umstieg: offene Eigene Artikel werden eine Runde „Sonstiges“ (alle 4 Wochen)
   if (Array.isArray(d.extra)) {
     const open = d.extra.filter(x => !x.d).map(x => x.n);
-    if (open.length) d.bundles.push({ id: 'b' + Date.now().toString(36), n: 'Sonstiges', items: open.join(', '), every: 4, last: '' });
+    if (open.length) { d.bundles.push({ id: 'b' + Date.now().toString(36), n: 'Sonstiges', items: open.join(', '), every: 4, last: '' }); d.mt.m.bundles = Date.now(); }
     d.extra = [];
   }
   if (!d.weeks || typeof d.weeks !== 'object' || Array.isArray(d.weeks)) d.weeks = {};
@@ -988,8 +988,8 @@ document.addEventListener('click', e => {
     if (k >= 0) S.disabled.splice(k, 1); else S.disabled.push(id);
     touch('pool'); save(); render();
   }
-  else if (act === 'uncheck') { clearTicks(S.weekStart); (S.bundles || []).forEach(x => { x.last = ''; }); save(); render(); }
-  else if (act === 'bdel') { S.bundles = (S.bundles || []).filter(x => x.id !== b.dataset.id); saveLocal(); render(); }
+  else if (act === 'uncheck') { clearTicks(S.weekStart); (S.bundles || []).forEach(x => { x.last = ''; }); touch('bundles'); save(); render(); }
+  else if (act === 'bdel') { S.bundles = (S.bundles || []).filter(x => x.id !== b.dataset.id); touch('bundles'); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
   else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
@@ -1117,7 +1117,7 @@ document.addEventListener('change', e => {
     save();
   } else if (t.matches('input[type=checkbox][data-bkey]')) {
     const x = (S.bundles || []).find(e => e.id === t.dataset.bkey); if (x) x.last = t.checked ? iso(new Date()) : '';
-    saveLocal(); render();
+    touch('bundles'); save(); render();
   } else if (t.matches('input[type=checkbox][data-key]')) {
     S.checked.map[tk(t.dataset.key)] = t.checked; touchKey('checked', tk(t.dataset.key));
     const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
@@ -1151,7 +1151,7 @@ document.addEventListener('submit', e => {
     if (!n || !items) return;
     if (!Array.isArray(S.bundles)) S.bundles = [];
     S.bundles.push({ id: 'b' + Date.now().toString(36) + Math.floor(Math.random() * 1000), n, items, every, last: '' });
-    saveLocal(); render();
+    touch('bundles'); save(); render();
     const nx = document.getElementById('bn'); if (nx) { try { nx.focus(); } catch (x) { /* egal */ } }
   }
 });

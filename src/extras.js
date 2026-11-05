@@ -111,7 +111,7 @@ function decodeShare(hash) {
 /* ---------- Abgleich ----------
    Zustand S hat Zeitstempel in S.mt: m = {plan, pool, settings, offers}, ratings/storeOv/checked = {id: ms}.
    Dokument: Abschnitte mit Zeitstempel, Schlüssel-Maps mit [Wert, Zeit]. Der neuere Abschnitt gewinnt, Maps werden pro Eintrag gemischt. */
-const SECTIONS = ['plan', 'pool', 'settings', 'offers'];
+const SECTIONS = ['plan', 'pool', 'settings', 'offers', 'bundles'];
 function mapTo(vals, times) { const o = {}; Object.keys(vals || {}).forEach(k => { o[k] = [vals[k], (times && times[k]) || 0]; }); return o; }
 function toDoc(S) {
   const mt = S.mt || { m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} };
@@ -122,6 +122,7 @@ function toDoc(S) {
     pool: { disabled: S.disabled },
     settings: { settings: S.settings, diversity: S.diversity, motto: S.motto || '', cal: S.cal || null },
     offers: S.offers || '',
+    bundles: S.bundles || [],
     ratings: mapTo(S.ratings, mt.ratings), storeOv: mapTo(S.storeOv, mt.storeOv),
     checked: { key: '', map: mapTo(S.checked.map, mt.checked) }
   };
@@ -181,6 +182,8 @@ function cleanWeek(rec, isId) {
   const shopAt = { day: sa.day, time: typeof sa.time === 'string' ? sa.time : '' }; if (/^[01]$/.test(sa.w || '')) shopAt.w = sa.w;
   return { grid: g, sess, shopAt, key: String(rec.key || '').slice(0, 400), relaxed: !!rec.relaxed };
 }
+// Haushalt-Runden: nur gültige Einträge übernehmen.
+const validBundle = b => !!b && typeof b === 'object' && /^[a-z0-9]{1,30}$/i.test(b.id) && typeof b.n === 'string' && b.n.length > 0 && typeof b.items === 'string' && Number.isInteger(b.every) && b.every >= 1 && b.every <= 52 && (b.last === '' || DATE_RE.test(b.last));
 function applyDoc(S, doc, known) {
   if (!doc || doc.v !== 2) return false;
   const isId = id => typeof id === 'string' && known[id];
@@ -217,6 +220,7 @@ function applyDoc(S, doc, known) {
   }
   if (doc.settings && doc.settings.diversity != null) S.diversity = num(doc.settings.diversity, 0, 1, S.diversity);
   if (typeof doc.offers === 'string') S.offers = doc.offers.slice(0, 600);
+  if (Array.isArray(doc.bundles)) S.bundles = doc.bundles.filter(validBundle).slice(0, 50).map(b => ({ id: b.id, n: b.n.slice(0, 30), items: b.items.slice(0, 200), every: b.every, last: b.last }));
   S.ratings = {}; S.mt.ratings = {};
   Object.keys(doc.ratings || {}).forEach(k => { const x = doc.ratings[k]; if (isId(k) && Array.isArray(x) && (x[0] === 1 || x[0] === -1 || x[0] === 0)) { S.ratings[k] = x[0]; S.mt.ratings[k] = x[1] || 0; } });
   S.storeOv = {}; S.mt.storeOv = {};
@@ -232,7 +236,7 @@ function applyDoc(S, doc, known) {
 /* Firebase löscht leere Arrays und leere Objekte. Deshalb gehen Pläne, Pool und Einstellungen als Text über die Leitung. */
 function pack(doc) {
   const w = Object.assign({}, doc);
-  ['plan', 'pool', 'settings'].forEach(k => { w[k] = JSON.stringify(doc[k] === undefined ? null : doc[k]); });
+  ['plan', 'pool', 'settings', 'bundles'].forEach(k => { w[k] = JSON.stringify(doc[k] === undefined ? null : doc[k]); });
   w.weeks = {};
   Object.keys(doc.weeks || {}).forEach(ws => { const e = doc.weeks[ws]; if (Array.isArray(e)) w.weeks[ws] = [JSON.stringify(e[0]), e[1] || 0]; });
   return w;
@@ -251,7 +255,7 @@ function upgrade1(d) {
 function unpack(w) {
   if (!w || typeof w !== 'object' || (w.v !== 1 && w.v !== 2)) return null;
   const d = Object.assign({}, w);
-  try { ['plan', 'pool', 'settings'].forEach(k => { d[k] = typeof w[k] === 'string' ? JSON.parse(w[k]) : w[k]; }); } catch (e) { return null; }
+  try { ['plan', 'pool', 'settings', 'bundles'].forEach(k => { d[k] = typeof w[k] === 'string' ? JSON.parse(w[k]) : w[k]; }); } catch (e) { return null; }
   d.m = d.m && typeof d.m === 'object' ? d.m : {};
   d.ratings = d.ratings || {}; d.storeOv = d.storeOv || {};
   d.checked = d.checked && typeof d.checked === 'object' ? { key: String(d.checked.key || ''), map: d.checked.map || {} } : { key: '', map: {} };

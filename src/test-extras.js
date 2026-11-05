@@ -66,6 +66,17 @@ assert.ok(X.same(X.toDoc(R), X.toDoc(R2)));
   const T7 = base(); T7.weeks = {}; X.applyDoc(T7, d, known);
   assert.ok(T7.weeks[WS] && T7.weeks[WS].key === 'k1'); assert.deepStrictEqual(Object.keys(T7.checked.map).sort(), [WS + '|skyr', WS + '|v_salz']); assert.deepStrictEqual(T7.history, [['dal']]);
 }
+// 7c) Haushalt-Runden wandern mit, der neuere Stand gewinnt, ungültige Einträge fallen raus
+{
+  const B1 = base(); B1.bundles = [{ id: 'b1', n: 'Küche', items: 'Küchenrolle, Spülmittel', every: 4, last: '2026-10-20' }]; B1.mt.m.bundles = 100;
+  const B2 = base(); B2.bundles = [{ id: 'b2', n: 'Bad', items: 'Klopapier', every: 2, last: '' }]; B2.mt.m.bundles = 50;
+  const T = X.applyDoc, got = base(); T(got, X.unpack(X.pack(X.toDoc(B1))), known);
+  assert.deepStrictEqual(got.bundles, B1.bundles);
+  const mg = X.merge(X.toDoc(B1), X.toDoc(B2)); assert.deepStrictEqual(mg.bundles, B1.bundles);
+  const mg2 = X.merge(X.toDoc(B2), X.toDoc(B1)); assert.ok(X.same(mg, mg2));
+  const bad = X.toDoc(B1); bad.bundles = [B1.bundles[0], { id: '<x>', n: 'x', items: 'x', every: 4, last: '' }, { id: 'b3', n: 'y', items: 'y', every: 99, last: '' }, { id: 'b4', n: 'z', items: 'z', every: 4, last: 'kaputt' }];
+  const got2 = base(); T(got2, X.unpack(X.pack(bad)), known); assert.deepStrictEqual(got2.bundles, B1.bundles);
+}
 // 8) Teilen per Link
 const h = X.encodeShare('s', { a: 'Äpfel & Öl €', n: [1, 2] }), dd = X.decodeShare(h);
 assert.strictEqual(dd.kind, 's'); assert.strictEqual(dd.data.a, 'Äpfel & Öl €'); assert.strictEqual(X.decodeShare('#s=!!!'), null); assert.strictEqual(X.decodeShare('#x=abc'), null);
