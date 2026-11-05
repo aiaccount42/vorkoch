@@ -366,6 +366,12 @@ input[type=password], input[type=url], input[type=email] { width: 100%; min-heig
 .tchip.sess .dl { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; white-space: normal; margin-left: 25px; }
 .tchip.sess .dl .dot { margin-right: 5px; width: 9px; height: 9px; }
 .sess h3 { display: flex; align-items: center; }
+
+/* Mengen im Kochmodus */
+.cm-amt { background: var(--card); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); display: grid; gap: 6px; }
+.cm-amt p { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--ink2); }
+.cm-amt ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.cm-amt li { font-size: 16px; font-weight: 600; line-height: 1.3; }
 </style>
 <div id="app"></div>
 <nav id="tabs" aria-label="Bereiche"><div class="in"><button type="button" data-act="tab" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button type="button" data-act="tab" data-tab="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Einkauf</button><button type="button" data-act="tab" data-tab="cook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h2M20 10h2M9 3c0 1.6 1 1.6 1 3.5M14 3c0 1.6 1 1.6 1 3.5"/></svg>Kochen</button><button type="button" data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Rezepte</button><button type="button" data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Mehr</button></div></nav>
@@ -1754,6 +1760,51 @@ function remapGrid(grid, sess) {
   return placeTokens(g, sess, tokens);
 }
 
+
+/* ---------- Mengen im Kochmodus ----------
+   Jeder Schritt zeigt die Zutaten, die er nennt, in der Menge für diese Woche (factor = Vielfaches des Rezepts, 1 = 4 Portionen).
+   Eine Zutat erscheint nur im ersten Schritt, der sie nennt. Was kein Schritt nennt (Beilage, Gewürz), steht im letzten Schritt des Gerichts. */
+const MATCH_SKIP = new Set(['dose', 'pulver', 'frisch', 'mild', 'vollkorn', 'ohne', 'zucker', 'braune', 'rote', 'abgetropft', 'edelsüß', 'stück', 'gehackt']);
+const MATCH_EXTRA = { olivenoel: ['öl'], bruehe: ['brühe'], knoblauch: ['knoblauch', 'knofi'], lasagne: ['platte'], curry: ['curry'] };
+const MATCH_LOOSE = { zitrone: 1 };
+const SPICES = ['paprikapulver', 'kreuzkuemmel', 'oregano', 'zimt', 'kurkuma', 'garammasala', 'curry', 'currypaste'];
+const matchCache = {};
+function ingMatcher(id) {
+  if (matchCache[id]) return matchCache[id];
+  const g = ING[id], ks = new Set(MATCH_EXTRA[id] || []), strip = w => w.replace(/(en|n|e)$/, '');
+  g.n.toLowerCase().split(/[^a-zäöüß]+/).filter(w => w.length >= 3 && !MATCH_SKIP.has(w)).forEach(w => ks.add(strip(w)));
+  (g.al || []).forEach(a => ks.add(strip(a.toLowerCase())));
+  return (matchCache[id] = new RegExp('(^|[^a-zäöüß])(' + [...ks].map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')[a-zäöüß]{0,' + (MATCH_LOOSE[id] ? 9 : 3) + '}(?![a-zäöüß])', 'i'));
+}
+function amtText(id, a) {
+  const g = ING[id];
+  if (g.unit === 'g' || g.unit === 'ml') return fmtAmt(id, a);
+  const n = Math.round(a * 4) / 4;
+  return g.fm ? g.fm(Number.isInteger(n) ? n : fmtQ(n)) : fmtQ(n) + ' ' + g.unit + ' ' + g.n;
+}
+// evs: Ereignisse eines Kochtermins (mit rid und t), factorOf(rid) liefert den Faktor. Ergebnis je Ereignis: { items: [Text], extra: [Text] }
+function stepAmounts(evs, factorOf) {
+  const used = {}, last = {}, out = evs.map(() => ({ items: [], extra: [] }));
+  evs.forEach((e, i) => { last[e.rid] = i; });
+  evs.forEach((e, i) => {
+    const r = BY_ID[e.rid]; if (!r) return;
+    const u = used[e.rid] = used[e.rid] || new Set(), f = factorOf(e.rid) || 1, txt = e.t || '';
+    const spice = /gewürz/i.test(txt);
+    r.i.forEach(([id, amt]) => {
+      if (u.has(id) || !ING[id]) return;
+      if (ingMatcher(id).test(txt) || (spice && SPICES.includes(id))) {
+        u.add(id); out[i].items.push(amtText(id, amt * f));
+        if (id === 'reis' && /aufsetzen|kochen|garen/i.test(txt)) out[i].items.push('Wasser ca. ' + (Math.round(amt * f * 2 / 50) * 50 >= 1000 ? (Math.round(amt * f * 2 / 50) * 50 / 1000).toString().replace('.', ',') + ' l' : Math.round(amt * f * 2 / 50) * 50 + ' ml'));
+      }
+    });
+  });
+  Object.keys(last).forEach(rid => {
+    const r = BY_ID[rid], f = factorOf(rid) || 1; if (!r) return;
+    r.i.forEach(([id, amt]) => { if (!(used[rid] && used[rid].has(id)) && ING[id]) out[last[rid]].extra.push(amtText(id, amt * f)); });
+  });
+  return out;
+}
+
 function buildWeek(grid, sessIn, st) {
   const counts = dishCounts(grid);
   const ids = Object.keys(counts);
@@ -1782,7 +1833,7 @@ function buildWeek(grid, sessIn, st) {
   return { rs: rsAll, prepIds: lay.groups.flat().map(r => r.id), counts, sessions, shop: sh, stats: { mk, packs, rests, avgP, kinds: sh.items.length }, targets, time: lay.time };
 }
 
-root.VK = { countries, ING, RECIPES, BY_ID, AISLES, CELLS, MEAL_MIN, FRESH_AT, DEFAULT_SESS, defaultGrid, copyGrid, cellTime, sessTime, sortSess, dishCounts, layout, sessionSizes, demandSizes, plan, pickFresh, fillGrid, remapGrid, buildWeek, placeTokens, assign, sched, shop, nutri, activeMin, devices, offerHits, fmtQ, fmtAmt, fmtDur, fmtClock, fmtSize, wasteScore };
+root.VK = { countries, ING, RECIPES, BY_ID, AISLES, CELLS, MEAL_MIN, FRESH_AT, DEFAULT_SESS, defaultGrid, copyGrid, cellTime, sessTime, sortSess, dishCounts, layout, sessionSizes, demandSizes, stepAmounts, ingMatcher, plan, pickFresh, fillGrid, remapGrid, buildWeek, placeTokens, assign, sched, shop, nutri, activeMin, devices, offerHits, fmtQ, fmtAmt, fmtDur, fmtClock, fmtSize, wasteScore };
 if (typeof module !== 'undefined') module.exports = root.VK;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -3003,7 +3054,7 @@ function sheetHtml() {
       '<div class="cm-top" style="padding:0 max(16px, env(safe-area-inset-left, 0px))">' + ev.map((_, k) => '<i class="' + (k <= i ? 'on' : '') + '"></i>').join('') + '</div>' +
       '<div class="cm-body">' + timersHtml() + '<div class="cm-clock">' + (e.start < 1 ? 'Zu Beginn' : 'Nach ' + V.fmtDur(e.start)) + '</div>' +
       '<div class="cm-dish">' + dot(di) + esc(e.rs) + (multi ? ' · ' + esc(e.tn) : '') + '</div>' +
-      '<div class="cm-text">' + esc(e.t) + '</div>' +
+      '<div class="cm-text">' + esc(e.t) + '</div>' + amountsHtml(s, ev, i) +
       '<div class="cm-kind ' + e.k + '">' + (e.k === 'a' ? 'Du bist dran · ' + e.m + ' Min' : 'Läuft von allein · ' + e.m + ' Min') + (e.d ? ' · ' + esc(e.d) : '') + '</div>';
     const tid = s.key + ':' + i, tmin = (S.tadj && S.tadj[tid]) || e.m, own = (S.timers || []).find(x => x.id === tid);
     h += own ? '<p class="sub" style="margin:0">Timer für diesen Schritt läuft oben.</p>' :
@@ -3022,6 +3073,16 @@ function timersHtml() {
     const left = (x.end - Date.now()) / 1000;
     return '<div class="timer' + (left <= 0 ? ' done' : '') + '"><div><div class="sub">' + esc(x.label) + '</div><b data-tmr="' + esc(x.id) + '">' + (left <= 0 ? 'Fertig' : fmtMS(left)) + '</b></div><button class="btn sm gray" data-act="timerstop" data-id="' + esc(x.id) + '">' + (left <= 0 ? 'OK' : 'Stoppen') + '</button></div>';
   }).join('') + '</div>';
+}
+/* Mengen je Kochschritt (Faktor: Zahl der Rezeptansätze dieser Woche; frisch gekocht = halber Ansatz) */
+function amountsHtml(s, ev, i) {
+  const f = rid => s.fresh ? 0.5 : Math.max(1, Math.ceil((B.counts[rid] || 2) / 2));
+  const a = V.stepAmounts(ev, f)[i];
+  if (!a || (!a.items.length && !a.extra.length)) return '';
+  let h = '<div class="cm-amt">';
+  if (a.items.length) h += '<p>Dafür brauchst du</p><ul>' + a.items.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  if (a.extra.length) h += '<p>Dazu, nicht vergessen</p><ul>' + a.extra.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  return h + '</div>';
 }
 function SESS_DAY_NAME(s) { return DAYLONG[s.day] + (s.fresh ? ', frisch' : ''); }
 
