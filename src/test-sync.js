@@ -47,7 +47,7 @@ async function run() {
   // Haken auf 1
   D1.click({ act: 'tab', tab: 'shop' });
   const m = /data-key="([a-z_0-9]+)"/.exec(D1.appEl.innerHTML);
-  D1.chg({ dataset: { key: m[1] }, checked: true, closest: () => null, matches: s => s.includes('checkbox') && !s.includes('xkey') });
+  D1.chg({ dataset: { key: m[1] }, checked: true, closest: () => null, matches: s => s.includes('checkbox') && !s.includes('xkey') && !s.includes('bkey') });
   await D1.fire(); D2.click({ act: 'syncnow' }); await D2.flush();
   ok(D2.st().checked.map[D1.st().weekStart + '|' + m[1]] === true, 'Haken von 1 kommt auf 2 an');
   // Pool: 2 nimmt Rezept raus, 1 sieht es

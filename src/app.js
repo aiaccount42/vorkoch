@@ -12,7 +12,7 @@ function defaults() {
     grid: V.defaultGrid(), sess: V.DEFAULT_SESS.map(s => Object.assign({}, s)), shopAt: { day: -1, time: '' },
     disabled: [], ids: null, key: '', recent: [], history: [], checked: { key: '', map: {} }, weeks: {},
     offers: '', diversity: 0.5, motto: '', cal: null, calAt: 0, tab: 'plan', weekStart: '', relaxed: false, theme: 'auto',
-    ratings: {}, storeOv: {}, shopView: 'gang', extra: [], sync: { url: '', code: '', fresh: false },
+    ratings: {}, storeOv: {}, shopView: 'gang', extra: [], bundles: [], sync: { url: '', code: '', fresh: false },
     mt: { m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} }
   };
 }
@@ -49,6 +49,13 @@ function load() {
   d.mt = Object.assign({ m: {}, ratings: {}, storeOv: {}, checked: {}, weeks: {} }, d.mt || {});
   ['m', 'ratings', 'storeOv', 'checked', 'weeks'].forEach(k => { if (!d.mt[k] || typeof d.mt[k] !== 'object') d.mt[k] = {}; });
   if (!d.sync || typeof d.sync !== 'object') d.sync = { url: '', code: '', fresh: false };
+  if (!Array.isArray(d.bundles)) d.bundles = [];
+  // Umstieg: offene Eigene Artikel werden eine Runde „Sonstiges“ (alle 4 Wochen)
+  if (Array.isArray(d.extra)) {
+    const open = d.extra.filter(x => !x.d).map(x => x.n);
+    if (open.length) d.bundles.push({ id: 'b' + Date.now().toString(36), n: 'Sonstiges', items: open.join(', '), every: 4, last: '' });
+    d.extra = [];
+  }
   if (!d.weeks || typeof d.weeks !== 'object' || Array.isArray(d.weeks)) d.weeks = {};
   if (!Object.keys(d.weeks).length && d.grid) {
     let ws = /^\d{4}-\d{2}-\d{2}$/.test(d.weekStart || '') ? d.weekStart : '';
@@ -88,6 +95,12 @@ function weekDays() {
 const DATE_OK = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
 function addDaysIso(ws, n) { const d = new Date(ws + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); }
 function thisSunday() { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - d.getDay()); return iso(d); }
+// Haushalt-Runden: Sachen, die nur alle paar Wochen fällig sind. Tage bis zur nächsten Runde, 0 = fällig.
+function bundleLeft(b) {
+  if (!b.last) return 0;
+  const [y, m, d] = b.last.split('-').map(Number), now = new Date(); now.setHours(12, 0, 0, 0);
+  return Math.max(0, Math.round((new Date(y, m - 1, d + b.every * 7, 12) - now) / 864e5));
+}
 function defaultWeek() { return iso(nextSunday()); }
 function weekRec() { return { grid: V.copyGrid(S.grid), sess: S.sess.map(s => Object.assign({}, s)), shopAt: Object.assign({}, S.shopAt), key: S.key || '', relaxed: !!S.relaxed }; }
 function commitWeek() {
@@ -440,17 +453,23 @@ function viewShop() {
       h += '<p class="cap">' + a + '</p><div class="grp">' + list.map(x => itemHtml(x, map, false)).join('') + '</div>';
     });
   }
-  h += '<p class="cap">Zuhause prüfen</p><div class="grp">';
+  h += '<details><summary class="cap">Zuhause prüfen · ' + B.shop.vorrat.length + ' Posten</summary><div class="grp">';
   B.shop.vorrat.forEach(x => {
     const k = 'v_' + x.id;
     h += '<label class="item small' + (map[tk(k)] ? ' done' : '') + '"><input type="checkbox" data-key="' + k + '" data-v="1"' + (map[tk(k)] ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + (x.spec ? '<span class="chip spec" style="margin-left:6px">Spezial</span>' : '') + '</b></span><span></span></label>';
   });
-  h += '</div>';
-  h += '<p class="cap">Eigene Artikel</p><div class="grp"><div class="pad"><form data-form="xadd" style="display:flex;gap:8px"><input type="text" id="xin" maxlength="60" placeholder="Zum Beispiel Zahnpasta" aria-label="Eigener Artikel" style="flex:1;min-width:0"><button type="submit" class="btn sm">Hinzufügen</button></form></div>';
-  (S.extra || []).forEach(x => {
-    h += '<div class="item small' + (x.d ? ' done' : '') + '" style="display:flex;align-items:center"><label style="display:flex;align-items:center;flex:1;min-width:0;gap:12px"><input type="checkbox" data-xkey="' + x.id + '"' + (x.d ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + '</b></span></label><button type="button" class="btn sm soft" data-act="xdel" data-id="' + x.id + '" aria-label="' + esc(x.n) + ' löschen">✕</button></div>';
+  h += '</div></details>';
+  h += '<p class="cap">Regelmäßig für den Haushalt</p><div class="grp">';
+  (S.bundles || []).forEach(b => {
+    const left = bundleLeft(b), doneNow = left > 0;
+    h += '<div class="item small' + (doneNow ? ' done' : '') + '" style="display:flex;align-items:center"><label style="display:flex;align-items:center;flex:1;min-width:0;gap:12px"><input type="checkbox" data-bkey="' + b.id + '"' + (doneNow ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(b.n) + '</b><small>' + esc(b.items) + '</small></span><span class="ipk">' + (doneNow ? 'in ' + left + ' Tagen' : 'fällig') + '</span></label><button type="button" class="btn sm soft" data-act="bdel" data-id="' + b.id + '" aria-label="' + esc(b.n) + ' löschen">✕</button></div>';
   });
-  h += '</div><p class="foot">Diese Liste gibt es nur auf diesem Gerät. Sie wird nicht mit Ayşe abgeglichen.</p>';
+  h += '<div class="pad"><form data-form="badd" style="display:grid;gap:8px">' +
+    '<input type="text" id="bn" maxlength="30" placeholder="Name, zum Beispiel Küche" aria-label="Name der Runde">' +
+    '<input type="text" id="bi" maxlength="200" placeholder="Küchenrolle, Spülmittel, Müllbeutel" aria-label="Artikel der Runde">' +
+    '<div style="display:flex;gap:8px;align-items:center"><span class="sub">Alle</span><input type="number" id="bw" min="1" max="52" value="4" style="width:64px" aria-label="Wochen">' +
+    '<span class="sub">Wochen</span><button type="submit" class="btn sm" style="margin-left:auto">Hinzufügen</button></div></form></div></div>';
+  h += '<p class="foot">Eine Runde fasst Sachen zusammen, die nur alle paar Wochen fällig sind. Abhaken heißt gekauft, dann startet die nächste Runde. Nur auf diesem Gerät gespeichert.</p>';
   h += '<p class="foot">Fehlendes kommt auf die Liste. Tiefkühlware am Vorabend in den Kühlschrank legen. Hackfleisch kommt nur in die ersten beiden Kochtermine, damit es frisch bleibt.</p>';
   h += '<div class="actions"><button class="btn gray" data-act="copy">Liste kopieren</button><button class="btn gray" data-act="uncheck">Haken löschen</button></div><div id="copybox"></div>';
   h += '<a class="btn gray" style="display:block;text-align:center;text-decoration:none;margin:18px 0 6px" href="https://aiaccount42.github.io/haushalt/" target="_blank" rel="noopener">Weiter zu Haushalt</a>';
@@ -772,7 +791,7 @@ function listText() {
   if (S.shopView === 'laden') ['d', 'm'].forEach(s => { const l = B.shop.items.filter(x => storeOf(x) === s); if (l.length) t += '\n=== ' + STORES[s] + ' ===' + block(l); });
   else t += block(B.shop.items).replace(/^/, '');
   t += '\nZuhause prüfen\n' + B.shop.vorrat.map(x => '- ' + x.n).join('\n') + '\n';
-  const ex = (S.extra || []).filter(x => !x.d); if (ex.length) t += '\nEigene Artikel\n' + ex.map(x => '- ' + x.n).join('\n') + '\n';
+  const due = (S.bundles || []).filter(b => !bundleLeft(b)); if (due.length) t += '\nHaushalt, fällig\n' + due.map(b => '- ' + b.n + ': ' + b.items).join('\n') + '\n';
   return t;
 }
 /* ---------- Kalender abonnieren: Dateien über die GitHub-API ins eigene Repo legen ---------- */
@@ -969,8 +988,8 @@ document.addEventListener('click', e => {
     if (k >= 0) S.disabled.splice(k, 1); else S.disabled.push(id);
     touch('pool'); save(); render();
   }
-  else if (act === 'uncheck') { clearTicks(S.weekStart); (S.extra || []).forEach(x => { x.d = false; }); save(); render(); }
-  else if (act === 'xdel') { S.extra = (S.extra || []).filter(x => x.id !== b.dataset.id); saveLocal(); render(); }
+  else if (act === 'uncheck') { clearTicks(S.weekStart); (S.bundles || []).forEach(x => { x.last = ''; }); save(); render(); }
+  else if (act === 'bdel') { S.bundles = (S.bundles || []).filter(x => x.id !== b.dataset.id); saveLocal(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
   else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
@@ -1096,10 +1115,9 @@ document.addEventListener('change', e => {
     const w = t.closest('.rrow'); if (w) w.classList.toggle('offrec', !t.checked);
     const c = document.getElementById('poolcnt'); if (c) c.textContent = pool().length + ' von ' + V.RECIPES.length;
     save();
-  } else if (t.matches('input[type=checkbox][data-xkey]')) {
-    const x = (S.extra || []).find(e => e.id === t.dataset.xkey); if (x) x.d = t.checked;
-    const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
-    saveLocal();
+  } else if (t.matches('input[type=checkbox][data-bkey]')) {
+    const x = (S.bundles || []).find(e => e.id === t.dataset.bkey); if (x) x.last = t.checked ? iso(new Date()) : '';
+    saveLocal(); render();
   } else if (t.matches('input[type=checkbox][data-key]')) {
     S.checked.map[tk(t.dataset.key)] = t.checked; touchKey('checked', tk(t.dataset.key));
     const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
@@ -1126,14 +1144,15 @@ document.addEventListener('input', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) closeSheet(); });
 document.addEventListener('submit', e => {
   const f = e.target;
-  if (f && f.dataset && f.dataset.form === 'xadd') {
+  if (f && f.dataset && f.dataset.form === 'badd') {
     e.preventDefault();
-    const i = document.getElementById('xin'), n = i ? i.value.trim().replace(/\s+/g, ' ').slice(0, 60) : '';
-    if (!n) return;
-    if (!Array.isArray(S.extra)) S.extra = [];
-    S.extra.push({ id: 'x' + Date.now().toString(36) + Math.floor(Math.random() * 1000), n, d: false });
+    const val = id => { const i = document.getElementById(id); return i ? i.value.trim().replace(/\s+/g, ' ') : ''; };
+    const n = val('bn').slice(0, 30), items = val('bi').slice(0, 200), every = Math.min(52, Math.max(1, parseInt(val('bw'), 10) || 4));
+    if (!n || !items) return;
+    if (!Array.isArray(S.bundles)) S.bundles = [];
+    S.bundles.push({ id: 'b' + Date.now().toString(36) + Math.floor(Math.random() * 1000), n, items, every, last: '' });
     saveLocal(); render();
-    const nx = document.getElementById('xin'); if (nx) { try { nx.focus(); } catch (x) { /* egal */ } }
+    const nx = document.getElementById('bn'); if (nx) { try { nx.focus(); } catch (x) { /* egal */ } }
   }
 });
 let tx = null;
