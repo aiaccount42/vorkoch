@@ -225,18 +225,9 @@ click({ act: 'resetall' }); click({ act: 'resetall' }); bad('Reset');
   console.log('Token nicht im Speicher des Plans:', !JSON.stringify(store['vorkoch.v1']).includes('TESTTOKEN') ? 'ok' : 'LECK');
   click({ act: 'tab', tab: 'plan' }); console.log(/data-act="calpub"/.test(appEl.innerHTML) ? 'Plan-Knopf ok' : 'FEHLT Plan-Knopf');
   click({ act: 'tab', tab: 'settings' }); click({ act: 'caloff' }); bad('Kalender getrennt');
-  // Haushalt-Runden: anlegen, abhaken, Frist, löschen
+  // Einkauf: keine eigenen Runden mehr, die macht der Nachkauf-Tag in Haushalt
   click({ act: 'tab', tab: 'shop' });
-  const bsub = (name, items, w) => { els.bn = { value: name }; els.bi = { value: items }; els.bw = { value: w }; handlers.submit.forEach(f => f({ target: { dataset: { form: 'badd' }, matches: () => false }, preventDefault() {} })); };
-  bsub('Küche', 'Küchenrolle,   Spülmittel', '4');
-  const bst = JSON.parse(store['vorkoch.v1']).bundles;
-  console.log('Runde angelegt:', bst.length === 1 && bst[0].items === 'Küchenrolle, Spülmittel' && bst[0].every === 4 && bst[0].last === '' ? 'ok' : 'FALSCH ' + JSON.stringify(bst));
-  console.log('Runde fällig angezeigt:', /Küchenrolle, Spülmittel/.test(appEl.innerHTML) && /fällig/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
-  chg({ dataset: { bkey: bst[0].id }, checked: true, closest: () => null, matches: s => s.includes('checkbox') && s.includes('bkey') });
-  const bst2 = JSON.parse(store['vorkoch.v1']).bundles;
-  console.log('Abhaken setzt Frist:', bst2[0].last && /gekauft/.test(appEl.innerHTML) ? 'ok' : 'FALSCH ' + bst2[0].last);
-  click({ act: 'bdel', id: bst[0].id });
-  console.log('Runde gelöscht:', JSON.parse(store['vorkoch.v1']).bundles.length === 0 ? 'ok' : 'FALSCH');
+  console.log('Keine Runden im Einkauf:', !/Routine-Tag|data-form="badd"/.test(appEl.innerHTML) && /Haushalts-App/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
   // Einladung annehmen
   ctx.location.hash = ''; 
   console.log('Ende neue Tests');

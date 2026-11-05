@@ -26,4 +26,5 @@ Sprache der App und der Kommunikation mit Roman: Deutsch, kurz und direkt.
 - Keine neuen Abhängigkeiten, kein Framework, alles bleibt eine Datei plus Service Worker.
 - Gerichte: Rezepte stehen in `engine.js` (`R({...})`); jede Zutat im Rezept muss in genau einem Schritt auftauchen (siehe `test-amounts.js`).
 - Daten-Sync läuft über Firebase (`extras.js`, nur Whitelist-Felder). Bestehende Felder nicht umbenennen.
+- Regelmäßige Haushaltsartikel laufen nur noch über den Nachkauf-Tag in Haushalt. Das Sync-Feld `bundles` bleibt erhalten, damit alte Daten und Geräte nicht brechen, hat aber keine Oberfläche mehr.
 - Wochenliste für Haushalt: `pubShop()` schreibt nach jedem Abgleich nach `/vorkoch/<code>-einkauf/<Woche>.json` (`{shop, items: [{id, n, q, s, a}]}`). Haushalt liest das von selbst, Felder nicht umbenennen.

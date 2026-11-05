@@ -97,14 +97,6 @@ function weekDays() {
 const DATE_OK = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
 function addDaysIso(ws, n) { const d = new Date(ws + 'T12:00:00'); d.setDate(d.getDate() + n); return iso(d); }
 function thisSunday() { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - d.getDay()); return iso(d); }
-// Routine-Einkauf: alle Runden werden am selben Wochentag gekauft (S.routineDay, 0 = So ... 6 = Sa).
-function routineNext(day) { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + ((day - d.getDay() + 7) % 7)); return iso(d); }
-// Status einer Runde am nächsten Routine-Tag: bought = gekauft, due = fällig, later = noch nicht fällig
-function bundleStatus(b, next) {
-  if (b.last === next) return 'bought';
-  if (!b.last || addDaysIso(b.last, b.every * 7) <= next) return 'due';
-  return 'later';
-}
 function fmtDay(s) { const d = new Date(s + 'T12:00:00'); return DAYS[d.getDay()] + ' ' + d.getDate() + '.' + (d.getMonth() + 1) + '.'; }
 function defaultWeek() { return iso(nextSunday()); }
 function weekRec() { return { grid: V.copyGrid(S.grid), sess: S.sess.map(s => Object.assign({}, s)), shopAt: Object.assign({}, S.shopAt), key: S.key || '', relaxed: !!S.relaxed }; }
@@ -476,20 +468,7 @@ function viewShop() {
     h += '<label class="item small' + (map[tk(k)] ? ' done' : '') + '"><input type="checkbox" data-key="' + k + '" data-v="1"' + (map[tk(k)] ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + (x.spec ? '<span class="chip spec" style="margin-left:6px">Spezial</span>' : '') + '</b></span><span></span></label>';
   });
   h += '</div></details>';
-  const next = routineNext(S.routineDay), names = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
-  h += '<p class="cap">Routine-Einkauf</p><div class="grp"><div class="pad" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span><b>Routine-Tag</b><br><span class="sub">Nächster: ' + fmtDay(next) + '</span></span>' +
-    '<select id="rday" aria-label="Routine-Tag">' + names.map((x, i) => '<option value="' + i + '"' + (i === S.routineDay ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div>';
-  (S.bundles || []).forEach(b => {
-    const st = bundleStatus(b, next), bought = st === 'bought';
-    const ipk = bought ? 'gekauft' : st === 'due' ? 'fällig' : 'ab ' + fmtDay(addDaysIso(b.last, b.every * 7));
-    h += '<div class="item small' + (bought ? ' done' : '') + '" style="display:flex;align-items:center"><label style="display:flex;align-items:center;flex:1;min-width:0;gap:12px"><input type="checkbox" data-bkey="' + b.id + '"' + (bought ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(b.n) + '</b><small>' + esc(b.items) + '</small></span><span class="ipk">' + ipk + '</span></label><button type="button" class="btn sm soft" data-act="bdel" data-id="' + b.id + '" aria-label="' + esc(b.n) + ' löschen">✕</button></div>';
-  });
-  h += '<div class="pad"><form data-form="badd" style="display:grid;gap:8px">' +
-    '<input type="text" id="bn" maxlength="30" placeholder="Name, zum Beispiel Küche" aria-label="Name der Runde">' +
-    '<input type="text" id="bi" maxlength="200" placeholder="Küchenrolle, Spülmittel, Müllbeutel" aria-label="Artikel der Runde">' +
-    '<div style="display:flex;gap:8px;align-items:center"><span class="sub">Alle</span><input type="number" id="bw" min="1" max="52" value="4" style="width:64px" aria-label="Wochen">' +
-    '<span class="sub">Wochen</span><button type="submit" class="btn sm" style="margin-left:auto">Hinzufügen</button></div></form></div></div>';
-  h += '<p class="foot">Alles Fällige kaufst du am Routine-Tag in einem Rutsch. Abhaken heißt gekauft, die nächste Fälligkeit richtet sich nach dem Intervall.</p>';
+  h += '<p class="foot">Die Einkaufsliste erscheint von selbst in der Haushalts-App, wenn beide verbunden sind.</p>';
   h += '<p class="foot">Fehlendes kommt auf die Liste. Tiefkühlware am Vorabend in den Kühlschrank legen. Hackfleisch kommt nur in die ersten beiden Kochtermine, damit es frisch bleibt.</p>';
   h += '<div class="actions"><button class="btn gray" data-act="copy">Liste kopieren</button><button class="btn gray" data-act="uncheck">Haken löschen</button></div><div id="copybox"></div>';
   h += '<a class="btn gray" style="display:block;text-align:center;text-decoration:none;margin:18px 0 6px" href="https://aiaccount42.github.io/haushalt/" target="_blank" rel="noopener">Weiter zu Haushalt</a>';
@@ -812,7 +791,6 @@ function listText() {
   if (S.shopView === 'laden') ['d', 'm'].forEach(s => { const l = B.shop.items.filter(x => storeOf(x) === s); if (l.length) t += '\n=== ' + STORES[s] + ' ===' + block(l); });
   else t += block(B.shop.items).replace(/^/, '');
   t += '\nZuhause prüfen\n' + B.shop.vorrat.map(x => '- ' + x.n).join('\n') + '\n';
-  const due = (S.bundles || []).filter(b => bundleStatus(b, routineNext(S.routineDay)) === 'due'); if (due.length) t += '\nHaushalt, fällig\n' + due.map(b => '- ' + b.n + ': ' + b.items).join('\n') + '\n';
   return t;
 }
 /* ---------- Kalender abonnieren: Dateien über die GitHub-API ins eigene Repo legen ---------- */
@@ -1009,8 +987,7 @@ document.addEventListener('click', e => {
     if (k >= 0) S.disabled.splice(k, 1); else S.disabled.push(id);
     touch('pool'); save(); render();
   }
-  else if (act === 'uncheck') { clearTicks(S.weekStart); (S.bundles || []).forEach(x => { x.last = ''; }); touch('bundles'); save(); render(); }
-  else if (act === 'bdel') { S.bundles = (S.bundles || []).filter(x => x.id !== b.dataset.id); touch('bundles'); save(); render(); }
+  else if (act === 'uncheck') { clearTicks(S.weekStart); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
   else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
@@ -1136,9 +1113,6 @@ document.addEventListener('change', e => {
     const w = t.closest('.rrow'); if (w) w.classList.toggle('offrec', !t.checked);
     const c = document.getElementById('poolcnt'); if (c) c.textContent = pool().length + ' von ' + V.RECIPES.length;
     save();
-  } else if (t.matches('input[type=checkbox][data-bkey]')) {
-    const x = (S.bundles || []).find(e => e.id === t.dataset.bkey); if (x) x.last = t.checked ? routineNext(S.routineDay) : '';
-    touch('bundles'); save(); render();
   } else if (t.matches('input[type=checkbox][data-key]')) {
     S.checked.map[tk(t.dataset.key)] = t.checked; touchKey('checked', tk(t.dataset.key));
     const row = t.closest('.item'); if (row) row.classList.toggle('done', t.checked);
@@ -1148,7 +1122,6 @@ document.addEventListener('change', e => {
     save();
   } else if (t.id === 'div') { S.diversity = t.value / 100; touch('settings'); save(); }
   else if (t.id === 'offers') { S.offers = t.value; touch('offers'); save(); }
-  else if (t.id === 'rday') { S.routineDay = +t.value; touch('bundles'); save(); render(); }
   else if (t.id === 'share') { S.settings.share = t.value / 100; touch('settings'); save(); render(); }
   else if (t.dataset && t.dataset.set) {
     const k = t.dataset.set;
@@ -1164,19 +1137,6 @@ document.addEventListener('input', e => {
   else if (t.id === 'q') { S.q = t.value; const l = document.getElementById('rlist'); if (l) l.innerHTML = recipeList(); }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) closeSheet(); });
-document.addEventListener('submit', e => {
-  const f = e.target;
-  if (f && f.dataset && f.dataset.form === 'badd') {
-    e.preventDefault();
-    const val = id => { const i = document.getElementById(id); return i ? i.value.trim().replace(/\s+/g, ' ') : ''; };
-    const n = val('bn').slice(0, 30), items = val('bi').slice(0, 200), every = Math.min(52, Math.max(1, parseInt(val('bw'), 10) || 4));
-    if (!n || !items) return;
-    if (!Array.isArray(S.bundles)) S.bundles = [];
-    S.bundles.push({ id: 'b' + Date.now().toString(36) + Math.floor(Math.random() * 1000), n, items, every, last: '' });
-    touch('bundles'); save(); render();
-    const nx = document.getElementById('bn'); if (nx) { try { nx.focus(); } catch (x) { /* egal */ } }
-  }
-});
 let tx = null;
 document.addEventListener('touchstart', e => { if (S.sheet && S.sheet.t === 'cook' && e.touches && e.touches[0]) tx = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
 document.addEventListener('touchend', e => {

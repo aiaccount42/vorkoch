@@ -1,6 +1,6 @@
 const fs = require('fs');
 const crypto = require('crypto');
-const CACHE_V = 26; /* bei jeder neuen Version erhöhen, sonst zeigt die App den alten Stand */
+const CACHE_V = 27; /* bei jeder neuen Version erhöhen, sonst zeigt die App den alten Stand */
 const d = __dirname + '/';
 const css = fs.readFileSync(d + 'style.css', 'utf8');
 const eng = fs.readFileSync(d + 'engine.js', 'utf8');
