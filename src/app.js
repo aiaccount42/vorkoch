@@ -71,9 +71,9 @@ function load() {
   }
   return d;
 }
-const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs'];
+const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs', 'undo'];
 let S = load();
-function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; }
+function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; S.undo = null; }
 resetTransient();
 let calTimer = null, calBusy = false, calFail = 0;
 function save() { saveLocal(); schedSync(); calSoon(); }
@@ -124,6 +124,23 @@ function histFor() {
   return h.concat((S.history || []).slice(0, 3 - h.length));
 }
 const tk = id => S.weekStart + '|' + id;
+/* Rückgängig: merkt sich Plan und Haken vor Aktionen, die sonst Arbeit wegwerfen. */
+let undoTimer = null;
+function undoSnap() { return { ws: S.weekStart, grid: V.copyGrid(S.grid), key: S.key, relaxed: S.relaxed, recent: (S.recent || []).slice(), map: Object.assign({}, S.checked.map) }; }
+function undoOffer(snap, msg) {
+  S.undo = Object.assign(snap, { msg });
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => { S.undo = null; const el = document.getElementById('undo'); if (el && el.remove) el.remove(); }, 8000);
+}
+function undoRun() {
+  const u = S.undo; if (!u) return;
+  S.undo = null; clearTimeout(undoTimer);
+  if (S.weekStart !== u.ws) openWeek(u.ws);
+  S.grid = u.grid; S.key = u.key; S.relaxed = u.relaxed; S.recent = u.recent;
+  syncIds(); touch('plan');
+  Object.keys(Object.assign({}, S.checked.map, u.map)).forEach(k => { if (k.indexOf(u.ws + '|') === 0 && !!S.checked.map[k] !== !!u.map[k]) { S.checked.map[k] = !!u.map[k]; touchKey('checked', k); } });
+  save();
+}
 function clearTicks(ws) { Object.keys(S.checked.map).forEach(k => { if (k.indexOf(ws + '|') === 0 && S.checked.map[k]) { S.checked.map[k] = false; touchKey('checked', k); } }); }
 function weekRange() { const d = weekDays(); return d[0].date + ' bis ' + d[6].date; }
 function weekLabel() {
@@ -440,7 +457,7 @@ function itemHtml(x, map, mv) {
 function viewShop() {
   const items = B.shop.items, map = S.checked.map, by = S.shopView === 'laden';
   const done = items.filter(x => map[tk(x.id)]).length;
-  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Posten in ganzen Packungen für ' + weekRange() + '.</p>';
+  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Posten in ganzen Packungen für ' + weekRange() + '</p>';
   h += '<div class="seg" style="margin-bottom:6px">' + [['gang', 'Nach Gang'], ['laden', 'Nach Laden']].map(([k, l]) => '<button data-act="shopview" data-v="' + k + '" aria-pressed="' + (S.shopView === k || (k === 'gang' && !by)) + '">' + l + '</button>').join('') + '</div>';
   h += '<div class="flex" style="justify-content:space-between;align-items:baseline;margin:10px 2px 0"><span class="sub">Erledigt</span><b id="prog">' + done + ' von ' + items.length + '</b></div><div class="pbar"><i id="pbar" style="width:' + (items.length ? done / items.length * 100 : 0) + '%"></i></div>';
   if (by) {
@@ -775,7 +792,8 @@ function render() {
   rebuild();
   if (!B) { app.innerHTML = '<p class="alert">' + esc(S.msg || 'Keine Woche geplant.') + '</p><div class="actions"><button class="btn" data-act="reroll">Neu planen</button></div>'; return; }
   const v = { plan: viewPlan, shop: viewShop, cook: viewCook, recipes: viewRecipes, settings: viewSettings }[S.tab] || viewPlan;
-  app.innerHTML = '<div class="' + (S.fresh ? 'view' : '') + '">' + v() + '</div>' + sheetHtml();
+  app.innerHTML = '<div class="' + (S.fresh ? 'view' : '') + '">' + v() + '</div>' + sheetHtml() +
+    (S.undo ? '<div class="toast" id="undo" role="status"><span>' + S.undo.msg + '</span><button data-act="undo">Rückgängig</button></div>' : '');
   S.fresh = false;
   if (document.body && document.body.classList) document.body.classList.toggle('lock', !!S.sheet);
   document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
@@ -947,10 +965,11 @@ document.addEventListener('click', e => {
   if (!b) return;
   const act = b.dataset.act;
   if (act === 'tab') setTab(b.dataset.tab);
-  else if (act === 'reroll') { generate(false); render(); }
+  else if (act === 'reroll') { const u = undoSnap(); generate(false); if (!S.msg) undoOffer(u, 'Neuer Vorschlag.'); render(); }
+  else if (act === 'undo') { undoRun(); render(); }
   else if (act === 'wk') { const t = addDaysIso(S.weekStart, 7 * (+b.dataset.d < 0 ? -1 : 1)); if (canGo(t)) { openWeek(t); render(); window.scrollTo(0, 0); } }
   else if (act === 'wkgo') { openWeek(defaultWeek()); render(); window.scrollTo(0, 0); }
-  else if (act === 'offerplan') { const i = document.getElementById('offers'); S.offers = i ? i.value : S.offers; touch('offers'); generate(false); render(); }
+  else if (act === 'offerplan') { const i = document.getElementById('offers'); S.offers = i ? i.value : S.offers; touch('offers'); const u = undoSnap(); generate(false); if (!S.msg) undoOffer(u, 'Neuer Vorschlag.'); render(); }
   else if (act === 'recipe') { S.sheet = { t: 'recipe', id: b.dataset.rid }; render(); }
   else if (act === 'cookstart') { S.sheet = { t: 'cook', key: b.dataset.key }; S.ci = 0; lockScreen(true); render(); }
   else if (act === 'close') closeSheet();
@@ -987,7 +1006,7 @@ document.addEventListener('click', e => {
     if (k >= 0) S.disabled.splice(k, 1); else S.disabled.push(id);
     touch('pool'); save(); render();
   }
-  else if (act === 'uncheck') { clearTicks(S.weekStart); save(); render(); }
+  else if (act === 'uncheck') { const u = undoSnap(); clearTicks(S.weekStart); undoOffer(u, 'Haken gelöscht.'); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
   else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }

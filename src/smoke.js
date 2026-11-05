@@ -85,6 +85,15 @@ click({ act: 'tab', tab: 'plan' }); click({ act: 'reroll' }); bad('Pool klein');
 console.log(appEl.innerHTML.includes('weniger als fünf') ? 'Pool-Meldung sichtbar' : 'KEINE Pool-Meldung');
 click({ act: 'resetall' }); click({ act: 'resetall' }); bad('Reset');
 
+// ---- Rückgängig: Neu vorschlagen und Haken löschen werfen nichts mehr endgültig weg
+click({ act: 'tab', tab: 'plan' });
+{
+  const cells = () => JSON.stringify(JSON.parse(store['vorkoch.v1']).grid);
+  const before = cells(); click({ act: 'reroll' });
+  console.log('Rückgängig angeboten:', /data-act="undo"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
+  click({ act: 'undo' }); console.log('Vorschlag zurückgenommen:', cells() === before && !/data-act="undo"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
+  console.log('Rückgängig wird nicht gespeichert:', store['vorkoch.v1'].includes('"undo"') ? 'FALSCH' : 'ok');
+}
 // ---- Wochenraster
 (function () {
   click({ act: 'tab', tab: 'plan' });
@@ -127,6 +136,7 @@ click({ act: 'resetall' }); click({ act: 'resetall' }); bad('Reset');
   const wk = JSON.parse(store['vorkoch.v1']).weeks; console.log('Wochen gespeichert:', Object.keys(wk).length === 2 ? 'ok' : 'FALSCH ' + Object.keys(wk).length);
   // Haken gelten pro Woche
   click({ act: 'tab', tab: 'shop' }); const key0 = /data-key="([a-z_0-9]+)"/.exec(appEl.innerHTML)[1]; chg({ dataset: { key: key0 }, checked: true, closest: () => null, matches: s => s.includes('checkbox') && !s.includes('xkey') && !s.includes('bkey') });
+  click({ act: 'uncheck' }); console.log('Haken gelöscht:', !/class="item done"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH'); click({ act: 'undo' }); console.log('Haken zurückgeholt:', /class="item done"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH');
   click({ act: 'tab', tab: 'plan' }); click({ act: 'wk', d: '1' }); click({ act: 'tab', tab: 'shop' });
   console.log('Haken pro Woche:', !/class="item done"/.test(appEl.innerHTML) ? 'ok' : 'FALSCH (Haken in anderer Woche sichtbar)');
   click({ act: 'tab', tab: 'plan' }); click({ act: 'wk', d: '-1' }); click({ act: 'tab', tab: 'shop' });

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-z4HQBCokfjIsDLOtCX4janXzV00oWzoZxNmDWWXmqhs=' 'sha256-uMUkCsD/MXZKHJWpCIUc1pYrvGeVsCtD5hQ30dOgQVU='; style-src 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; connect-src 'self' https://api.github.com https://*.firebaseio.com https://*.firebasedatabase.app; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-GNz/8NtG6OVVWy7kqgMGeCDa/dnIeCeQe1NYvt3hj9w=' 'sha256-uMUkCsD/MXZKHJWpCIUc1pYrvGeVsCtD5hQ30dOgQVU='; style-src 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; connect-src 'self' https://api.github.com https://*.firebaseio.com https://*.firebasedatabase.app; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -373,6 +373,10 @@ input[type=password], input[type=url], input[type=email] { width: 100%; min-heig
 .cm-amt p { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .cm-amt ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .cm-amt li { font-size: 16px; font-weight: 600; line-height: 1.3; }
+
+/* Rückgängig-Leiste über den Tabs */
+.toast { position: fixed; left: 12px; right: 12px; bottom: calc(70px + env(safe-area-inset-bottom, 0px)); z-index: 60; max-width: 520px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 8px 6px 16px; border-radius: 14px; background: var(--ink); color: var(--bg); font-size: 15px; box-shadow: var(--shadow); }
+.toast button { flex: none; min-height: 44px; padding: 0 12px; border: 0; background: none; color: inherit; font: 700 15px/1 var(--font); cursor: pointer; text-decoration: underline; }
 </style>
 <div id="app"></div>
 <nav id="tabs" aria-label="Bereiche"><div class="in"><button type="button" data-act="tab" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button type="button" data-act="tab" data-tab="shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Einkauf</button><button type="button" data-act="tab" data-tab="cook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h2M20 10h2M9 3c0 1.6 1 1.6 1 3.5M14 3c0 1.6 1 1.6 1 3.5"/></svg>Kochen</button><button type="button" data-act="tab" data-tab="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Rezepte</button><button type="button" data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Mehr</button></div></nav>
@@ -2385,7 +2389,7 @@ if (typeof module !== 'undefined') module.exports = root.VX;
 const V = window.VK;
 const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const KEY = 'vorkoch.v1';
-const APP_V = '27'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
+const APP_V = '28'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
 const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 
 /* ---------- Zustand ---------- */
@@ -2453,9 +2457,9 @@ function load() {
   }
   return d;
 }
-const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs'];
+const TRANSIENT = ['msg', 'sheet', 'ci', 'timers', 'tadj', 'fresh', 'confirm', 'q', 'filter', 'country', 'carb', 'ss', 'ids', 'cs', 'undo'];
 let S = load();
-function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; }
+function resetTransient() { S.msg = ''; S.sheet = null; S.ci = 0; S.timers = []; S.tadj = {}; S.fresh = false; S.confirm = false; S.q = ''; S.filter = 'all'; S.country = ''; S.carb = ''; S.ss = null; S.cs = null; S.undo = null; }
 resetTransient();
 let calTimer = null, calBusy = false, calFail = 0;
 function save() { saveLocal(); schedSync(); calSoon(); }
@@ -2506,6 +2510,23 @@ function histFor() {
   return h.concat((S.history || []).slice(0, 3 - h.length));
 }
 const tk = id => S.weekStart + '|' + id;
+/* Rückgängig: merkt sich Plan und Haken vor Aktionen, die sonst Arbeit wegwerfen. */
+let undoTimer = null;
+function undoSnap() { return { ws: S.weekStart, grid: V.copyGrid(S.grid), key: S.key, relaxed: S.relaxed, recent: (S.recent || []).slice(), map: Object.assign({}, S.checked.map) }; }
+function undoOffer(snap, msg) {
+  S.undo = Object.assign(snap, { msg });
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => { S.undo = null; const el = document.getElementById('undo'); if (el && el.remove) el.remove(); }, 8000);
+}
+function undoRun() {
+  const u = S.undo; if (!u) return;
+  S.undo = null; clearTimeout(undoTimer);
+  if (S.weekStart !== u.ws) openWeek(u.ws);
+  S.grid = u.grid; S.key = u.key; S.relaxed = u.relaxed; S.recent = u.recent;
+  syncIds(); touch('plan');
+  Object.keys(Object.assign({}, S.checked.map, u.map)).forEach(k => { if (k.indexOf(u.ws + '|') === 0 && !!S.checked.map[k] !== !!u.map[k]) { S.checked.map[k] = !!u.map[k]; touchKey('checked', k); } });
+  save();
+}
 function clearTicks(ws) { Object.keys(S.checked.map).forEach(k => { if (k.indexOf(ws + '|') === 0 && S.checked.map[k]) { S.checked.map[k] = false; touchKey('checked', k); } }); }
 function weekRange() { const d = weekDays(); return d[0].date + ' bis ' + d[6].date; }
 function weekLabel() {
@@ -2822,7 +2843,7 @@ function itemHtml(x, map, mv) {
 function viewShop() {
   const items = B.shop.items, map = S.checked.map, by = S.shopView === 'laden';
   const done = items.filter(x => map[tk(x.id)]).length;
-  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Posten in ganzen Packungen für ' + weekRange() + '.</p>';
+  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Posten in ganzen Packungen für ' + weekRange() + '</p>';
   h += '<div class="seg" style="margin-bottom:6px">' + [['gang', 'Nach Gang'], ['laden', 'Nach Laden']].map(([k, l]) => '<button data-act="shopview" data-v="' + k + '" aria-pressed="' + (S.shopView === k || (k === 'gang' && !by)) + '">' + l + '</button>').join('') + '</div>';
   h += '<div class="flex" style="justify-content:space-between;align-items:baseline;margin:10px 2px 0"><span class="sub">Erledigt</span><b id="prog">' + done + ' von ' + items.length + '</b></div><div class="pbar"><i id="pbar" style="width:' + (items.length ? done / items.length * 100 : 0) + '%"></i></div>';
   if (by) {
@@ -3157,7 +3178,8 @@ function render() {
   rebuild();
   if (!B) { app.innerHTML = '<p class="alert">' + esc(S.msg || 'Keine Woche geplant.') + '</p><div class="actions"><button class="btn" data-act="reroll">Neu planen</button></div>'; return; }
   const v = { plan: viewPlan, shop: viewShop, cook: viewCook, recipes: viewRecipes, settings: viewSettings }[S.tab] || viewPlan;
-  app.innerHTML = '<div class="' + (S.fresh ? 'view' : '') + '">' + v() + '</div>' + sheetHtml();
+  app.innerHTML = '<div class="' + (S.fresh ? 'view' : '') + '">' + v() + '</div>' + sheetHtml() +
+    (S.undo ? '<div class="toast" id="undo" role="status"><span>' + S.undo.msg + '</span><button data-act="undo">Rückgängig</button></div>' : '');
   S.fresh = false;
   if (document.body && document.body.classList) document.body.classList.toggle('lock', !!S.sheet);
   document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
@@ -3329,10 +3351,11 @@ document.addEventListener('click', e => {
   if (!b) return;
   const act = b.dataset.act;
   if (act === 'tab') setTab(b.dataset.tab);
-  else if (act === 'reroll') { generate(false); render(); }
+  else if (act === 'reroll') { const u = undoSnap(); generate(false); if (!S.msg) undoOffer(u, 'Neuer Vorschlag.'); render(); }
+  else if (act === 'undo') { undoRun(); render(); }
   else if (act === 'wk') { const t = addDaysIso(S.weekStart, 7 * (+b.dataset.d < 0 ? -1 : 1)); if (canGo(t)) { openWeek(t); render(); window.scrollTo(0, 0); } }
   else if (act === 'wkgo') { openWeek(defaultWeek()); render(); window.scrollTo(0, 0); }
-  else if (act === 'offerplan') { const i = document.getElementById('offers'); S.offers = i ? i.value : S.offers; touch('offers'); generate(false); render(); }
+  else if (act === 'offerplan') { const i = document.getElementById('offers'); S.offers = i ? i.value : S.offers; touch('offers'); const u = undoSnap(); generate(false); if (!S.msg) undoOffer(u, 'Neuer Vorschlag.'); render(); }
   else if (act === 'recipe') { S.sheet = { t: 'recipe', id: b.dataset.rid }; render(); }
   else if (act === 'cookstart') { S.sheet = { t: 'cook', key: b.dataset.key }; S.ci = 0; lockScreen(true); render(); }
   else if (act === 'close') closeSheet();
@@ -3369,7 +3392,7 @@ document.addEventListener('click', e => {
     if (k >= 0) S.disabled.splice(k, 1); else S.disabled.push(id);
     touch('pool'); save(); render();
   }
-  else if (act === 'uncheck') { clearTicks(S.weekStart); save(); render(); }
+  else if (act === 'uncheck') { const u = undoSnap(); clearTicks(S.weekStart); undoOffer(u, 'Haken gelöscht.'); save(); render(); }
   else if (act === 'copy') copyOut(listText(), 'Liste kopiert.', 10);
   else if (act === 'term') { S.sess = V.sortSess(S.sess); S.sheet = { t: 'term', k: b.dataset.term }; render(); }
   else if (act === 'cell') { S.sheet = { t: 'cell', k: b.dataset.k }; render(); }
