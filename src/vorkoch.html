@@ -2381,7 +2381,7 @@ if (typeof module !== 'undefined') module.exports = root.VX;
 const V = window.VK;
 const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const KEY = 'vorkoch.v1';
-const APP_V = '31'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
+const APP_V = '32'; /* beim Bauen durch CACHE_V aus build.js ersetzt */
 const KIND = { veg: 'Vegetarisch', fisch: 'Fisch', fleisch: 'Fleisch' };
 
 /* ---------- Zustand ---------- */
@@ -2558,7 +2558,7 @@ function hasFilled() { return V.CELLS.some(k => (S.grid[k].t === 'p' || S.grid[k
 function wantsMeals() { return V.CELLS.some(k => S.grid[k].t === 'p' || S.grid[k].t === 'f'); }
 function generate(advance) {
   const pl = pool();
-  if (pl.length < 5) { S.msg = 'Im Pool sind weniger als fünf Rezepte aktiv. Aktiviere weitere unter „Rezepte“.'; return; }
+  if (pl.length < 5) { S.msg = 'Es werden weniger als fünf Rezepte vorgeschlagen. Aktiviere weitere unter „Rezepte“.'; return; }
   let base = V.copyGrid(S.grid);
   if (advance) V.CELLS.forEach(k => { delete base[k].r; delete base[k].u; });
   const res = V.fillGrid(base, planOpts());
@@ -2721,7 +2721,7 @@ function rateBtns(id) {
 const STORES = { d: 'Aldi Nord oder Lidl', m: 'Marktkauf' };
 function storeOf(x) { return S.storeOv[x.id] || (x.spec ? 'm' : 'd'); }
 
-const AGE = ['frisch', '1 Tag alt', '2 Tage alt'];
+const AGE = ['frisch', 'von gestern', 'von vorgestern'];
 const TYPE_NAME = { p: 'Vorgekocht', f: 'Frisch', o: 'Auswärts', x: 'Offen' };
 const MEAL_NAME = { l: 'Mittag', d: 'Abend' };
 
@@ -2739,24 +2739,23 @@ function cellWho(k) {
   if (x.t === 'f') return B.sessions.find(s => s.fresh && s.cell === k) ? whoCode(B.sessions.find(s => s.fresh && s.cell === k)) : 'b';
   const s = cellSess(k); return s ? whoCode(s) : 'b';
 }
-const whoTag = c => c === '0' || c === '1' ? ' · ' + esc((names()[+c] || '?').charAt(0).toUpperCase()) : '';
 function slotHtml(k) {
   const x = S.grid[k], w = cellWarn(k);
   const wh = w ? '<span class="cw">' + w + '</span>' : '';
   if ((x.t === 'p' || x.t === 'f') && x.r && V.BY_ID[x.r]) {
     const r = V.BY_ID[x.r];
     let m;
-    if (x.t === 'f') m = dot(-1) + 'frisch gekocht' + whoTag(cellWho(k));
-    else { const age = Math.max(0, +k[0] - Math.floor((B.time[x.r] || 0) / 1440)), cs = cellSess(k); m = sb(cs && cs.n) + dot(dishIdx(x.r)) + (age < 3 ? AGE[age] : age + ' Tage alt') + whoTag(cellWho(k)); }
+    if (x.t === 'f') m = dot(-1) + 'frisch gekocht';
+    else { const age = Math.max(0, +k[0] - Math.floor((B.time[x.r] || 0) / 1440)), cs = cellSess(k); m = sb(cs && cs.n) + dot(dishIdx(x.r)) + (age < 3 ? AGE[age] : age + ' Tage alt'); }
     return '<button class="slot" data-act="cell" data-k="' + k + '"><span class="m">' + m + '</span><b>' + esc(r.short) + '</b>' + wh + '</button>';
   }
   if (x.t === 'p' || x.t === 'f') return '<button class="slot warnslot" data-act="cell" data-k="' + k + '"><span class="m">' + TYPE_NAME[x.t] + '</span><b>–</b>' + wh + '</button>';
   return '<button class="slot off" data-act="cell" data-k="' + k + '">' + (x.t === 'o' ? 'Auswärts' : 'Offen') + '</button>';
 }
 
-const dayOpts = (cur, withBefore) => (withBefore ? [[-1, 'Sa davor']] : []).concat([1, 2, 3, 4, 5, 6, 0].map(d => [d, DAYS[d]])).map(([d, l]) => '<option value="' + d + '"' + (cur === d ? ' selected' : '') + '>' + l + '</option>').join('');
+const dayOpts = (cur, withBefore) => (withBefore ? [[-1, 'Samstag davor']] : []).concat([1, 2, 3, 4, 5, 6, 0].map(d => [d, DAYS[d]])).map(([d, l]) => '<option value="' + d + '"' + (cur === d ? ' selected' : '') + '>' + l + '</option>').join('');
 const tl = t => t || 'tagsüber';
-const dayLbl = d => d < 0 ? 'Sa davor' : DAYS[d];
+const dayLbl = d => d < 0 ? fmtDay(addDaysIso(S.weekStart, -1)) : DAYS[d];
 const whoLabel = c => c === '0' || c === '1' ? (names()[+c] || '?') : 'zusammen';
 function termsCard() {
   const sl = sessList();
@@ -2778,7 +2777,7 @@ function viewPlan() {
   if (S.weekStart !== dflt && canGo(dflt)) h += '<div class="wback"><button class="lnk" data-act="wkgo">Zurück zur Planungswoche</button></div>';
   if (S.msg) h += '<p class="alert">' + esc(S.msg) + '</p>';
   if (S.cs && S.cs.auto && S.cs.state === 'err') h += '<p class="alert">Kalender konnte nicht automatisch aktualisiert werden: ' + esc(S.cs.msg) + '</p>';
-  if (S.relaxed) h += '<p class="alert">Der Pool ist für deine Regeln zu klein. Die Mindestzahl vegetarischer Gerichte wurde dieses Mal nicht eingehalten.</p>';
+  if (S.relaxed) h += '<p class="alert">Für deine Regeln gibt es zu wenige aktive Rezepte. Die Mindestzahl vegetarischer Gerichte wurde dieses Mal nicht eingehalten.</p>';
   h += '<p class="cap" style="margin-left:2px">Essensplan</p>';
   h += '<div class="grp"><div class="dh"><span></span><span>Mittag</span><span>Abend</span></div>';
   for (let d = 0; d < 7; d++) {
@@ -2786,14 +2785,14 @@ function viewPlan() {
   }
   h += '</div>';
   h += '<p class="wsum">' + V.fmtDur(st.mk) + ' kochen · ' + B.shop.items.length + ' Artikel' + (st.avgP ? ' · Ø ' + Math.round(st.avgP) + ' g Protein' : '') + (st.rests ? ' · ' + st.rests + ' mit Rest' : '') + '</p>';
-  h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Passt, zum Einkauf</button></div>';
+  h += '<div class="actions"><button class="btn" data-act="tab" data-tab="shop">Einkaufsliste öffnen</button></div>';
   h += termsCard();
 
   h += '<p class="cap">Anpassen</p><div class="grp">' +
-    '<button class="row" data-act="reroll"><span class="grow"><b>Neu vorschlagen</b></span><span class="val">eigene Felder bleiben</span></button>' +
+    '<button class="row" data-act="reroll"><span class="grow"><b>Neu vorschlagen</b></span><span class="val">deine Änderungen bleiben</span></button>' +
     (S.cal ? '<button class="row" data-act="calpub"><span class="grow"><b>Kalender aktualisieren</b></span><span class="val">' + (ghTok() ? 'automatisch · ' : 'Token fehlt · ') + calAgo() + '</span></button>' : '') +
     '<label class="row"><span class="grow"><b>Küche der Woche</b><div class="sub">bevorzugt beim Vorschlag</div></span><select class="inl day" data-motto aria-label="Küche der Woche" style="width:auto;max-width:150px"><option value="">Egal</option>' + V.countries().filter(c => c.n >= 2).map(c => '<option value="' + esc(c.name) + '"' + (S.motto === c.name ? ' selected' : '') + '>' + esc(c.name) + ' (' + c.n + ')</option>').join('') + '</select></label>' +
-    '<div class="pad"><div class="flex" style="justify-content:space-between"><span class="sub">Reste verwerten</span><span class="sub">Vielfalt</span></div><input type="range" id="div" min="0" max="100" step="5" value="' + Math.round(S.diversity * 100) + '" aria-label="Reste verwerten oder Vielfalt"></div></div>';
+    '<div class="pad"><div class="flex" style="justify-content:space-between"><span class="sub">Weniger Reste</span><span class="sub">Mehr Abwechslung</span></div><input type="range" id="div" min="0" max="100" step="5" value="' + Math.round(S.diversity * 100) + '" aria-label="Weniger Reste oder mehr Abwechslung"></div></div>';
 
   h += '<h2 class="sec">Kochen diese Woche</h2>';
   if (!B.sessions.length) h += '<div class="grp pad"><p class="sub">Noch nichts zu kochen. Lege Felder auf „Vorgekocht“ oder „Frisch“.</p></div>';
@@ -2831,13 +2830,13 @@ function itemHtml(x, map, mv) {
 function viewShop() {
   const items = B.shop.items, map = S.checked.map, by = S.shopView === 'laden';
   const done = items.filter(x => map[tk(x.id)]).length;
-  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Posten in ganzen Packungen für ' + weekRange() + '</p>';
+  let h = '<h1 class="ltitle">Einkauf</h1><p class="lsub">' + items.length + ' Artikel in ganzen Packungen für ' + weekRange() + '</p>';
   h += '<div class="seg" style="margin-bottom:6px">' + [['gang', 'Nach Gang'], ['laden', 'Nach Laden']].map(([k, l]) => '<button data-act="shopview" data-v="' + k + '" aria-pressed="' + (S.shopView === k || (k === 'gang' && !by)) + '">' + l + '</button>').join('') + '</div>';
   h += '<div class="flex" style="justify-content:space-between;align-items:baseline;margin:10px 2px 0"><span class="sub">Erledigt</span><b id="prog">' + done + ' von ' + items.length + '</b></div><div class="pbar"><i id="pbar" style="width:' + (items.length ? done / items.length * 100 : 0) + '%"></i></div>';
   if (by) {
     ['d', 'm'].forEach(s => {
       const inStore = items.filter(x => storeOf(x) === s);
-      h += '<p class="cap">' + STORES[s] + ' · ' + inStore.length + ' Posten</p>';
+      h += '<p class="cap">' + STORES[s] + ' · ' + inStore.length + ' Artikel</p>';
       if (!inStore.length) { h += '<div class="grp pad"><p class="sub">Hier ist nichts zu holen.</p></div>'; return; }
       V.AISLES.forEach(a => {
         const list = inStore.filter(x => x.a === a);
@@ -2845,7 +2844,7 @@ function viewShop() {
         h += '<p class="sub" style="margin:10px 18px 4px">' + a + '</p><div class="grp">' + list.map(x => itemHtml(x, map, true)).join('') + '</div>';
       });
     });
-    h += '<p class="foot">Spezialzutaten liegen bei Marktkauf, alles andere bei Aldi oder Lidl. Mit dem Knopf an jedem Posten wechselst du den Laden, auch für künftige Wochen.</p>';
+    h += '<p class="foot">Spezialzutaten liegen bei Marktkauf, alles andere bei Aldi oder Lidl. Mit dem Knopf an jedem Artikel wechselst du den Laden, auch für künftige Wochen.</p>';
   } else {
     V.AISLES.forEach(a => {
       const list = items.filter(x => x.a === a);
@@ -2853,7 +2852,7 @@ function viewShop() {
       h += '<p class="cap">' + a + '</p><div class="grp">' + list.map(x => itemHtml(x, map, false)).join('') + '</div>';
     });
   }
-  h += '<details><summary class="cap">Zuhause prüfen · ' + B.shop.vorrat.length + ' Posten</summary><div class="grp">';
+  h += '<details><summary class="cap">Zuhause prüfen · ' + B.shop.vorrat.length + ' Dinge</summary><div class="grp">';
   B.shop.vorrat.forEach(x => {
     const k = 'v_' + x.id;
     h += '<label class="item small' + (map[tk(k)] ? ' done' : '') + '"><input type="checkbox" data-key="' + k + '" data-v="1"' + (map[tk(k)] ? ' checked' : '') + '><span class="box"></span><span class="itx"><b>' + esc(x.n) + (x.spec ? '<span class="chip spec" style="margin-left:6px">Spezial</span>' : '') + '</b></span><span></span></label>';
@@ -2956,7 +2955,7 @@ function recipeList() {
       const off = S.disabled.includes(r.id);
       h += '<div class="rrow' + (off ? ' offrec' : '') + '">' + dishThumb(r) + '<button class="open" data-act="recipe" data-rid="' + r.id + '"><b>' + esc(r.name) + (r.isNew ? '<span class="chip neu">neu</span>' : '') + (r.src ? '<span class="chip neu" style="background:var(--fill);color:var(--ink2)">REWE</span>' : '') + '</b>' +
         '<small>' + esc(r.country === r.cuisine ? r.country : r.country + ' · ' + r.cuisine) + ' · ' + Math.round(r.nu.p) + ' g Protein · ' + V.fmtDur(V.sched([r]).mk) + (r.spec.length ? ' · Spezialzutat' : '') + '</small></button>' +
-        '<label class="sw"><input type="checkbox" data-pool="' + r.id + '"' + (off ? '' : ' checked') + ' aria-label="' + esc(r.short) + ' im Pool"><i></i></label></div>';
+        '<label class="sw"><input type="checkbox" data-pool="' + r.id + '"' + (off ? '' : ' checked') + ' aria-label="' + esc(r.short) + ' vorschlagen"><i></i></label></div>';
     });
     h += '</div>';
   });
@@ -2964,7 +2963,7 @@ function recipeList() {
 }
 function viewRecipes() {
   const FIL = [['all', 'Alle'], ['new', 'Neu'], ['rewe', 'REWE Rezeptideen'], ['veg', 'Vegetarisch'], ['fisch', 'Fisch'], ['fleisch', 'Fleisch'], ['off', 'Abgewählt']];
-  let h = '<h1 class="ltitle">Rezepte</h1><p class="lsub"><span id="poolcnt">' + pool().length + ' von ' + V.RECIPES.length + '</span> im Pool. Schalter an heißt: darf geplant werden.</p>';
+  let h = '<h1 class="ltitle">Rezepte</h1><p class="lsub"><span id="poolcnt">' + pool().length + ' von ' + V.RECIPES.length + '</span> werden vorgeschlagen. Schalter an heißt: darf geplant werden.</p>';
   h += '<div class="search"><input type="search" id="q" placeholder="Suchen, zum Beispiel Linsen oder Indisch" value="' + esc(S.q) + '" aria-label="Rezepte suchen"></div>';
   h += '<div class="filters" role="group" aria-label="Filter" style="margin-top:10px">' + FIL.map(([k, l]) => '<button data-act="filter" data-f="' + k + '" aria-pressed="' + (S.filter === k) + '">' + l + '</button>').join('') + '</div>';
   h += '<div class="filters" role="group" aria-label="Kohlenhydratquelle" style="margin-top:2px"><button data-act="carb" data-c="" aria-pressed="' + (!S.carb) + '">Alle Beilagen</button>' + CARBS.map(c => '<button data-act="carb" data-c="' + c + '" aria-pressed="' + (S.carb === c) + '">' + c + ' ' + V.RECIPES.filter(r => carbOf(r) === c).length + '</button>').join('') + '</div>';
@@ -2983,13 +2982,13 @@ function syncBox() {
       '<ol class="mini"><li>console.firebase.google.com öffnen, Projekt anlegen (Analytics aus).</li><li>Build, Realtime Database, Datenbank erstellen, Testmodus.</li><li>Reiter „Regeln“: <code>{ "rules": { "vorkoch": { "$code": { ".read": true, ".write": true } } } }</code> einfügen und veröffentlichen.</li><li>Die Datenbank-URL (endet auf firebasedatabase.app oder firebaseio.com) hier einfügen.</li></ol>' +
       '<div class="flex" style="margin-top:12px"><input type="text" id="syncurl" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://…firebasedatabase.app" aria-label="Datenbank-URL"><button class="btn sm" data-act="connect">Verbinden</button></div>' +
       (ss && ss.state === 'err' ? '<p class="warn" style="margin-top:8px">' + esc(ss.msg) + '</p>' : '') + '</div>' +
-      '<button class="row" data-act="snaplink"><span class="grow"><b>Momentaufnahme als Link</b></span><span class="val">ohne Server</span></button></div><div id="syncout"></div>';
+      '<button class="row" data-act="snaplink"><span class="grow"><b>Plan als Link teilen</b></span><span class="val">ohne Server</span></button></div><div id="syncout"></div>';
   }
   const st = !ss ? 'Verbunden' : ss.state === 'err' ? ss.msg : ss.msg;
   return '<div class="grp"><div class="row"><span class="grow"><b>' + (ss && ss.state === 'err' ? 'Problem' : 'Verbunden') + '</b><div class="sub">' + esc(st) + '</div></span></div>' +
     '<button class="row" data-act="syncnow"><span class="grow">Jetzt abgleichen</span></button>' +
     '<button class="row" data-act="invite"><span class="grow">Einladungslink für das andere Gerät</span></button>' +
-    '<button class="row" data-act="snaplink"><span class="grow">Momentaufnahme als Link</span></button>' +
+    '<button class="row" data-act="snaplink"><span class="grow">Plan als Link teilen</span></button>' +
     '<button class="row" data-act="disconnect" style="color:var(--danger)"><span class="grow">Trennen</span></button></div><div id="syncout"></div>' +
     '<p class="foot">Wer den Link hat, hat Zugriff auf den Plan. Gleichzeitiges Bearbeiten innerhalb weniger Sekunden kann eine Änderung überschreiben.</p>';
 }
@@ -3034,7 +3033,7 @@ function sheetHtml() {
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(r.name) + '"><div class="shd"><span class="grab"></span><h3>' + esc(r.name) + '</h3><button class="btn sm soft" data-act="close">Fertig</button></div>' +
       '<div class="shb rb">' + dishImg(r) + '<p class="sub" style="margin-bottom:12px">' + esc(r.cuisine) + ' · ' + KIND[r.kind] + (r.src ? ' · nach einer Idee aus „' + esc(r.src) + '“, in eigener Fassung' : '') + '</p>' + recipeBody(r) +
       '<div class="flex" style="justify-content:space-between;margin-top:14px"><span class="sub">Hat es geschmeckt?</span>' + rateBtns(r.id) + '</div>' +
-      '<div class="actions"><button class="btn ' + (off ? '' : 'gray') + '" data-act="pool" data-rid="' + r.id + '">' + (off ? 'In den Pool aufnehmen' : 'Aus dem Pool nehmen') + '</button></div></div></div>';
+      '<div class="actions"><button class="btn ' + (off ? '' : 'gray') + '" data-act="pool" data-rid="' + r.id + '">' + (off ? 'Wieder vorschlagen' : 'Nicht mehr vorschlagen') + '</button></div></div></div>';
   }
   if (sh.t === 'cell') {
     const k = sh.k, x = S.grid[k];
@@ -3092,7 +3091,7 @@ function sheetHtml() {
   }
   if (sh.t === 'snap') {
     return '<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Plan übernehmen"><div class="shd"><span class="grab"></span><h3>Plan übernehmen</h3><button class="btn sm soft" data-act="close">Abbrechen</button></div>' +
-      '<div class="shb"><p>Das ist eine Momentaufnahme eines Plans. Übernehmen ersetzt Plan, Bewertungen und Einstellungen auf diesem Gerät.</p><div class="actions"><button class="btn" data-act="snapok">Übernehmen</button></div></div></div>';
+      '<div class="shb"><p>Das ist ein geteilter Plan. Übernehmen ersetzt Plan, Bewertungen und Einstellungen auf diesem Gerät.</p><div class="actions"><button class="btn" data-act="snapok">Übernehmen</button></div></div></div>';
   }
   if (sh.t === 'cook') {
     const s = B.sessions.find(x => x.key === sh.key), ev = cookEvents();

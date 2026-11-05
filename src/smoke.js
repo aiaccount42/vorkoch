@@ -112,7 +112,7 @@ click({ act: 'tab', tab: 'shop' });
   click({ act: 'cell', k: '3l' }); click({ act: 'celltype', t: 'o' }); bad('auswärts');
   console.log(appEl.innerHTML.includes('Auswärts') ? 'auswärts ok' : 'auswärts FEHLT');
   click({ act: 'cell', k: '6d' }); click({ act: 'celltype', t: 'p' }); click({ act: 'cellr', rid: '' }); bad('Feld Auto');
-  console.log(/class="terms"/.test(appEl.innerHTML) && /Einkauf Sa davor/.test(appEl.innerHTML) && /tagsüber/.test(appEl.innerHTML) && !/Einkaufen und Kochen/.test(appEl.innerHTML) ? 'Termin-Kärtchen ok' : 'FEHLT Termin-Kärtchen');
+  console.log(/class="terms"/.test(appEl.innerHTML) && /Einkauf Sa \d/.test(appEl.innerHTML) && /tagsüber/.test(appEl.innerHTML) && !/Einkaufen und Kochen/.test(appEl.innerHTML) ? 'Termin-Kärtchen ok' : 'FEHLT Termin-Kärtchen');
   click({ act: 'sessadd' }); bad('Termin +');
   console.log(/data-tday/.test(appEl.innerHTML) && /Kochtermin \d/.test(appEl.innerHTML) ? 'Termin-Dialog nach + ok' : 'FEHLT Termin-Dialog');
   chg({ dataset: { tday: '' }, value: '2', matches: () => false }); bad('Termin Tag');
