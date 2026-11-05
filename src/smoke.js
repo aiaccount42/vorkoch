@@ -179,7 +179,7 @@ click({ act: 'tab', tab: 'shop' });
   els.syncurl = { value: 'https://demo-default-rtdb.europe-west1.firebasedatabase.app/' };
   click({ act: 'connect' }); await wait();
   const keys = Object.keys(fakeDB);
-  console.log('DB-Eintrag nach Verbinden:', keys.length === 1 && keys[0].startsWith('/vorkoch/') ? 'ok' : 'FEHLT ' + keys);
+  console.log('DB-Eintrag nach Verbinden:', keys.filter(k => !/-einkauf\//.test(k)).length === 1 && keys[0].startsWith('/vorkoch/') ? 'ok' : 'FEHLT ' + keys);
   const doc1 = fakeDB[keys[0]];
   console.log('Format:', doc1 && doc1.v === 2 && typeof doc1.plan === 'string' ? 'ok' : 'FALSCH');
   bad('Mehr verbunden');

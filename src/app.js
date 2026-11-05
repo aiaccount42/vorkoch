@@ -445,7 +445,7 @@ function viewPlan() {
 function itemHtml(x, map, mv) {
   const st = storeOf(x), open = S.info === x.id;
   return '<label class="item' + (map[tk(x.id)] ? ' done' : '') + '"><input type="checkbox" data-key="' + x.id + '"' + (map[tk(x.id)] ? ' checked' : '') + '><span class="box"></span>' +
-    '<span class="itx"><b>' + esc(x.n) + (!mv && st === 'm' ? '<span class="chip spec" style="margin-left:6px">Marktkauf</span>' : '') + '</b>' + (open ? '<small>' + esc(x.txt) + '</small><small>' + esc(x.needTxt) + ' gebraucht · ' + esc(x.forR.join(', ')) + '</small>' : '') +
+    '<span class="itx"><b>' + esc(x.n) + (!mv && st === 'm' ? '<span class="chip spec" style="margin-left:6px">Marktkauf</span>' : '') + '</b>' + (open ? (x.txt.includes(' · ') ? '<small>' + esc(x.txt.split(' · ')[1]) + '</small>' : '') + '<small>' + esc(x.needTxt) + ' gebraucht · ' + esc(x.forR.join(', ')) + '</small>' : '') +
     (x.rest && open ? '<small class="rest">Rest: ' + esc(x.leftTxt) + '</small>' : '') + '</span><span class="ipk">' + esc(x.txt.split(' · ')[0]) + '</span>' +
     '<button type="button" class="inf" data-act="info" data-id="' + x.id + '" aria-expanded="' + open + '" aria-label="Details zu ' + esc(x.n) + '">i</button>' +
     (mv ? '<button type="button" class="mv" data-act="store" data-id="' + x.id + '" aria-label="' + esc(x.n) + ' zu ' + (st === 'm' ? 'Aldi oder Lidl' : 'Marktkauf') + ' verschieben">' + (st === 'm' ? 'zu Aldi/Lidl' : 'zu Marktkauf') + '</button>' : '') + '</label>';
